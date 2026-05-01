@@ -191,6 +191,9 @@ export class Session {
       case "sdp":
         this.applySdp(message);
         return;
+      case "ice":
+        this.applyIce(message);
+        return;
       default:
         // Other message types added in later tasks.
         throw new SignalingValidationError(`unsupported message type ${message.type}`, {
@@ -272,6 +275,15 @@ export class Session {
    * is a silent no-op.
    */
   private applySdp(message: Extract<SignalingMessageType, { type: "sdp" }>): void {
+    this.send(message.to, message);
+  }
+
+  /**
+   * Internal: routes an ICE candidate (or `null` end-of-candidates marker)
+   * to the target peer. Same opaque-payload policy as SDP — the candidate
+   * shape varies across browsers and is forwarded untouched.
+   */
+  private applyIce(message: Extract<SignalingMessageType, { type: "ice" }>): void {
     this.send(message.to, message);
   }
 
