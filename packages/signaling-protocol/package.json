@@ -50,6 +50,7 @@
         "src/**/*.ts",
         "tsup.config.ts",
         "tsconfig.json",
+        "tsconfig.build.json",
         "../../tsconfig.base.json"
       ],
       "output": [
@@ -61,6 +62,7 @@
       "command": "tsc --noEmit",
       "files": [
         "src/**/*.ts",
+        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.base.json"
       ],
