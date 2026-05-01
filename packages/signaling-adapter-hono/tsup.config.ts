@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup';
+import { createBanner } from '../../tools/build-banner.ts';
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -9,4 +10,5 @@ export default defineConfig({
   target: 'node20',
   platform: 'node',
   treeshake: true,
+  banner: { js: createBanner() },
 });
