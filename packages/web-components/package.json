@@ -1,0 +1,59 @@
+{
+  "name": "@forinda/video-sdk-elements",
+  "version": "0.0.0",
+  "description": "Web Components (custom HTML elements) for the Forinda video SDK",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./manual": {
+      "types": "./dist/manual.d.ts",
+      "import": "./dist/manual.js"
+    },
+    "./global": "./dist/index.global.js",
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=20.0.0" },
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "wireit",
+    "typecheck": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "command": "tsup",
+      "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": ["dist/**"],
+      "clean": "if-file-deleted",
+      "dependencies": ["../core:build"]
+    },
+    "typecheck": {
+      "command": "tsc --noEmit",
+      "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": []
+    },
+    "lint": {
+      "command": "oxlint src",
+      "files": ["src/**/*.ts", "../../oxlint.json"],
+      "output": []
+    }
+  },
+  "peerDependencies": {
+    "@forinda/video-sdk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@forinda/video-sdk-core": "workspace:*",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.0",
+    "wireit": "^0.14.9",
+    "oxlint": "^0.11.0"
+  }
+}
