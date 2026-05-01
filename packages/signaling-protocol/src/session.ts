@@ -30,7 +30,7 @@
  */
 
 import { SignalingMessage, type SignalingMessageType } from "./messages.ts";
-import { SignalingAuthError, SignalingValidationError } from "./errors.ts";
+import { PeerNotFoundError, SignalingAuthError, SignalingValidationError } from "./errors.ts";
 import { defineRoom, type Room } from "./rooms.ts";
 import type { PeerId, RoomId, RoomSnapshot, SendHandler, SocketId } from "./types.ts";
 
@@ -92,6 +92,8 @@ export class Session {
   private readonly authenticate: AuthenticateFn | undefined;
   private readonly sockets = new Map<SocketId, SocketRecord>();
   private readonly roomMap = new Map<RoomId, Room>();
+  /** Cross-room peer index: peerId → socket record. Maintained by applyJoin/Leave/Disconnect. */
+  private readonly peerIndex = new Map<PeerId, SocketRecord>();
   private sendHandler: SendHandler | undefined;
 
   constructor(opts: SessionOptions = {}) {
@@ -223,6 +225,7 @@ export class Session {
           this.roomMap.delete(room.id);
         }
       }
+      this.peerIndex.delete(socket.peerId);
     }
 
     this.sockets.delete(socketId);
@@ -255,6 +258,7 @@ export class Session {
     socket.peerId = message.peer;
     socket.roomId = message.room;
     room.add({ peerId: message.peer, socketId: socket.socketId, role: message.role });
+    this.peerIndex.set(message.peer, socket);
 
     // Tell each existing peer about the new joiner.
     for (const existing of existingPeers) {
@@ -288,6 +292,7 @@ export class Session {
     if (room === undefined) return;
     const removed = room.remove(message.peer);
     if (removed === undefined) return;
+    this.peerIndex.delete(message.peer);
 
     // Clear socket's peer/room association if the leaving peer matches.
     if (socket.peerId === message.peer && socket.roomId === message.room) {
@@ -307,20 +312,30 @@ export class Session {
   /**
    * Internal: routes an SDP offer/answer to the target peer. The server
    * does not parse the SDP body — codec selection, simulcast, header
-   * extensions, etc. are negotiated end-to-end. Task 13 adds a
-   * PeerNotFoundError check; until then, sending to a non-existent peer
-   * is a silent no-op.
+   * extensions, etc. are negotiated end-to-end. Throws
+   * {@link PeerNotFoundError} if the target peer is not registered.
    */
   private applySdp(message: Extract<SignalingMessageType, { type: "sdp" }>): void {
+    if (!this.peerIndex.has(message.to)) {
+      throw new PeerNotFoundError(`unknown peer ${message.to}`, {
+        context: { peer: message.to, from: message.from },
+      });
+    }
     this.send(message.to, message);
   }
 
   /**
    * Internal: routes an ICE candidate (or `null` end-of-candidates marker)
    * to the target peer. Same opaque-payload policy as SDP — the candidate
-   * shape varies across browsers and is forwarded untouched.
+   * shape varies across browsers and is forwarded untouched. Throws
+   * {@link PeerNotFoundError} if the target peer is not registered.
    */
   private applyIce(message: Extract<SignalingMessageType, { type: "ice" }>): void {
+    if (!this.peerIndex.has(message.to)) {
+      throw new PeerNotFoundError(`unknown peer ${message.to}`, {
+        context: { peer: message.to, from: message.from },
+      });
+    }
     this.send(message.to, message);
   }
 
