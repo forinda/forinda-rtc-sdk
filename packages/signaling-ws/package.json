@@ -1,0 +1,53 @@
+{
+  "name": "@forinda/video-sdk-signaling-ws",
+  "version": "0.0.0",
+  "description": "Browser WebSocket client transport for Forinda video SDK signaling",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=20.0.0" },
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "wireit",
+    "typecheck": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "command": "tsup",
+      "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": ["dist/**"],
+      "clean": "if-file-deleted"
+    },
+    "typecheck": {
+      "command": "tsc --noEmit",
+      "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": []
+    },
+    "lint": {
+      "command": "oxlint src",
+      "files": ["src/**/*.ts", "../../oxlint.json"],
+      "output": []
+    }
+  },
+  "peerDependencies": {
+    "@forinda/video-sdk-core": "workspace:*",
+    "@forinda/video-sdk-signaling-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.0",
+    "wireit": "^0.14.9",
+    "oxlint": "^0.11.0"
+  }
+}
