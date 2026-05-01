@@ -203,6 +203,32 @@ export class Session {
   }
 
   /**
+   * Notify the engine that a transport-level connection has closed. Cleans
+   * up the socket's room/peer binding and broadcasts `peer-left` to the
+   * remaining members of any room the socket was in. No-op for unknown
+   * sockets, so hosts can call it from a `finally` block without try/catch.
+   */
+  async handleDisconnect(socketId: SocketId): Promise<void> {
+    const socket = this.sockets.get(socketId);
+    if (socket === undefined) return;
+
+    if (socket.roomId !== undefined && socket.peerId !== undefined) {
+      const room = this.roomMap.get(socket.roomId);
+      if (room !== undefined) {
+        room.remove(socket.peerId);
+        for (const remaining of room.peers()) {
+          this.send(remaining.peerId, { type: "peer-left", peer: socket.peerId });
+        }
+        if (room.size === 0) {
+          this.roomMap.delete(room.id);
+        }
+      }
+    }
+
+    this.sockets.delete(socketId);
+  }
+
+  /**
    * Internal: registers the peer in the room and broadcasts `peer-joined`
    * notifications both ways (to existing peers about the joiner, and to the
    * joiner about each existing peer). Authentication wiring is added in
