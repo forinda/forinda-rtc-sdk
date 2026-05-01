@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { defineSession } from "../../src/session.ts";
+import { defineSession } from "@/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });

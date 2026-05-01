@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { defineSession } from "../../src/session.ts";
+import { defineSession } from "@/session.ts";
 
 describe("Session — construction and onSend", () => {
   it("constructs with default options", () => {

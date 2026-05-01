@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { RoomFullError } from "../../src/errors.ts";
-import { defineRoom, Room } from "../../src/rooms.ts";
+import { RoomFullError } from "@/errors.ts";
+import { defineRoom, Room } from "@/rooms.ts";
 
 const peer = (
   peerId: string,

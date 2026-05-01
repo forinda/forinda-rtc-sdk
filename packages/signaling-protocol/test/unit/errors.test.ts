@@ -5,7 +5,7 @@ import {
   SignalingAuthError,
   SignalingProtocolError,
   SignalingValidationError,
-} from "../../src/errors.ts";
+} from "@/errors.ts";
 
 describe("SignalingProtocolError hierarchy", () => {
   it("SignalingProtocolError carries code, cause, context", () => {

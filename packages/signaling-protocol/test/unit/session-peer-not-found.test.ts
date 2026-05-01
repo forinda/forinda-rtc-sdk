@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { PeerNotFoundError } from "../../src/errors.ts";
-import { defineSession } from "../../src/session.ts";
+import { PeerNotFoundError } from "@/errors.ts";
+import { defineSession } from "@/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });

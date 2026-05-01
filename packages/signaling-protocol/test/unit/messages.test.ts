@@ -8,7 +8,7 @@ import {
   Sdp,
   SignalingMessage,
   type SignalingMessageType,
-} from "../../src/messages.ts";
+} from "@/messages.ts";
 
 describe("wire format", () => {
   describe("JoinRoom", () => {

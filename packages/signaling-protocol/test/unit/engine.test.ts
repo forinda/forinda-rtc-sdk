@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { defineSignalingEngine, SignalingEngine } from "../../src/engine.ts";
-import { Session } from "../../src/session.ts";
+import { defineSignalingEngine, SignalingEngine } from "@/engine.ts";
+import { Session } from "@/session.ts";
 
 describe("defineSignalingEngine + SignalingEngine", () => {
   it("factory returns a SignalingEngine", () => {

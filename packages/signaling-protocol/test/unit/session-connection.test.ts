@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defineSession } from "../../src/session.ts";
+import { defineSession } from "@/session.ts";
 
 describe("Session.handleConnection", () => {
   it("registers a socket", async () => {
