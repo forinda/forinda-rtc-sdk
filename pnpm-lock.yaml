@@ -49,6 +49,28 @@ importers:
         specifier: ^0.14.9
         version: 0.14.12
 
+  packages/signaling-broadcast:
+    dependencies:
+      '@forinda/video-sdk-core':
+        specifier: workspace:*
+        version: link:../core
+      '@forinda/video-sdk-signaling-protocol':
+        specifier: workspace:*
+        version: link:../signaling-protocol
+    devDependencies:
+      oxlint:
+        specifier: ^0.11.0
+        version: 0.11.1
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(typescript@6.0.3)
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+      wireit:
+        specifier: ^0.14.9
+        version: 0.14.12
+
   packages/signaling-protocol:
     dependencies:
       zod:
