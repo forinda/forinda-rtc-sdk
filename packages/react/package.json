@@ -1,0 +1,57 @@
+{
+  "name": "@forinda/video-sdk-react",
+  "version": "0.0.0",
+  "description": "React hooks and components for the Forinda video SDK",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": { "node": ">=20.0.0" },
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "build": "wireit",
+    "typecheck": "wireit",
+    "lint": "wireit"
+  },
+  "wireit": {
+    "build": {
+      "command": "tsup",
+      "files": ["src/**/*.ts", "src/**/*.tsx", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": ["dist/**"],
+      "clean": "if-file-deleted",
+      "dependencies": ["../core:build"]
+    },
+    "typecheck": {
+      "command": "tsc --noEmit",
+      "files": ["src/**/*.ts", "src/**/*.tsx", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": []
+    },
+    "lint": {
+      "command": "oxlint src",
+      "files": ["src/**/*.ts", "src/**/*.tsx", "../../oxlint.json"],
+      "output": []
+    }
+  },
+  "peerDependencies": {
+    "@forinda/video-sdk-core": "workspace:*",
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@forinda/video-sdk-core": "workspace:*",
+    "@types/react": "^18.3.12",
+    "react": "^18.3.1",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.0",
+    "wireit": "^0.14.9",
+    "oxlint": "^0.11.0"
+  }
+}
