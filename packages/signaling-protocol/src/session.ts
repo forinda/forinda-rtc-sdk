@@ -188,6 +188,9 @@ export class Session {
       case "leave":
         this.applyLeave(socket, message);
         return;
+      case "sdp":
+        this.applySdp(message);
+        return;
       default:
         // Other message types added in later tasks.
         throw new SignalingValidationError(`unsupported message type ${message.type}`, {
@@ -259,6 +262,17 @@ export class Session {
     if (room.size === 0) {
       this.roomMap.delete(room.id);
     }
+  }
+
+  /**
+   * Internal: routes an SDP offer/answer to the target peer. The server
+   * does not parse the SDP body — codec selection, simulcast, header
+   * extensions, etc. are negotiated end-to-end. Task 13 adds a
+   * PeerNotFoundError check; until then, sending to a non-existent peer
+   * is a silent no-op.
+   */
+  private applySdp(message: Extract<SignalingMessageType, { type: "sdp" }>): void {
+    this.send(message.to, message);
   }
 
   /** Lazy room creation. Capacity propagates from session options. */
