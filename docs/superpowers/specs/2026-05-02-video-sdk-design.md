@@ -445,7 +445,9 @@ The signaling logic is split into a pure protocol engine and per-framework adapt
 #### `@forinda/video-sdk-signaling-protocol` — pure engine
 
 ```ts
-const engine = new SignalingEngine({
+import { defineSignalingEngine } from "@forinda/video-sdk-signaling-protocol";
+
+const engine = defineSignalingEngine({
   authenticate: async (token, room) => true,
   maxPeersPerRoom: 50,
 });
@@ -458,6 +460,8 @@ session.handleConnection(socketId, peerInfo);
 session.handleMessage(socketId, rawMessageString);
 session.handleDisconnect(socketId);
 ```
+
+> **Convention:** Public APIs use declarative `defineX({...})` factories instead of `new ClassInstance(...)`. The underlying classes (e.g. `SignalingEngine`, `Publisher`, `Viewer`) are still exported for type imports and `instanceof` checks; the factory is the recommended call style. Same pattern across `defineSession`, `definePublisher`, `defineViewer`, `defineSignalingServer`, etc.
 
 The engine knows nothing about WebSockets. Pure I/O state machine: in = events, out = "send this message to this peer". The package also owns the wire-format zod schemas (re-exported by `@forinda/video-sdk-core` for browser convenience). This package is environment-neutral — no Node-only or browser-only APIs.
 

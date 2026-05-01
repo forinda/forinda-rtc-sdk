@@ -2323,14 +2323,14 @@ git commit -m "feat(signaling-protocol): throw PeerNotFoundError when SDP/ICE ta
 
 ---
 
-## Task 14: `SignalingEngine` — config + `Session` factory
+## Task 14: `SignalingEngine` + `defineSignalingEngine` factory
 
 **Files:**
 
 - Create: `packages/signaling-protocol/src/engine.ts`
 - Create: `packages/signaling-protocol/test/unit/engine.test.ts`
 
-The Engine is the thin facade that holds policy and produces independent Sessions. Per spec: `engine.openSession()` returns a Session.
+The Engine is the thin facade that holds policy and produces independent Sessions. Per the project convention (see `feedback_factory_apis` memory), the **primary public entry point is the `defineSignalingEngine({...})` factory**; the underlying `SignalingEngine` class is exported alongside for type imports and `instanceof` checks but is not the recommended call style.
 
 - [ ] **Step 1: Write the failing engine test**
 
@@ -2338,18 +2338,23 @@ Create `packages/signaling-protocol/test/unit/engine.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
-import { SignalingEngine } from "../../src/engine.ts";
+import { defineSignalingEngine, SignalingEngine } from "../../src/engine.ts";
 import { Session } from "../../src/session.ts";
 
-describe("SignalingEngine", () => {
+describe("defineSignalingEngine + SignalingEngine", () => {
+  it("factory returns a SignalingEngine", () => {
+    const engine = defineSignalingEngine();
+    expect(engine).toBeInstanceOf(SignalingEngine);
+  });
+
   it("constructs with no options", () => {
-    const engine = new SignalingEngine();
+    const engine = defineSignalingEngine();
     const session = engine.openSession();
     expect(session).toBeInstanceOf(Session);
   });
 
   it("passes maxPeersPerRoom to created sessions", async () => {
-    const engine = new SignalingEngine({ maxPeersPerRoom: 1 });
+    const engine = defineSignalingEngine({ maxPeersPerRoom: 1 });
     const session = engine.openSession();
     session.onSend(vi.fn());
     await session.handleConnection("s1", {});
@@ -2369,7 +2374,7 @@ describe("SignalingEngine", () => {
 
   it("passes authenticate to created sessions", async () => {
     const auth = vi.fn(async () => true);
-    const engine = new SignalingEngine({ authenticate: auth });
+    const engine = defineSignalingEngine({ authenticate: auth });
     const session = engine.openSession();
     session.onSend(vi.fn());
     await session.handleConnection("s1", { token: "xyz" });
@@ -2381,7 +2386,7 @@ describe("SignalingEngine", () => {
   });
 
   it("openSession returns independent sessions", async () => {
-    const engine = new SignalingEngine();
+    const engine = defineSignalingEngine();
     const a = engine.openSession();
     const b = engine.openSession();
     a.onSend(vi.fn());
@@ -2403,14 +2408,34 @@ Expected: FAIL with "Cannot find module '../../src/engine.ts'".
 
 - [ ] **Step 3: Implement `packages/signaling-protocol/src/engine.ts`**
 
-```ts
+````ts
+/**
+ * `SignalingEngine` — config holder + Session factory.
+ *
+ * The engine is the single place to configure protocol-wide policy
+ * (auth, room capacity). It produces independent {@link Session} runtimes
+ * via {@link SignalingEngine.openSession}; sessions do not share state with
+ * each other, which makes per-test isolation trivial.
+ *
+ * Public API: prefer {@link defineSignalingEngine} over `new SignalingEngine(...)`
+ * — declarative factory style is the project convention. The class is
+ * exported for type imports and `instanceof` checks only.
+ */
+
 import { Session, type AuthenticateFn } from "./session.ts";
 
+/** Options passed to {@link defineSignalingEngine} / `new SignalingEngine()`. */
 export interface SignalingEngineOptions {
+  /** Maximum peers per room. Defaults to 50 (see `Session.DEFAULT_MAX_PEERS_PER_ROOM`). */
   maxPeersPerRoom?: number;
+  /** Optional auth check called on every join. Default: allow all. */
   authenticate?: AuthenticateFn;
 }
 
+/**
+ * Engine class. Use {@link defineSignalingEngine} as the recommended
+ * call style; this class is also exported for type imports and `instanceof`.
+ */
 export class SignalingEngine {
   private readonly options: SignalingEngineOptions;
 
@@ -2418,11 +2443,34 @@ export class SignalingEngine {
     this.options = options;
   }
 
+  /**
+   * Create a fresh, isolated {@link Session}. Each session has its own room
+   * map and socket registry — no shared state with sibling sessions, which
+   * makes per-test isolation easy and supports running multiple independent
+   * SDK instances inside one process if needed.
+   */
   openSession(): Session {
     return new Session(this.options);
   }
 }
-```
+
+/**
+ * Declarative factory for {@link SignalingEngine}. The recommended way to
+ * construct an engine — keeps call sites declarative and matches the rest of
+ * the SDK's `defineX({...})` style.
+ *
+ * ```ts
+ * const engine = defineSignalingEngine({
+ *   authenticate: async (token, room) => verifyJwt(token),
+ *   maxPeersPerRoom: 50,
+ * });
+ * const session = engine.openSession();
+ * ```
+ */
+export function defineSignalingEngine(opts: SignalingEngineOptions = {}): SignalingEngine {
+  return new SignalingEngine(opts);
+}
+````
 
 - [ ] **Step 4: Run tests to verify pass**
 
@@ -2446,7 +2494,7 @@ Expected: exit 0.
 
 ```bash
 git add packages/signaling-protocol/
-git commit -m "feat(signaling-protocol): add SignalingEngine factory wrapping Session"
+git commit -m "feat(signaling-protocol): add defineSignalingEngine factory + SignalingEngine class"
 ```
 
 ---
