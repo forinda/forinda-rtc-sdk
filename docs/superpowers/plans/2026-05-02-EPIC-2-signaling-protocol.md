@@ -21,6 +21,18 @@
 - Public surface in `src/index.ts` matches spec Section 7 and is consumed cleanly from a smoke test.
 - Repo is tagged `v0.0.0-epic-2`.
 
+**Documentation convention (applies to every source file in this epic):**
+
+Every `src/*.ts` file gets:
+
+1. A **file-header JSDoc block** at the top explaining what the file owns, why it exists separately from siblings, and any non-obvious invariants.
+2. A **JSDoc comment on every exported symbol** (class, function, type, const). Document the _why_ and the _contract_, not the _what_ — names already say what.
+3. A **JSDoc comment on every public method** of exported classes — capture preconditions, return-value semantics, and error conditions.
+
+This is a deliberate departure from the default "no comments" stance because the codebase will be read by future agents and contributors who lack the conversation history. Inline docs anchor that future reading. JSDoc-style is preferred (renders in IDE tooltips). Internal helpers used in only one file may skip the JSDoc.
+
+**Tooling note:** `tsconfig.base.json` enables `allowImportingTsExtensions: true` (TS 6 requirement when source files import each other with explicit `.ts` extensions). All package tsconfigs already set `noEmit: true`, which satisfies the flag's compatibility constraint. tsup ignores the extension at build time and emits `.js` references in dist.
+
 **Out of scope (deferred to later epics):**
 
 - Authentication beyond pluggable callback (JWT verification, OAuth) → EPIC-4 server adapters wire any auth they want.
