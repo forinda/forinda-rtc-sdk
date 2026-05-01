@@ -831,6 +831,7 @@ Every package has these five files. Substitute `<NAME>` (without scope) and `<DE
 
 ```ts
 import { defineConfig } from 'tsup';
+import { createBanner } from '../../tools/build-banner.ts';
 
 export default defineConfig({
   entry: ['src/index.ts'],
@@ -840,8 +841,11 @@ export default defineConfig({
   clean: true,
   target: 'es2022',
   treeshake: true,
+  banner: { js: createBanner() },
 });
 ```
+
+> Note: every package's `tsup.config.ts` includes `banner: { js: createBanner() }` (or a shebang-prefixed variant for CLIs). The banner stamps `(c) <year> Felix Orinda | built <date>` at the top of every emitted `dist/*.js`. See `tools/README.md` for utility details. Per-package overrides below preserve the same banner line.
 
 `packages/<NAME>/README.md`:
 
