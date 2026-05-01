@@ -26,6 +26,7 @@
     "declarationMap": true,
     "sourceMap": true,
 
-    "newLine": "lf"
+    "newLine": "lf",
+    "ignoreDeprecations": "6.0"
   }
 }
