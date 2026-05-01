@@ -1,0 +1,39 @@
+# deps
+node_modules/
+
+# build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# logs
+npm-debug.log*
+pnpm-debug.log*
+*.log
+
+# coverage
+coverage/
+.nyc_output/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+
+# env
+.env
+.env.local
+.env.*.local
+
+# changeset publish artifact
+.changeset/*.tmp
+
+# wireit cache
+.wireit/
+
+# playwright
+playwright-report/
+test-results/
