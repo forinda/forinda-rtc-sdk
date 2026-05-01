@@ -15,35 +15,51 @@
     },
     "./package.json": "./package.json"
   },
-  "engines": { "node": ">=20.0.0" },
   "scripts": {
     "build": "wireit",
     "typecheck": "wireit",
     "lint": "wireit"
   },
+  "devDependencies": {
+    "oxlint": "^0.11.0",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.0",
+    "wireit": "^0.14.9"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "wireit": {
     "build": {
       "command": "tsup",
-      "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
-      "output": ["dist/**"],
+      "files": [
+        "src/**/*.ts",
+        "tsup.config.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
+      ],
+      "output": [
+        "dist/**"
+      ],
       "clean": "if-file-deleted",
       "dependencies": []
     },
     "typecheck": {
       "command": "tsc --noEmit",
-      "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "files": [
+        "src/**/*.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
+      ],
       "output": []
     },
     "lint": {
       "command": "oxlint src",
-      "files": ["src/**/*.ts", "../../oxlint.json"],
+      "files": [
+        "src/**/*.ts",
+        "../../oxlint.json"
+      ],
       "output": []
     }
-  },
-  "devDependencies": {
-    "tsup": "^8.3.0",
-    "typescript": "^6.0.0",
-    "wireit": "^0.14.9",
-    "oxlint": "^0.11.0"
   }
 }

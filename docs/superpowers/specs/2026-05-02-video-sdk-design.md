@@ -77,35 +77,49 @@ forinda-video-sdk/
 
 ## 3. Tooling
 
-| Concern              | Choice                                          | Notes |
-|----------------------|-------------------------------------------------|-------|
-| Package manager      | pnpm 9+                                         | pinned via `packageManager` in root `package.json` |
-| Task runner          | wireit                                          | per-package scripts with file-hash caching |
-| Language             | TypeScript 6.0+, `strict: true`                 | |
-| Module format        | ESM-only output (exception: `signaling-adapter-express` ships dual ESM + CJS to support CJS-first Express consumers) | `"type": "module"`, `"sideEffects": false` |
-| Library build        | tsup                                            | esbuild-fast, dual `.d.ts` via `--dts` |
-| Server build         | tsup `--target node20 --format esm`             | |
-| Web Components build | tsup with `esm` + `iife` outputs                | IIFE for `<script>` drop-in |
-| Test                 | Vitest + jsdom (unit), `@vitest/browser` w/ Playwright Chromium (integration), Playwright Test (e2e) | |
-| Lint                 | oxlint                                          | |
-| Format               | oxfmt (fallback to Prettier if oxfmt not production-ready when CI is wired) | decision deferred to wiring day |
-| Versioning           | Changesets, independent semver per package      | |
-| Node minimum         | 20.x LTS, set in `engines`                      | |
-| CI                   | GitHub Actions                                  | |
-| Docs site            | deferred to slice 2                             | |
+| Concern              | Choice                                                                                                               | Notes                                              |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Package manager      | pnpm 9+                                                                                                              | pinned via `packageManager` in root `package.json` |
+| Task runner          | wireit                                                                                                               | per-package scripts with file-hash caching         |
+| Language             | TypeScript 6.0+, `strict: true`                                                                                      |                                                    |
+| Module format        | ESM-only output (exception: `signaling-adapter-express` ships dual ESM + CJS to support CJS-first Express consumers) | `"type": "module"`, `"sideEffects": false`         |
+| Library build        | tsup                                                                                                                 | esbuild-fast, dual `.d.ts` via `--dts`             |
+| Server build         | tsup `--target node20 --format esm`                                                                                  |                                                    |
+| Web Components build | tsup with `esm` + `iife` outputs                                                                                     | IIFE for `<script>` drop-in                        |
+| Test                 | Vitest + jsdom (unit), `@vitest/browser` w/ Playwright Chromium (integration), Playwright Test (e2e)                 |                                                    |
+| Lint                 | oxlint                                                                                                               |                                                    |
+| Format               | oxfmt (fallback to Prettier if oxfmt not production-ready when CI is wired)                                          | decision deferred to wiring day                    |
+| Versioning           | Changesets, independent semver per package                                                                           |                                                    |
+| Node minimum         | 20.x LTS, set in `engines`                                                                                           |                                                    |
+| CI                   | GitHub Actions                                                                                                       |                                                    |
+| Docs site            | deferred to slice 2                                                                                                  |                                                    |
 
 ### Wireit per-package script convention
 
 ```jsonc
 {
-  "scripts": { "build": "wireit", "typecheck": "wireit", "test": "wireit", "test:integration": "wireit", "lint": "wireit" },
+  "scripts": {
+    "build": "wireit",
+    "typecheck": "wireit",
+    "test": "wireit",
+    "test:integration": "wireit",
+    "lint": "wireit",
+  },
   "wireit": {
-    "build":            { "command": "tsup", "files": ["src/**", "tsup.config.ts"], "output": ["dist/**"], "dependencies": ["^build"] },
-    "typecheck":        { "command": "tsc --noEmit", "files": ["src/**", "tsconfig.json"], "output": [] },
-    "test":             { "command": "vitest run --project unit", "dependencies": ["build"] },
-    "test:integration": { "command": "vitest run --project integration", "dependencies": ["build"] },
-    "lint":             { "command": "oxlint src && oxfmt --check src", "files": ["src/**"], "output": [] }
-  }
+    "build": {
+      "command": "tsup",
+      "files": ["src/**", "tsup.config.ts"],
+      "output": ["dist/**"],
+      "dependencies": ["^build"],
+    },
+    "typecheck": { "command": "tsc --noEmit", "files": ["src/**", "tsconfig.json"], "output": [] },
+    "test": { "command": "vitest run --project unit", "dependencies": ["build"] },
+    "test:integration": {
+      "command": "vitest run --project integration",
+      "dependencies": ["build"],
+    },
+    "lint": { "command": "oxlint src && oxfmt --check src", "files": ["src/**"], "output": [] },
+  },
 }
 ```
 
@@ -198,20 +212,37 @@ test/
 ### Public surface (`src/index.ts`)
 
 ```ts
-export { Publisher } from './publisher/publisher.js';
-export { Viewer } from './viewer/viewer.js';
-export { getUserMedia, enumerateDevices, watchDevices } from './media/index.js';
-export type { SignalingTransport, SignalingMessage, TransportState } from './signaling/transport.js';
-export type { ConnectionStats } from './stats/types.js';
-export type { ConnectionState, IceServerConfig, RetryConfig } from './peer/types.js';
+export { Publisher } from "./publisher/publisher.js";
+export { Viewer } from "./viewer/viewer.js";
+export { getUserMedia, enumerateDevices, watchDevices } from "./media/index.js";
+export type {
+  SignalingTransport,
+  SignalingMessage,
+  TransportState,
+} from "./signaling/transport.js";
+export type { ConnectionStats } from "./stats/types.js";
+export type { ConnectionState, IceServerConfig, RetryConfig } from "./peer/types.js";
 export {
-  SdkError, SignalingError, SignalingConnectError, SignalingClosedError,
-  SignalingProtocolError, SignalingAuthError,
-  PermissionDeniedError, DeviceNotFoundError, DeviceInUseError, OverconstrainedError,
-  PeerConnectionError, IceFailedError, DtlsFailedError, NegotiationError,
-  RoomFullError, PeerNotFoundError, PeerLeftError, ConfigurationError,
-} from './errors/errors.js';
-export { setLogger, type Logger } from './logger/logger.js';
+  SdkError,
+  SignalingError,
+  SignalingConnectError,
+  SignalingClosedError,
+  SignalingProtocolError,
+  SignalingAuthError,
+  PermissionDeniedError,
+  DeviceNotFoundError,
+  DeviceInUseError,
+  OverconstrainedError,
+  PeerConnectionError,
+  IceFailedError,
+  DtlsFailedError,
+  NegotiationError,
+  RoomFullError,
+  PeerNotFoundError,
+  PeerLeftError,
+  ConfigurationError,
+} from "./errors/errors.js";
+export { setLogger, type Logger } from "./logger/logger.js";
 ```
 
 ---
@@ -222,27 +253,29 @@ export { setLogger, type Logger } from './logger/logger.js';
 
 ```ts
 const publisher = new Publisher({
-  signaling,                              // SignalingTransport
-  room: 'demo-room',
-  peerId: 'alice',                        // optional, auto-generated UUID if omitted
-  stream,                                 // MediaStream
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-  stats: { interval: 1000 },              // optional; omit to disable auto-poll
-  retry: { /* see Section 9 */ },
+  signaling, // SignalingTransport
+  room: "demo-room",
+  peerId: "alice", // optional, auto-generated UUID if omitted
+  stream, // MediaStream
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+  stats: { interval: 1000 }, // optional; omit to disable auto-poll
+  retry: {
+    /* see Section 9 */
+  },
 });
 
 await publisher.start();
-publisher.on('state',       (s)     => {});
-publisher.on('viewer',      (v)     => {});
-publisher.on('viewer-left', (v)     => {});
-publisher.on('stats',       (stats) => {});  // ConnectionStats[]
-publisher.on('retry',       (info)  => {});
-publisher.on('error',       (err)   => {});
+publisher.on("state", (s) => {});
+publisher.on("viewer", (v) => {});
+publisher.on("viewer-left", (v) => {});
+publisher.on("stats", (stats) => {}); // ConnectionStats[]
+publisher.on("retry", (info) => {});
+publisher.on("error", (err) => {});
 
 await publisher.replaceVideoTrack(track);
 await publisher.replaceAudioTrack(track);
-await publisher.getStats();               // ConnectionStats[] — one per viewer
-publisher.peers();                        // readonly PeerId[]
+await publisher.getStats(); // ConnectionStats[] — one per viewer
+publisher.peers(); // readonly PeerId[]
 await publisher.stop();
 ```
 
@@ -253,21 +286,25 @@ Properties: `state: ConnectionState`, `peerId: string`, `room: string`.
 ```ts
 const viewer = new Viewer({
   signaling,
-  room: 'demo-room',
-  peerId: 'bob',                          // optional
-  publisherId: 'alice',
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+  room: "demo-room",
+  peerId: "bob", // optional
+  publisherId: "alice",
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   stats: { interval: 1000 },
-  retry: { /* see Section 9 */ },
+  retry: {
+    /* see Section 9 */
+  },
 });
 
 await viewer.start();
-viewer.on('track', ({ stream }) => { videoEl.srcObject = stream; });
-viewer.on('state', (s)     => {});
-viewer.on('stats', (stats) => {});         // single ConnectionStats object
-viewer.on('retry', (info)  => {});
-viewer.on('error', (err)   => {});
-await viewer.getStats();                  // ConnectionStats (single)
+viewer.on("track", ({ stream }) => {
+  videoEl.srcObject = stream;
+});
+viewer.on("state", (s) => {});
+viewer.on("stats", (stats) => {}); // single ConnectionStats object
+viewer.on("retry", (info) => {});
+viewer.on("error", (err) => {});
+await viewer.getStats(); // ConnectionStats (single)
 await viewer.stop();
 ```
 
@@ -281,7 +318,9 @@ const stream = await getUserMedia({ video: true, audio: true });
 
 const { cameras, microphones, speakers } = await enumerateDevices();
 
-const unwatch = watchDevices((devices) => { /* re-render device picker */ });
+const unwatch = watchDevices((devices) => {
+  /* re-render device picker */
+});
 unwatch();
 ```
 
@@ -296,7 +335,7 @@ interface ConnectionStats {
   inbound: {
     bitrateBps: number;
     packetsLost: number;
-    packetLossRatio: number;            // 0..1
+    packetLossRatio: number; // 0..1
     jitterMs: number;
     framesPerSecond: number | null;
     frameWidth: number | null;
@@ -307,7 +346,7 @@ interface ConnectionStats {
     framesPerSecond: number | null;
     frameWidth: number | null;
     frameHeight: number | null;
-    qualityLimitationReason: 'none' | 'cpu' | 'bandwidth' | 'other';
+    qualityLimitationReason: "none" | "cpu" | "bandwidth" | "other";
   };
   rttMs: number | null;
 }
@@ -318,7 +357,7 @@ Asymmetric: Publisher returns `ConnectionStats[]` (one per viewer); Viewer retur
 ### `ConnectionState`
 
 ```ts
-type ConnectionState = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'failed' | 'closed';
+type ConnectionState = "idle" | "connecting" | "connected" | "reconnecting" | "failed" | "closed";
 ```
 
 ---
@@ -332,11 +371,11 @@ export interface SignalingTransport {
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   send(message: SignalingMessage): Promise<void>;
-  on(event: 'message', handler: (msg: SignalingMessage) => void): () => void;
-  on(event: 'state',   handler: (state: TransportState) => void): () => void;
+  on(event: "message", handler: (msg: SignalingMessage) => void): () => void;
+  on(event: "state", handler: (state: TransportState) => void): () => void;
   readonly state: TransportState;
 }
-export type TransportState = 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'closed';
+export type TransportState = "idle" | "connecting" | "connected" | "reconnecting" | "closed";
 ```
 
 ### Wire format (zod-validated)
@@ -347,24 +386,50 @@ Defined in **`@forinda/video-sdk-signaling-protocol`** (environment-neutral). Bo
 const PeerId = z.string().min(1).max(128);
 const RoomId = z.string().min(1).max(128);
 
-const JoinRoom   = z.object({ type: z.literal('join'),    room: RoomId, peer: PeerId, role: z.enum(['publisher', 'viewer']) });
-const LeaveRoom  = z.object({ type: z.literal('leave'),   room: RoomId, peer: PeerId });
-const PeerJoined = z.object({ type: z.literal('peer-joined'), peer: PeerId, role: z.enum(['publisher', 'viewer']) });
-const PeerLeft   = z.object({ type: z.literal('peer-left'),   peer: PeerId });
-const Sdp        = z.object({ type: z.literal('sdp'),     from: PeerId, to: PeerId, sdp: z.object({ type: z.enum(['offer','answer']), sdp: z.string() }) });
-const IceCand    = z.object({ type: z.literal('ice'),     from: PeerId, to: PeerId, candidate: z.unknown() });
+const JoinRoom = z.object({
+  type: z.literal("join"),
+  room: RoomId,
+  peer: PeerId,
+  role: z.enum(["publisher", "viewer"]),
+});
+const LeaveRoom = z.object({ type: z.literal("leave"), room: RoomId, peer: PeerId });
+const PeerJoined = z.object({
+  type: z.literal("peer-joined"),
+  peer: PeerId,
+  role: z.enum(["publisher", "viewer"]),
+});
+const PeerLeft = z.object({ type: z.literal("peer-left"), peer: PeerId });
+const Sdp = z.object({
+  type: z.literal("sdp"),
+  from: PeerId,
+  to: PeerId,
+  sdp: z.object({ type: z.enum(["offer", "answer"]), sdp: z.string() }),
+});
+const IceCand = z.object({
+  type: z.literal("ice"),
+  from: PeerId,
+  to: PeerId,
+  candidate: z.unknown(),
+});
 
-export const SignalingMessage = z.discriminatedUnion('type', [JoinRoom, LeaveRoom, PeerJoined, PeerLeft, Sdp, IceCand]);
+export const SignalingMessage = z.discriminatedUnion("type", [
+  JoinRoom,
+  LeaveRoom,
+  PeerJoined,
+  PeerLeft,
+  Sdp,
+  IceCand,
+]);
 ```
 
 Every inbound message is `SignalingMessage.parse(raw)`. Failures throw `SignalingProtocolError`.
 
 ### Client-side adapters
 
-| Package                                       | Transport | Use case |
-|-----------------------------------------------|-----------|----------|
-| `@forinda/video-sdk-signaling-ws`             | Browser WebSocket | production |
-| `@forinda/video-sdk-signaling-broadcast`      | `BroadcastChannel` | same-tab demos, tests |
+| Package                                  | Transport          | Use case              |
+| ---------------------------------------- | ------------------ | --------------------- |
+| `@forinda/video-sdk-signaling-ws`        | Browser WebSocket  | production            |
+| `@forinda/video-sdk-signaling-broadcast` | `BroadcastChannel` | same-tab demos, tests |
 
 WS adapter behaviors:
 
@@ -386,7 +451,9 @@ const engine = new SignalingEngine({
 });
 
 const session = engine.openSession();
-session.onSend((peerId, message) => { /* user delivers via their socket */ });
+session.onSend((peerId, message) => {
+  /* user delivers via their socket */
+});
 session.handleConnection(socketId, peerInfo);
 session.handleMessage(socketId, rawMessageString);
 session.handleDisconnect(socketId);
@@ -396,29 +463,31 @@ The engine knows nothing about WebSockets. Pure I/O state machine: in = events, 
 
 #### Adapters at launch
 
-| Package                                            | Backend       | Notes |
-|----------------------------------------------------|---------------|-------|
-| `@forinda/video-sdk-signaling-adapter-ws`          | Node `ws`     | also powers the standalone CLI |
-| `@forinda/video-sdk-signaling-adapter-express`     | Express       | most common Node framework |
-| `@forinda/video-sdk-signaling-adapter-hono`        | Hono          | edge-runtime portable (Node + Bun + Cloudflare-friendly) |
-| `@forinda/video-sdk-signaling-adapter-bun`         | Bun native WS | first-class Bun support |
+| Package                                        | Backend       | Notes                                                    |
+| ---------------------------------------------- | ------------- | -------------------------------------------------------- |
+| `@forinda/video-sdk-signaling-adapter-ws`      | Node `ws`     | also powers the standalone CLI                           |
+| `@forinda/video-sdk-signaling-adapter-express` | Express       | most common Node framework                               |
+| `@forinda/video-sdk-signaling-adapter-hono`    | Hono          | edge-runtime portable (Node + Bun + Cloudflare-friendly) |
+| `@forinda/video-sdk-signaling-adapter-bun`     | Bun native WS | first-class Bun support                                  |
 
 Each adapter ~80 LOC once the engine exists. Community-contributable later: Fastify, NestJS, Koa, Deno, Cloudflare Workers (Durable Objects).
 
 Example (Express):
 
 ```ts
-import express from 'express';
-import { WebSocketServer } from 'ws';
-import { createExpressSignaling } from '@forinda/video-sdk-signaling-adapter-express';
+import express from "express";
+import { WebSocketServer } from "ws";
+import { createExpressSignaling } from "@forinda/video-sdk-signaling-adapter-express";
 
 const app = express();
 const server = app.listen(3000);
 const wss = new WebSocketServer({ noServer: true });
 
 createExpressSignaling({
-  app, server, wss,
-  path: '/signaling',
+  app,
+  server,
+  wss,
+  path: "/signaling",
   authenticate: async (token, room) => verifyJwt(token),
 });
 ```
@@ -447,13 +516,13 @@ React 18+ only — `useSyncExternalStore` is the foundation.
 ### Public surface
 
 ```ts
-export { VideoSdkProvider, useVideoSdkConfig } from './provider.js';
-export { useUserMedia } from './use-user-media.js';
-export { useDevices } from './use-devices.js';
-export { usePublisher } from './use-publisher.js';
-export { useViewer } from './use-viewer.js';
-export { useConnectionStats } from './use-connection-stats.js';
-export { VideoView } from './video-view.js';
+export { VideoSdkProvider, useVideoSdkConfig } from "./provider.js";
+export { useUserMedia } from "./use-user-media.js";
+export { useDevices } from "./use-devices.js";
+export { usePublisher } from "./use-publisher.js";
+export { useViewer } from "./use-viewer.js";
+export { useConnectionStats } from "./use-connection-stats.js";
+export { VideoView } from "./video-view.js";
 ```
 
 ### `VideoSdkProvider` (optional)
@@ -462,8 +531,8 @@ Supplies default `signaling` factory and `iceServers`. Hooks accept overrides.
 
 ```tsx
 <VideoSdkProvider
-  signaling={() => new WebSocketSignaling({ url: 'wss://signal.example.com' })}
-  iceServers={[{ urls: 'stun:stun.l.google.com:19302' }]}
+  signaling={() => new WebSocketSignaling({ url: "wss://signal.example.com" })}
+  iceServers={[{ urls: "stun:stun.l.google.com:19302" }]}
 >
   <App />
 </VideoSdkProvider>
@@ -478,12 +547,23 @@ const { stream, error, state, refresh, stop } = useUserMedia({ video: true, audi
 
 const { cameras, microphones, speakers, refresh } = useDevices();
 
-const { publisher, state, viewers, stats, error,
-        start, stop, replaceVideoTrack, replaceAudioTrack } =
-  usePublisher({ room: 'demo-room', stream, autoStart: true, stats: { interval: 1000 } });
+const {
+  publisher,
+  state,
+  viewers,
+  stats,
+  error,
+  start,
+  stop,
+  replaceVideoTrack,
+  replaceAudioTrack,
+} = usePublisher({ room: "demo-room", stream, autoStart: true, stats: { interval: 1000 } });
 
-const { viewer, state, stream, stats, error, start, stop } =
-  useViewer({ room: 'demo-room', publisherId: 'alice', autoStart: true });
+const { viewer, state, stream, stats, error, start, stop } = useViewer({
+  room: "demo-room",
+  publisherId: "alice",
+  autoStart: true,
+});
 
 const stats = useConnectionStats(publisherOrViewer, { interval: 500 });
 ```
@@ -519,25 +599,25 @@ No Lit, no Stencil. Vanilla `HTMLElement`. ~250 LOC target.
 
 ### Elements
 
-| Tag                       | Wraps                                  | Required attrs                      | Optional attrs                                                                                                  | `CustomEvent`s                                  |
-|---------------------------|----------------------------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| `<video-publisher>`       | `Publisher` + `getUserMedia` + `<video>` preview | `signaling-url`, `room`     | `peer-id`, `ice-servers` (JSON), `audio` (bool), `video` (bool), `autostart`, `stats-interval`, `mirror`         | `state`, `viewer`, `viewer-left`, `stats`, `error`, `ready` |
-| `<video-viewer>`          | `Viewer` + `<video>`                   | `signaling-url`, `room`, `publisher-id` | `peer-id`, `ice-servers`, `autostart`, `stats-interval`, `muted`, `controls`                            | `state`, `track`, `stats`, `error`               |
-| `<video-device-picker>`   | `enumerateDevices` + `watchDevices`    | none                                | `kind` (`camera`\|`microphone`\|`speaker`), `value`                                                              | `change`                                         |
+| Tag                     | Wraps                                            | Required attrs                          | Optional attrs                                                                                           | `CustomEvent`s                                              |
+| ----------------------- | ------------------------------------------------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `<video-publisher>`     | `Publisher` + `getUserMedia` + `<video>` preview | `signaling-url`, `room`                 | `peer-id`, `ice-servers` (JSON), `audio` (bool), `video` (bool), `autostart`, `stats-interval`, `mirror` | `state`, `viewer`, `viewer-left`, `stats`, `error`, `ready` |
+| `<video-viewer>`        | `Viewer` + `<video>`                             | `signaling-url`, `room`, `publisher-id` | `peer-id`, `ice-servers`, `autostart`, `stats-interval`, `muted`, `controls`                             | `state`, `track`, `stats`, `error`                          |
+| `<video-device-picker>` | `enumerateDevices` + `watchDevices`              | none                                    | `kind` (`camera`\|`microphone`\|`speaker`), `value`                                                      | `change`                                                    |
 
 ### Build outputs
 
-| File                  | Format | Use case                                  |
-|-----------------------|--------|-------------------------------------------|
-| `dist/index.js`       | ESM    | bundlers, module scripts                  |
-| `dist/index.global.js`| IIFE   | `<script src="...">` legacy CDN drop-in   |
-| `dist/index.d.ts`     | TS     | editor autocomplete                       |
+| File                   | Format | Use case                                |
+| ---------------------- | ------ | --------------------------------------- |
+| `dist/index.js`        | ESM    | bundlers, module scripts                |
+| `dist/index.global.js` | IIFE   | `<script src="...">` legacy CDN drop-in |
+| `dist/index.d.ts`      | TS     | editor autocomplete                     |
 
 Both bundles auto-register elements on load. Manual control:
 
 ```ts
-import { defineElements } from '@forinda/video-sdk-elements/manual';
-defineElements({ prefix: 'forinda-' });   // <forinda-video-publisher>
+import { defineElements } from "@forinda/video-sdk-elements/manual";
+defineElements({ prefix: "forinda-" }); // <forinda-video-publisher>
 ```
 
 ### Custom Elements Manifest
@@ -583,7 +663,7 @@ Each:
 
 ```ts
 class SdkError extends Error {
-  readonly code: string;             // stable: 'permission_denied'
+  readonly code: string; // stable: 'permission_denied'
   readonly cause?: unknown;
   readonly retryable: boolean;
   readonly context?: Record<string, unknown>;
@@ -594,12 +674,12 @@ class SdkError extends Error {
 
 ### Surface rules
 
-| Site                                          | Mechanism                          |
-|-----------------------------------------------|------------------------------------|
-| `getUserMedia`, `enumerateDevices`            | thrown                             |
-| `publisher.start()`, `viewer.start()`         | thrown if initial connect fails; `'error'` event after start resolves |
-| `replaceVideoTrack`, `replaceAudioTrack`      | thrown                             |
-| Background failures (post-`connected`)        | `'error'` event, never thrown      |
+| Site                                     | Mechanism                                                             |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| `getUserMedia`, `enumerateDevices`       | thrown                                                                |
+| `publisher.start()`, `viewer.start()`    | thrown if initial connect fails; `'error'` event after start resolves |
+| `replaceVideoTrack`, `replaceAudioTrack` | thrown                                                                |
+| Background failures (post-`connected`)   | `'error'` event, never thrown                                         |
 
 Promise-returning methods reject for synchronous failures during the call; everything later is an event.
 
@@ -631,12 +711,12 @@ Default = noop. Every error log line carries `peerId`, `room`, `attempt`, `iceSt
 
 ### Layered recovery
 
-| Layer                | Failure                       | Recovery                                                                                       |
-|----------------------|-------------------------------|------------------------------------------------------------------------------------------------|
-| Signaling transport  | socket drops                  | exponential backoff 1s → 30s, ±25% jitter; outbound buffered; opt-out: `{ reconnect: false }` |
-| ICE                  | network change, NAT rebind    | `restartIce()` after `iceconnectionstate === 'disconnected'` for >5s; hard fail after 3 restarts in 60s → `IceFailedError`, state → `failed` |
-| Renegotiation        | track replaced, codec change  | perfect-negotiation handles offer/answer collisions; failures bubble as `NegotiationError`     |
-| Session-level retry  | any of the above terminating  | see auto-retry below                                                                          |
+| Layer               | Failure                      | Recovery                                                                                                                                     |
+| ------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Signaling transport | socket drops                 | exponential backoff 1s → 30s, ±25% jitter; outbound buffered; opt-out: `{ reconnect: false }`                                                |
+| ICE                 | network change, NAT rebind   | `restartIce()` after `iceconnectionstate === 'disconnected'` for >5s; hard fail after 3 restarts in 60s → `IceFailedError`, state → `failed` |
+| Renegotiation       | track replaced, codec change | perfect-negotiation handles offer/answer collisions; failures bubble as `NegotiationError`                                                   |
+| Session-level retry | any of the above terminating | see auto-retry below                                                                                                                         |
 
 ### Consumer-visible state machine
 
@@ -686,7 +766,7 @@ Behaviour:
 ### `'retry'` event
 
 ```ts
-publisher.on('retry', ({ attempt, nextDelayMs, lastError }) => {
+publisher.on("retry", ({ attempt, nextDelayMs, lastError }) => {
   console.log(`retry ${attempt}/5 in ${nextDelayMs}ms; lastError: ${lastError.code}`);
 });
 ```
@@ -697,11 +777,11 @@ publisher.on('retry', ({ attempt, nextDelayMs, lastError }) => {
 
 ### Three layers
 
-| Layer        | Tool                              | Where                                  | What                                                                 |
-|--------------|-----------------------------------|----------------------------------------|----------------------------------------------------------------------|
-| Unit         | Vitest + jsdom                    | every package                          | pure logic: SDP helpers, stats normalization, message validation, state machine, error mapping, backoff math |
-| Integration  | Vitest + `@vitest/browser` (Playwright Chromium) | `core`, `react`, `web-components` | real `RTCPeerConnection`, real `getUserMedia` (`--use-fake-device-for-media-stream`), real DOM |
-| End-to-end   | Playwright Test                   | `e2e/`, in CI only                     | full flow: dev server up, two browsers, publisher in tab A, viewer in tab B, assert remote video frames render |
+| Layer       | Tool                                             | Where                             | What                                                                                                           |
+| ----------- | ------------------------------------------------ | --------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Unit        | Vitest + jsdom                                   | every package                     | pure logic: SDP helpers, stats normalization, message validation, state machine, error mapping, backoff math   |
+| Integration | Vitest + `@vitest/browser` (Playwright Chromium) | `core`, `react`, `web-components` | real `RTCPeerConnection`, real `getUserMedia` (`--use-fake-device-for-media-stream`), real DOM                 |
+| End-to-end  | Playwright Test                                  | `e2e/`, in CI only                | full flow: dev server up, two browsers, publisher in tab A, viewer in tab B, assert remote video frames render |
 
 ### Mocks vs. real
 
@@ -715,13 +795,13 @@ publisher.on('retry', ({ attempt, nextDelayMs, lastError }) => {
 
 ### Coverage targets
 
-| Area                                 | Target line coverage |
-|--------------------------------------|----------------------|
-| `core/`                              | ≥85% (100% on `errors/`, state machine, retry)                       |
-| `signaling-protocol/`                | ≥90% (wire-format schemas + engine — both contracts)                 |
-| Adapters                             | ≥75%                 |
-| `react/`, `web-components/`          | ≥75%                 |
-| `examples/`, `apps/`                 | not gated            |
+| Area                        | Target line coverage                                 |
+| --------------------------- | ---------------------------------------------------- |
+| `core/`                     | ≥85% (100% on `errors/`, state machine, retry)       |
+| `signaling-protocol/`       | ≥90% (wire-format schemas + engine — both contracts) |
+| Adapters                    | ≥75%                                                 |
+| `react/`, `web-components/` | ≥75%                                                 |
+| `examples/`, `apps/`        | not gated                                            |
 
 V8 provider via Vitest. Reports as CI artifacts; not enforced via gating service in v0.
 
@@ -770,11 +850,11 @@ WebRTC tests are timing-sensitive.
 
 ## 13. Examples
 
-| Example                                     | Demonstrates                                           |
-|---------------------------------------------|--------------------------------------------------------|
-| `examples/vanilla-publisher-viewer/`        | Plain TS + Vite, two tabs, demonstrates raw API        |
-| `examples/react-publisher-viewer/`          | React + Vite, hooks + `<VideoView>`                    |
-| `examples/web-components-publisher-viewer/` | Plain HTML, `<video-publisher>` + `<video-viewer>`     |
+| Example                                     | Demonstrates                                       |
+| ------------------------------------------- | -------------------------------------------------- |
+| `examples/vanilla-publisher-viewer/`        | Plain TS + Vite, two tabs, demonstrates raw API    |
+| `examples/react-publisher-viewer/`          | React + Vite, hooks + `<VideoView>`                |
+| `examples/web-components-publisher-viewer/` | Plain HTML, `<video-publisher>` + `<video-viewer>` |
 
 Each example boots `apps/dev-signaling-server` via a workspace dev script.
 
@@ -818,17 +898,17 @@ EPIC-1 Foundation ──► EPIC-2 Protocol ──► EPIC-3 Core ──► EPIC
 
 ### Epic catalog
 
-| ID     | Epic                                 | Outcome                                                                                                          | Depends on        |
-|--------|--------------------------------------|------------------------------------------------------------------------------------------------------------------|-------------------|
-| EPIC-1 | Monorepo Foundation                  | pnpm workspace, wireit pipelines, tsconfig.base, oxlint + oxfmt (with Prettier fallback), Changesets, MIT LICENSE, root README, package scaffolding for all packages, CI skeleton | none              |
-| EPIC-2 | `signaling-protocol` (engine + wire format) | Wire-format zod schemas (single source of truth), pure `SignalingEngine` class, room/peer state model, unit-tested in isolation | EPIC-1            |
-| EPIC-3 | `@forinda/video-sdk-core`            | All modules under Section 5 implemented + unit-tested. Public surface frozen. State machine + retry policy implemented. Imports wire-format types from EPIC-2. | EPIC-2            |
-| EPIC-4 | Signaling adapters (client + server) | `signaling-ws` (client), `signaling-broadcast` (client), `signaling-adapter-ws/express/hono/bun` (server), `signaling-server` CLI | EPIC-2, EPIC-3    |
-| EPIC-5 | React adapter                        | All 7 exports from Section 8, SSR-safe, StrictMode-safe, hooks tested in jsdom + integration tests with real PC | EPIC-3, EPIC-4    |
-| EPIC-6 | Web Components adapter               | All 3 elements from Section 9, ESM + IIFE builds, custom-elements.json emit, manual `defineElements` entry      | EPIC-3, EPIC-4    |
-| EPIC-7 | Examples + dev server                | 3 working example apps (vanilla / React / web-components), `apps/dev-signaling-server`, all dev scripts wired   | EPIC-4, EPIC-5, EPIC-6 |
-| EPIC-8 | Test infrastructure                  | `test-helpers` package, fake PC, in-memory signaling, RTP-flow recorder, Vitest browser config, Playwright e2e config | EPIC-1            |
-| EPIC-9 | CI/CD + first release                | `ci.yml` (lint, typecheck, unit, build, integration matrix, e2e, bun-tests), `release.yml` (changesets + npm provenance), v0.1.0 published | EPIC-2..EPIC-8    |
+| ID     | Epic                                        | Outcome                                                                                                                                                                           | Depends on             |
+| ------ | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| EPIC-1 | Monorepo Foundation                         | pnpm workspace, wireit pipelines, tsconfig.base, oxlint + oxfmt (with Prettier fallback), Changesets, MIT LICENSE, root README, package scaffolding for all packages, CI skeleton | none                   |
+| EPIC-2 | `signaling-protocol` (engine + wire format) | Wire-format zod schemas (single source of truth), pure `SignalingEngine` class, room/peer state model, unit-tested in isolation                                                   | EPIC-1                 |
+| EPIC-3 | `@forinda/video-sdk-core`                   | All modules under Section 5 implemented + unit-tested. Public surface frozen. State machine + retry policy implemented. Imports wire-format types from EPIC-2.                    | EPIC-2                 |
+| EPIC-4 | Signaling adapters (client + server)        | `signaling-ws` (client), `signaling-broadcast` (client), `signaling-adapter-ws/express/hono/bun` (server), `signaling-server` CLI                                                 | EPIC-2, EPIC-3         |
+| EPIC-5 | React adapter                               | All 7 exports from Section 8, SSR-safe, StrictMode-safe, hooks tested in jsdom + integration tests with real PC                                                                   | EPIC-3, EPIC-4         |
+| EPIC-6 | Web Components adapter                      | All 3 elements from Section 9, ESM + IIFE builds, custom-elements.json emit, manual `defineElements` entry                                                                        | EPIC-3, EPIC-4         |
+| EPIC-7 | Examples + dev server                       | 3 working example apps (vanilla / React / web-components), `apps/dev-signaling-server`, all dev scripts wired                                                                     | EPIC-4, EPIC-5, EPIC-6 |
+| EPIC-8 | Test infrastructure                         | `test-helpers` package, fake PC, in-memory signaling, RTP-flow recorder, Vitest browser config, Playwright e2e config                                                             | EPIC-1                 |
+| EPIC-9 | CI/CD + first release                       | `ci.yml` (lint, typecheck, unit, build, integration matrix, e2e, bun-tests), `release.yml` (changesets + npm provenance), v0.1.0 published                                        | EPIC-2..EPIC-8         |
 
 ### Story sizing convention
 
@@ -844,12 +924,14 @@ Every story in the implementation plan will use this shape:
 
 ```markdown
 ### STORY-<id>: <imperative title>
+
 **Epic:** EPIC-<n>
 **Size:** XS|S|M|L
 **Depends on:** [STORY-<id>, ...]
 **Branch:** feat/<short-name>
 
 **Acceptance criteria:**
+
 - [ ] <observable outcome 1>
 - [ ] <observable outcome 2>
 - [ ] Tests added (unit + integration where relevant)

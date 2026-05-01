@@ -13,12 +13,12 @@ Generates the standard build banner stamped at the top of every emitted `dist/*.
 Usage in `packages/<name>/tsup.config.ts`:
 
 ```ts
-import { defineConfig } from 'tsup';
-import { createBanner } from '../../tools/build-banner.ts';
+import { defineConfig } from "tsup";
+import { createBanner } from "../../tools/build-banner.ts";
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
+  entry: ["src/index.ts"],
+  format: ["esm"],
   dts: true,
   banner: { js: createBanner() },
   // ...

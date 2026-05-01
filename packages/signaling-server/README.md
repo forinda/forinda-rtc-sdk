@@ -13,7 +13,7 @@ npx @forinda/video-sdk-signaling-server --port 3000
 ## Library
 
 ```ts
-import { createServer } from '@forinda/video-sdk-signaling-server';
+import { createServer } from "@forinda/video-sdk-signaling-server";
 
 const server = createServer({ port: 3000 });
 ```

@@ -11,6 +11,7 @@
 **Spec reference:** `docs/superpowers/specs/2026-05-02-video-sdk-design.md` — Sections 2, 3, 4, 15.
 
 **Definition of done:**
+
 - `pnpm install` succeeds from a clean clone.
 - `pnpm -r typecheck` exits 0 across all 12 packages + 1 app.
 - `pnpm -r build` exits 0 and emits `dist/index.js` + `dist/index.d.ts` per package.
@@ -74,28 +75,29 @@ forinda-video-sdk/
 
 **File responsibilities:**
 
-| File | Owns |
-|---|---|
-| `package.json` (root) | workspace declaration, pinned `packageManager`, root scripts (`-r` recursion), shared dev deps (typescript, tsup, wireit, oxlint, oxfmt or prettier, @changesets/cli) |
-| `pnpm-workspace.yaml` | glob list of workspaces |
-| `.npmrc` | pnpm strictness flags |
-| `tsconfig.base.json` | strict TS, ES2022, bundler resolution — extended by every package |
-| `oxlint.json` | lint rules |
-| `oxfmt.json` / `.prettierrc.json` | format rules |
-| `.changeset/config.json` | changesets behavior (independent versioning, MIT, public access) |
-| `.github/workflows/ci.yml` | lint + typecheck + build on every PR |
-| `.github/workflows/release.yml` | changesets version PR + npm publish on main merge |
-| `packages/<name>/package.json` | name, version (0.0.0), exports, deps, wireit scripts |
-| `packages/<name>/tsconfig.json` | extends tsconfig.base, sets rootDir/outDir |
-| `packages/<name>/tsup.config.ts` | tsup build config — ESM, dts, target |
-| `packages/<name>/src/index.ts` | empty public surface stub (`export {};`) |
-| `packages/<name>/README.md` | one-paragraph package purpose |
+| File                              | Owns                                                                                                                                                                  |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `package.json` (root)             | workspace declaration, pinned `packageManager`, root scripts (`-r` recursion), shared dev deps (typescript, tsup, wireit, oxlint, oxfmt or prettier, @changesets/cli) |
+| `pnpm-workspace.yaml`             | glob list of workspaces                                                                                                                                               |
+| `.npmrc`                          | pnpm strictness flags                                                                                                                                                 |
+| `tsconfig.base.json`              | strict TS, ES2022, bundler resolution — extended by every package                                                                                                     |
+| `oxlint.json`                     | lint rules                                                                                                                                                            |
+| `oxfmt.json` / `.prettierrc.json` | format rules                                                                                                                                                          |
+| `.changeset/config.json`          | changesets behavior (independent versioning, MIT, public access)                                                                                                      |
+| `.github/workflows/ci.yml`        | lint + typecheck + build on every PR                                                                                                                                  |
+| `.github/workflows/release.yml`   | changesets version PR + npm publish on main merge                                                                                                                     |
+| `packages/<name>/package.json`    | name, version (0.0.0), exports, deps, wireit scripts                                                                                                                  |
+| `packages/<name>/tsconfig.json`   | extends tsconfig.base, sets rootDir/outDir                                                                                                                            |
+| `packages/<name>/tsup.config.ts`  | tsup build config — ESM, dts, target                                                                                                                                  |
+| `packages/<name>/src/index.ts`    | empty public surface stub (`export {};`)                                                                                                                              |
+| `packages/<name>/README.md`       | one-paragraph package purpose                                                                                                                                         |
 
 ---
 
 ## Task 1: Initialize git repo, .gitignore, LICENSE
 
 **Files:**
+
 - Create: `.gitignore`
 - Create: `LICENSE`
 - Create: `.editorconfig`
@@ -232,6 +234,7 @@ git commit -m "chore: initialize repo with license and editor config"
 ## Task 2: Workspace root — package.json, pnpm-workspace.yaml, .npmrc
 
 **Files:**
+
 - Create: `package.json`
 - Create: `pnpm-workspace.yaml`
 - Create: `.npmrc`
@@ -330,6 +333,7 @@ git commit -m "chore: bootstrap pnpm workspace with root scripts"
 ## Task 3: TypeScript base config
 
 **Files:**
+
 - Create: `tsconfig.base.json`
 
 - [ ] **Step 1: Create `tsconfig.base.json`**
@@ -390,6 +394,7 @@ git commit -m "chore: add strict TypeScript base config"
 ## Task 4: Lint and format — oxlint + oxfmt (Prettier fallback)
 
 **Files:**
+
 - Create: `oxlint.json`
 - Create: `oxfmt.json` OR `.prettierrc.json` (decision in Step 1)
 - Modify: `package.json` (add format dep)
@@ -540,6 +545,7 @@ git commit -m "chore: configure oxlint; oxfmt unavailable, using Prettier fallba
 ## Task 5: Initialize Changesets
 
 **Files:**
+
 - Create: `.changeset/config.json`
 - Create: `.changeset/README.md` (auto-generated, then customized)
 
@@ -565,10 +571,7 @@ Overwrite `.changeset/config.json` with:
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
-  "ignore": [
-    "@forinda/test-helpers",
-    "dev-signaling-server"
-  ]
+  "ignore": ["@forinda/test-helpers", "dev-signaling-server"]
 }
 ```
 
@@ -594,6 +597,7 @@ git commit -m "chore: initialize changesets with public access and independent v
 ## Task 6: GitHub Actions CI workflow (skeleton)
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Create `.github/workflows/ci.yml`**
@@ -682,6 +686,7 @@ git commit -m "ci: add lint, typecheck, build jobs (test jobs added in later epi
 ## Task 7: GitHub Actions release workflow
 
 **Files:**
+
 - Create: `.github/workflows/release.yml`
 
 - [ ] **Step 1: Create `.github/workflows/release.yml`**
@@ -773,9 +778,9 @@ Every package has these five files. Substitute `<NAME>` (without scope) and `<DE
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
   },
   "files": ["dist", "README.md", "LICENSE"],
   "engines": { "node": ">=20.0.0" },
@@ -783,7 +788,7 @@ Every package has these five files. Substitute `<NAME>` (without scope) and `<DE
   "scripts": {
     "build": "wireit",
     "typecheck": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
   },
   "wireit": {
     "build": {
@@ -791,25 +796,25 @@ Every package has these five files. Substitute `<NAME>` (without scope) and `<DE
       "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
       "output": ["dist/**"],
       "clean": "if-file-deleted",
-      "dependencies": ["^build"]
+      "dependencies": ["^build"],
     },
     "typecheck": {
       "command": "tsc --noEmit",
       "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
-      "output": []
+      "output": [],
     },
     "lint": {
       "command": "oxlint src",
       "files": ["src/**/*.ts", "../../oxlint.json"],
-      "output": []
-    }
+      "output": [],
+    },
   },
   "devDependencies": {
     "tsup": "^8.3.0",
     "typescript": "^6.0.0",
     "wireit": "^0.14.9",
-    "oxlint": "^0.11.0"
-  }
+    "oxlint": "^0.11.0",
+  },
 }
 ```
 
@@ -830,16 +835,16 @@ Every package has these five files. Substitute `<NAME>` (without scope) and `<DE
 `packages/<NAME>/tsup.config.ts`:
 
 ```ts
-import { defineConfig } from 'tsup';
-import { createBanner } from '../../tools/build-banner.ts';
+import { defineConfig } from "tsup";
+import { createBanner } from "../../tools/build-banner.ts";
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
+  entry: ["src/index.ts"],
+  format: ["esm"],
   dts: true,
   sourcemap: true,
   clean: true,
-  target: 'es2022',
+  target: "es2022",
   treeshake: true,
   banner: { js: createBanner() },
 });
@@ -945,20 +950,22 @@ For each package:
   - `<DESCRIPTION>` = `Node WebSocket server adapter for Forinda video SDK signaling protocol`
   - Add to `package.json`: `"dependencies": { "@forinda/video-sdk-signaling-protocol": "workspace:*", "ws": "^8.18.0" }`, `"devDependencies": { "@types/ws": "^8.5.13", "tsup": "^8.3.0", "typescript": "^6.0.0", "wireit": "^0.14.9", "oxlint": "^0.11.0" }`
   - `tsup.config.ts` — add `target: 'node20'` and `platform: 'node'`:
+
     ```ts
-    import { defineConfig } from 'tsup';
+    import { defineConfig } from "tsup";
 
     export default defineConfig({
-      entry: ['src/index.ts'],
-      format: ['esm'],
+      entry: ["src/index.ts"],
+      format: ["esm"],
       dts: true,
       sourcemap: true,
       clean: true,
-      target: 'node20',
-      platform: 'node',
+      target: "node20",
+      platform: "node",
       treeshake: true,
     });
     ```
+
   - `src/index.ts`:
     ```ts
     export {};
@@ -973,7 +980,6 @@ For each package:
 Express is the only package in the monorepo that ships **both ESM and CJS** outputs. Express is heavily used in CJS-first Node projects; ESM-only would lock those consumers out. Every other package stays ESM-only.
 
 - [ ] **Step 1: Apply template** with the following overrides (the standard template is overridden in three places — `package.json`, `tsup.config.ts`, and the dist artifacts produced):
-
   - `<NAME>` = `signaling-adapter-express`
   - `<DESCRIPTION>` = `Express integration for Forinda video SDK signaling protocol (dual ESM + CJS)`
   - **Replace** `package.json` with the version below (note `main` points to CJS, `module` to ESM, `exports` has both `import` and `require` conditions):
@@ -993,9 +999,9 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
         ".": {
           "types": "./dist/index.d.ts",
           "import": "./dist/index.js",
-          "require": "./dist/index.cjs"
+          "require": "./dist/index.cjs",
         },
-        "./package.json": "./package.json"
+        "./package.json": "./package.json",
       },
       "files": ["dist", "README.md", "LICENSE"],
       "engines": { "node": ">=20.0.0" },
@@ -1003,7 +1009,7 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
       "scripts": {
         "build": "wireit",
         "typecheck": "wireit",
-        "lint": "wireit"
+        "lint": "wireit",
       },
       "wireit": {
         "build": {
@@ -1011,25 +1017,25 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
           "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
           "output": ["dist/**"],
           "clean": "if-file-deleted",
-          "dependencies": ["^build"]
+          "dependencies": ["^build"],
         },
         "typecheck": {
           "command": "tsc --noEmit",
           "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
-          "output": []
+          "output": [],
         },
         "lint": {
           "command": "oxlint src",
           "files": ["src/**/*.ts", "../../oxlint.json"],
-          "output": []
-        }
+          "output": [],
+        },
       },
       "dependencies": {
         "@forinda/video-sdk-signaling-protocol": "workspace:*",
-        "ws": "^8.18.0"
+        "ws": "^8.18.0",
       },
       "peerDependencies": {
-        "express": "^4.21.0 || ^5.0.0"
+        "express": "^4.21.0 || ^5.0.0",
       },
       "devDependencies": {
         "@types/express": "^5.0.0",
@@ -1038,26 +1044,26 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
         "tsup": "^8.3.0",
         "typescript": "^6.0.0",
         "wireit": "^0.14.9",
-        "oxlint": "^0.11.0"
-      }
+        "oxlint": "^0.11.0",
+      },
     }
     ```
 
   - **Replace** `tsup.config.ts` with the dual-format config below (`format: ['esm', 'cjs']` produces `index.js` (ESM) + `index.cjs` (CJS); `dts: true` emits one shared `index.d.ts`):
 
     ```ts
-    import { defineConfig } from 'tsup';
+    import { defineConfig } from "tsup";
 
     export default defineConfig({
-      entry: ['src/index.ts'],
-      format: ['esm', 'cjs'],
+      entry: ["src/index.ts"],
+      format: ["esm", "cjs"],
       dts: true,
       sourcemap: true,
       clean: true,
-      target: 'node20',
-      platform: 'node',
+      target: "node20",
+      platform: "node",
       treeshake: true,
-      outExtension: ({ format }) => ({ js: format === 'cjs' ? '.cjs' : '.js' }),
+      outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".js" }),
     });
     ```
 
@@ -1095,20 +1101,22 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
   - `<DESCRIPTION>` = `Bun native WebSocket server adapter for Forinda video SDK signaling protocol`
   - Add to `package.json`: `"dependencies": { "@forinda/video-sdk-signaling-protocol": "workspace:*" }`, `"devDependencies": { "@types/bun": "^1.1.14", "tsup": "^8.3.0", "typescript": "^6.0.0", "wireit": "^0.14.9", "oxlint": "^0.11.0" }`
   - `tsup.config.ts` — Bun-compatible (Node target works; Bun reads ESM):
+
     ```ts
-    import { defineConfig } from 'tsup';
+    import { defineConfig } from "tsup";
 
     export default defineConfig({
-      entry: ['src/index.ts'],
-      format: ['esm'],
+      entry: ["src/index.ts"],
+      format: ["esm"],
       dts: true,
       sourcemap: true,
       clean: true,
-      target: 'es2022',
-      platform: 'neutral',
+      target: "es2022",
+      platform: "neutral",
       treeshake: true,
     });
     ```
+
   - `src/index.ts`:
     ```ts
     export {};
@@ -1136,14 +1144,14 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
       "main": "./dist/index.js",
       "types": "./dist/index.d.ts",
       "bin": {
-        "forinda-signaling": "./dist/cli.js"
+        "forinda-signaling": "./dist/cli.js",
       },
       "exports": {
         ".": {
           "types": "./dist/index.d.ts",
-          "import": "./dist/index.js"
+          "import": "./dist/index.js",
         },
-        "./package.json": "./package.json"
+        "./package.json": "./package.json",
       },
       "files": ["dist", "README.md", "LICENSE"],
       "engines": { "node": ">=20.0.0" },
@@ -1151,7 +1159,7 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
       "scripts": {
         "build": "wireit",
         "typecheck": "wireit",
-        "lint": "wireit"
+        "lint": "wireit",
       },
       "wireit": {
         "build": {
@@ -1159,47 +1167,47 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
           "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
           "output": ["dist/**"],
           "clean": "if-file-deleted",
-          "dependencies": ["^build"]
+          "dependencies": ["^build"],
         },
         "typecheck": {
           "command": "tsc --noEmit",
           "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
-          "output": []
+          "output": [],
         },
         "lint": {
           "command": "oxlint src",
           "files": ["src/**/*.ts", "../../oxlint.json"],
-          "output": []
-        }
+          "output": [],
+        },
       },
       "dependencies": {
         "@forinda/video-sdk-signaling-adapter-ws": "workspace:*",
-        "@forinda/video-sdk-signaling-protocol": "workspace:*"
+        "@forinda/video-sdk-signaling-protocol": "workspace:*",
       },
       "devDependencies": {
         "tsup": "^8.3.0",
         "typescript": "^6.0.0",
         "wireit": "^0.14.9",
-        "oxlint": "^0.11.0"
-      }
+        "oxlint": "^0.11.0",
+      },
     }
     ```
 
   - `tsup.config.ts` — emits `index` and `cli` (Node target):
 
     ```ts
-    import { defineConfig } from 'tsup';
+    import { defineConfig } from "tsup";
 
     export default defineConfig({
-      entry: ['src/index.ts', 'src/cli.ts'],
-      format: ['esm'],
+      entry: ["src/index.ts", "src/cli.ts"],
+      format: ["esm"],
       dts: true,
       sourcemap: true,
       clean: true,
-      target: 'node20',
-      platform: 'node',
+      target: "node20",
+      platform: "node",
       treeshake: true,
-      banner: { js: '#!/usr/bin/env node' },
+      banner: { js: "#!/usr/bin/env node" },
     });
     ```
 
@@ -1227,17 +1235,17 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
   - `tsup.config.ts` — add JSX support:
 
     ```ts
-    import { defineConfig } from 'tsup';
+    import { defineConfig } from "tsup";
 
     export default defineConfig({
-      entry: ['src/index.ts'],
-      format: ['esm'],
+      entry: ["src/index.ts"],
+      format: ["esm"],
       dts: true,
       sourcemap: true,
       clean: true,
-      target: 'es2022',
+      target: "es2022",
       treeshake: true,
-      external: ['react', 'react-dom'],
+      external: ["react", "react-dom"],
     });
     ```
 
@@ -1268,8 +1276,7 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
 
 ### Package 8.11: `web-components` (publishes as `@forinda/video-sdk-elements`)
 
-- [ ] **Step 1: Apply template** with one rename**
-
+- [ ] **Step 1: Apply template** with one rename\*\*
   - Directory name on disk: `packages/web-components/`
   - Package name in `package.json`: `@forinda/video-sdk-elements` (intentional — directory describes the layer, published name is shorter for HTML users).
   - `<DESCRIPTION>` = `Web Components (custom HTML elements) for the Forinda video SDK`
@@ -1292,16 +1299,16 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
   - `tsup.config.ts` — emits both ESM and IIFE bundles:
 
     ```ts
-    import { defineConfig } from 'tsup';
+    import { defineConfig } from "tsup";
 
     export default defineConfig({
-      entry: ['src/index.ts', 'src/manual.ts'],
-      format: ['esm', 'iife'],
-      globalName: 'ForindaVideoSdk',
+      entry: ["src/index.ts", "src/manual.ts"],
+      format: ["esm", "iife"],
+      globalName: "ForindaVideoSdk",
       dts: true,
       sourcemap: true,
       clean: true,
-      target: 'es2022',
+      target: "es2022",
       treeshake: true,
     });
     ```
@@ -1321,14 +1328,14 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
       "exports": {
         ".": {
           "types": "./dist/index.d.ts",
-          "import": "./dist/index.js"
+          "import": "./dist/index.js",
         },
         "./manual": {
           "types": "./dist/manual.d.ts",
-          "import": "./dist/manual.js"
+          "import": "./dist/manual.js",
         },
         "./global": "./dist/index.global.js",
-        "./package.json": "./package.json"
+        "./package.json": "./package.json",
       },
       "files": ["dist", "README.md", "LICENSE"],
       "engines": { "node": ">=20.0.0" },
@@ -1336,7 +1343,7 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
       "scripts": {
         "build": "wireit",
         "typecheck": "wireit",
-        "lint": "wireit"
+        "lint": "wireit",
       },
       "wireit": {
         "build": {
@@ -1344,28 +1351,28 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
           "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
           "output": ["dist/**"],
           "clean": "if-file-deleted",
-          "dependencies": ["^build"]
+          "dependencies": ["^build"],
         },
         "typecheck": {
           "command": "tsc --noEmit",
           "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
-          "output": []
+          "output": [],
         },
         "lint": {
           "command": "oxlint src",
           "files": ["src/**/*.ts", "../../oxlint.json"],
-          "output": []
-        }
+          "output": [],
+        },
       },
       "peerDependencies": {
-        "@forinda/video-sdk-core": "workspace:*"
+        "@forinda/video-sdk-core": "workspace:*",
       },
       "devDependencies": {
         "tsup": "^8.3.0",
         "typescript": "^6.0.0",
         "wireit": "^0.14.9",
-        "oxlint": "^0.11.0"
-      }
+        "oxlint": "^0.11.0",
+      },
     }
     ```
 
@@ -1415,15 +1422,15 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
+        "import": "./dist/index.js",
       },
-      "./package.json": "./package.json"
+      "./package.json": "./package.json",
     },
     "engines": { "node": ">=20.0.0" },
     "scripts": {
       "build": "wireit",
       "typecheck": "wireit",
-      "lint": "wireit"
+      "lint": "wireit",
     },
     "wireit": {
       "build": {
@@ -1431,25 +1438,25 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
         "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
         "output": ["dist/**"],
         "clean": "if-file-deleted",
-        "dependencies": ["^build"]
+        "dependencies": ["^build"],
       },
       "typecheck": {
         "command": "tsc --noEmit",
         "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
-        "output": []
+        "output": [],
       },
       "lint": {
         "command": "oxlint src",
         "files": ["src/**/*.ts", "../../oxlint.json"],
-        "output": []
-      }
+        "output": [],
+      },
     },
     "devDependencies": {
       "tsup": "^8.3.0",
       "typescript": "^6.0.0",
       "wireit": "^0.14.9",
-      "oxlint": "^0.11.0"
-    }
+      "oxlint": "^0.11.0",
+    },
   }
   ```
 
@@ -1460,6 +1467,7 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
 ## Task 9: Scaffold `apps/dev-signaling-server`
 
 **Files:**
+
 - Create: `apps/dev-signaling-server/package.json`
 - Create: `apps/dev-signaling-server/tsconfig.json`
 - Create: `apps/dev-signaling-server/tsup.config.ts`
@@ -1533,16 +1541,16 @@ Express is the only package in the monorepo that ships **both ESM and CJS** outp
 - [ ] **Step 3: Create `apps/dev-signaling-server/tsup.config.ts`**
 
 ```ts
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
+  entry: ["src/index.ts"],
+  format: ["esm"],
   dts: false,
   sourcemap: true,
   clean: true,
-  target: 'node20',
-  platform: 'node',
+  target: "node20",
+  platform: "node",
 });
 ```
 
@@ -1591,6 +1599,7 @@ git commit -m "chore(dev-signaling-server): scaffold local development server ap
 ## Task 10: Root README
 
 **Files:**
+
 - Create: `README.md`
 
 - [ ] **Step 1: Create root `README.md`**
@@ -1604,25 +1613,25 @@ git commit -m "chore(dev-signaling-server): scaffold local development server ap
 
 ## Packages
 
-| Package                                                                       | Description                                                                            |
-|-------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
-| [`@forinda/video-sdk-core`](./packages/core)                                  | Framework-agnostic WebRTC publish/view core                                            |
-| [`@forinda/video-sdk-signaling-protocol`](./packages/signaling-protocol)      | Pure protocol engine + wire-format zod schemas                                         |
-| [`@forinda/video-sdk-signaling-ws`](./packages/signaling-ws)                  | Browser WebSocket client transport                                                     |
-| [`@forinda/video-sdk-signaling-broadcast`](./packages/signaling-broadcast)    | Same-tab BroadcastChannel client transport (demos, tests)                              |
-| [`@forinda/video-sdk-signaling-adapter-ws`](./packages/signaling-adapter-ws)  | Node `ws` server adapter                                                               |
-| [`@forinda/video-sdk-signaling-adapter-express`](./packages/signaling-adapter-express) | Express server adapter                                                        |
-| [`@forinda/video-sdk-signaling-adapter-hono`](./packages/signaling-adapter-hono)       | Hono server adapter                                                            |
-| [`@forinda/video-sdk-signaling-adapter-bun`](./packages/signaling-adapter-bun)         | Bun native WS server adapter                                                   |
-| [`@forinda/video-sdk-signaling-server`](./packages/signaling-server)          | Standalone reference server (library + CLI)                                            |
-| [`@forinda/video-sdk-react`](./packages/react)                                | React hooks and components                                                             |
-| [`@forinda/video-sdk-elements`](./packages/web-components)                    | Web Components (`<video-publisher>`, `<video-viewer>`, `<video-device-picker>`)        |
+| Package                                                                                | Description                                                                     |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [`@forinda/video-sdk-core`](./packages/core)                                           | Framework-agnostic WebRTC publish/view core                                     |
+| [`@forinda/video-sdk-signaling-protocol`](./packages/signaling-protocol)               | Pure protocol engine + wire-format zod schemas                                  |
+| [`@forinda/video-sdk-signaling-ws`](./packages/signaling-ws)                           | Browser WebSocket client transport                                              |
+| [`@forinda/video-sdk-signaling-broadcast`](./packages/signaling-broadcast)             | Same-tab BroadcastChannel client transport (demos, tests)                       |
+| [`@forinda/video-sdk-signaling-adapter-ws`](./packages/signaling-adapter-ws)           | Node `ws` server adapter                                                        |
+| [`@forinda/video-sdk-signaling-adapter-express`](./packages/signaling-adapter-express) | Express server adapter                                                          |
+| [`@forinda/video-sdk-signaling-adapter-hono`](./packages/signaling-adapter-hono)       | Hono server adapter                                                             |
+| [`@forinda/video-sdk-signaling-adapter-bun`](./packages/signaling-adapter-bun)         | Bun native WS server adapter                                                    |
+| [`@forinda/video-sdk-signaling-server`](./packages/signaling-server)                   | Standalone reference server (library + CLI)                                     |
+| [`@forinda/video-sdk-react`](./packages/react)                                         | React hooks and components                                                      |
+| [`@forinda/video-sdk-elements`](./packages/web-components)                             | Web Components (`<video-publisher>`, `<video-viewer>`, `<video-device-picker>`) |
 
 ## Apps
 
-| App                                                          | Description                                          |
-|--------------------------------------------------------------|------------------------------------------------------|
-| [`dev-signaling-server`](./apps/dev-signaling-server)        | Local development signaling server                   |
+| App                                                   | Description                        |
+| ----------------------------------------------------- | ---------------------------------- |
+| [`dev-signaling-server`](./apps/dev-signaling-server) | Local development signaling server |
 
 ## Development
 
@@ -1631,9 +1640,9 @@ Requires Node 20+ and pnpm 9+.
 \`\`\`bash
 corepack enable
 pnpm install
-pnpm build       # build every package
-pnpm typecheck   # type-check every package
-pnpm lint        # lint every package
+pnpm build # build every package
+pnpm typecheck # type-check every package
+pnpm lint # lint every package
 \`\`\`
 
 ## License
@@ -1792,18 +1801,18 @@ Expected: pushed without errors. If no remote yet, skip — the tag still lives 
 
 **Spec coverage check** (against `docs/superpowers/specs/2026-05-02-video-sdk-design.md`):
 
-| Spec section / requirement                           | Plan task           |
-|------------------------------------------------------|---------------------|
-| Section 2 — repo layout                              | Task 8 (packages), Task 9 (app), present throughout |
-| Section 3 — pnpm 9, Node 20, TypeScript 6.0, tsup, wireit, oxlint, oxfmt-or-Prettier, Changesets | Tasks 2, 3, 4, 5 |
-| Section 3 — wireit per-package script convention     | Task 8 template     |
-| Section 3 — ESM-only `exports` field with `types`    | Task 8 template     |
-| Section 3 — `engines.node >= 20`, pinned `packageManager` | Task 2          |
-| Section 4 — MIT, npm provenance                      | Task 1 (LICENSE), Task 7 (release.yml) |
-| Section 12 — CI lint/typecheck/build jobs            | Task 6              |
-| Section 12 — release workflow with changesets + provenance | Task 7        |
-| Section 15 — EPIC-1 outcome ("CI skeleton")          | Tasks 6 + 7         |
-| Section 15 — package scaffolding for all packages    | Task 8              |
+| Spec section / requirement                                                                       | Plan task                                           |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| Section 2 — repo layout                                                                          | Task 8 (packages), Task 9 (app), present throughout |
+| Section 3 — pnpm 9, Node 20, TypeScript 6.0, tsup, wireit, oxlint, oxfmt-or-Prettier, Changesets | Tasks 2, 3, 4, 5                                    |
+| Section 3 — wireit per-package script convention                                                 | Task 8 template                                     |
+| Section 3 — ESM-only `exports` field with `types`                                                | Task 8 template                                     |
+| Section 3 — `engines.node >= 20`, pinned `packageManager`                                        | Task 2                                              |
+| Section 4 — MIT, npm provenance                                                                  | Task 1 (LICENSE), Task 7 (release.yml)              |
+| Section 12 — CI lint/typecheck/build jobs                                                        | Task 6                                              |
+| Section 12 — release workflow with changesets + provenance                                       | Task 7                                              |
+| Section 15 — EPIC-1 outcome ("CI skeleton")                                                      | Tasks 6 + 7                                         |
+| Section 15 — package scaffolding for all packages                                                | Task 8                                              |
 
 Test jobs from Section 12 (unit, integration, e2e, bun-tests) are **deliberately deferred** to EPIC-8 — there are no tests to run yet.
 

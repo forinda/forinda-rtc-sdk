@@ -11,14 +11,14 @@ Drop-in tags: `<video-publisher>`, `<video-viewer>`, `<video-device-picker>`. Wo
 Default (auto-register on import):
 
 ```ts
-import '@forinda/video-sdk-elements';
+import "@forinda/video-sdk-elements";
 ```
 
 Manual (explicit, custom prefix):
 
 ```ts
-import { defineElements } from '@forinda/video-sdk-elements/manual';
-defineElements({ prefix: 'forinda-' });
+import { defineElements } from "@forinda/video-sdk-elements/manual";
+defineElements({ prefix: "forinda-" });
 ```
 
 CDN drop-in:
