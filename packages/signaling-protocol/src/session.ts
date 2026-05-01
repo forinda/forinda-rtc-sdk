@@ -185,6 +185,9 @@ export class Session {
       case "join":
         await this.applyJoin(socket, message);
         return;
+      case "leave":
+        this.applyLeave(socket, message);
+        return;
       default:
         // Other message types added in later tasks.
         throw new SignalingValidationError(`unsupported message type ${message.type}`, {
@@ -225,6 +228,36 @@ export class Session {
         peer: existing.peerId,
         role: existing.role,
       });
+    }
+  }
+
+  /**
+   * Internal: removes the peer from the room and broadcasts `peer-left` to
+   * remaining members. Idempotent — leaving a non-existent room or removing
+   * a peer that isn't in the room is a no-op (no error, no broadcast).
+   * Garbage-collects empty rooms so the room map doesn't grow unbounded.
+   */
+  private applyLeave(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "leave" }>,
+  ): void {
+    const room = this.roomMap.get(message.room);
+    if (room === undefined) return;
+    const removed = room.remove(message.peer);
+    if (removed === undefined) return;
+
+    // Clear socket's peer/room association if the leaving peer matches.
+    if (socket.peerId === message.peer && socket.roomId === message.room) {
+      delete socket.peerId;
+      delete socket.roomId;
+    }
+
+    for (const remaining of room.peers()) {
+      this.send(remaining.peerId, { type: "peer-left", peer: message.peer });
+    }
+
+    if (room.size === 0) {
+      this.roomMap.delete(room.id);
     }
   }
 
