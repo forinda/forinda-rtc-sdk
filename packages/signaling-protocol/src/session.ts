@@ -30,7 +30,7 @@
  */
 
 import { SignalingMessage, type SignalingMessageType } from "./messages.ts";
-import { SignalingValidationError } from "./errors.ts";
+import { SignalingAuthError, SignalingValidationError } from "./errors.ts";
 import { defineRoom, type Room } from "./rooms.ts";
 import type { PeerId, RoomId, RoomSnapshot, SendHandler, SocketId } from "./types.ts";
 
@@ -231,13 +231,24 @@ export class Session {
   /**
    * Internal: registers the peer in the room and broadcasts `peer-joined`
    * notifications both ways (to existing peers about the joiner, and to the
-   * joiner about each existing peer). Authentication wiring is added in
-   * Task 11; capacity enforcement is delegated to {@link Room.add}.
+   * joiner about each existing peer). Calls the optional `authenticate`
+   * callback first; rejection short-circuits with {@link SignalingAuthError}
+   * before any state is mutated. Capacity enforcement is delegated to
+   * {@link Room.add} which throws {@link RoomFullError}.
    */
   private async applyJoin(
     socket: SocketRecord,
     message: Extract<SignalingMessageType, { type: "join" }>,
   ): Promise<void> {
+    if (this.authenticate !== undefined) {
+      const ok = await this.authenticate(socket.token, message.room);
+      if (!ok) {
+        throw new SignalingAuthError("authentication rejected", {
+          context: { socketId: socket.socketId, room: message.room, peer: message.peer },
+        });
+      }
+    }
+
     const room = this.getOrCreateRoom(message.room);
     const existingPeers = room.peers();
 
