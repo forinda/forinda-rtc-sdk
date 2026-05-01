@@ -107,3 +107,16 @@ export class Room {
     return undefined;
   }
 }
+
+/**
+ * Declarative factory for {@link Room}. Prefer this over `new Room(...)` even
+ * inside the package — keeps construction style uniform with the rest of the
+ * SDK (`defineSession`, `defineSignalingEngine`, etc.).
+ *
+ * ```ts
+ * const room = defineRoom({ id: "demo", capacity: 50 });
+ * ```
+ */
+export function defineRoom(opts: { id: RoomId } & RoomOptions): Room {
+  return new Room(opts.id, { capacity: opts.capacity });
+}

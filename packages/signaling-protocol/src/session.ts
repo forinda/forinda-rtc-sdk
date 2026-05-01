@@ -2,8 +2,8 @@
  * `Session` — the per-process runtime that owns rooms, peer state, and the
  * outbound `onSend` channel.
  *
- * One `Session` is created via `engine.openSession()` (see `./engine.ts`).
- * It accepts three categories of input from its host:
+ * One `Session` is created via `defineSignalingEngine(...).openSession()`
+ * (see `./engine.ts`). It accepts three categories of input from its host:
  *
  *   1. Socket lifecycle: {@link Session.handleConnection}, {@link Session.handleDisconnect}
  *   2. Inbound messages: {@link Session.handleMessage} (raw JSON string)
@@ -29,7 +29,9 @@
  *   host can call it from a `finally` block without try/catch ceremony.
  */
 
-import type { SignalingMessageType } from "./messages.ts";
+import { SignalingMessage, type SignalingMessageType } from "./messages.ts";
+import { SignalingValidationError } from "./errors.ts";
+import { defineRoom, type Room } from "./rooms.ts";
 import type { PeerId, RoomId, RoomSnapshot, SendHandler, SocketId } from "./types.ts";
 
 /**
@@ -81,11 +83,15 @@ export const DEFAULT_MAX_PEERS_PER_ROOM = 50;
 /**
  * Per-process signaling state holder. See file-header docstring for the
  * lifecycle and invariants.
+ *
+ * Prefer {@link defineSession} as the primary call style; this class is
+ * also exported for type imports and `instanceof` checks.
  */
 export class Session {
   private readonly maxPeersPerRoom: number;
   private readonly authenticate: AuthenticateFn | undefined;
   private readonly sockets = new Map<SocketId, SocketRecord>();
+  private readonly roomMap = new Map<RoomId, Room>();
   private sendHandler: SendHandler | undefined;
 
   constructor(opts: SessionOptions = {}) {
@@ -99,11 +105,14 @@ export class Session {
   }
 
   /**
-   * Snapshot of all rooms and their peers. Returns an empty array until
-   * Task 6 wires room creation through `handleMessage(JoinRoom)`.
+   * Snapshot of all rooms and their peers. Each room snapshot is independent
+   * of the live state — mutating it has no effect on the session.
    */
   rooms(): readonly RoomSnapshot[] {
-    return [];
+    return [...this.roomMap.values()].map((room) => ({
+      roomId: room.id,
+      peers: room.peers(),
+    }));
   }
 
   /**
@@ -140,10 +149,99 @@ export class Session {
   }
 
   /**
+   * Process one inbound message from a socket. The string is parsed as JSON
+   * and validated against {@link "./messages.ts".SignalingMessage}; failures
+   * throw {@link SignalingValidationError}. Successful messages are
+   * dispatched by `type` to the corresponding internal handler.
+   */
+  async handleMessage(socketId: SocketId, raw: string): Promise<void> {
+    const socket = this.sockets.get(socketId);
+    if (socket === undefined) {
+      throw new SignalingValidationError(`unknown socket ${socketId}`, {
+        context: { socketId },
+      });
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (cause) {
+      throw new SignalingValidationError("message is not valid JSON", {
+        cause,
+        context: { socketId },
+      });
+    }
+
+    const result = SignalingMessage.safeParse(parsed);
+    if (!result.success) {
+      throw new SignalingValidationError("message failed schema validation", {
+        cause: result.error,
+        context: { socketId, parsed },
+      });
+    }
+    const message = result.data;
+
+    switch (message.type) {
+      case "join":
+        await this.applyJoin(socket, message);
+        return;
+      default:
+        // Other message types added in later tasks.
+        throw new SignalingValidationError(`unsupported message type ${message.type}`, {
+          context: { socketId, type: message.type },
+        });
+    }
+  }
+
+  /**
+   * Internal: registers the peer in the room and broadcasts `peer-joined`
+   * notifications both ways (to existing peers about the joiner, and to the
+   * joiner about each existing peer). Authentication wiring is added in
+   * Task 11; capacity enforcement is delegated to {@link Room.add}.
+   */
+  private async applyJoin(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "join" }>,
+  ): Promise<void> {
+    const room = this.getOrCreateRoom(message.room);
+    const existingPeers = room.peers();
+
+    socket.peerId = message.peer;
+    socket.roomId = message.room;
+    room.add({ peerId: message.peer, socketId: socket.socketId, role: message.role });
+
+    // Tell each existing peer about the new joiner.
+    for (const existing of existingPeers) {
+      this.send(existing.peerId, {
+        type: "peer-joined",
+        peer: message.peer,
+        role: message.role,
+      });
+    }
+    // Tell the new joiner about each existing peer.
+    for (const existing of existingPeers) {
+      this.send(message.peer, {
+        type: "peer-joined",
+        peer: existing.peerId,
+        role: existing.role,
+      });
+    }
+  }
+
+  /** Lazy room creation. Capacity propagates from session options. */
+  private getOrCreateRoom(roomId: RoomId): Room {
+    let room = this.roomMap.get(roomId);
+    if (room === undefined) {
+      room = defineRoom({ id: roomId, capacity: this.maxPeersPerRoom });
+      this.roomMap.set(roomId, room);
+    }
+    return room;
+  }
+
+  /**
    * Internal helper: deliver one outbound message to a peer via the registered
    * `onSend` handler. No-op if no handler is registered (host hasn't wired
-   * delivery yet). Made `protected`-style by being an instance method (not
-   * exported) but kept private for v0.1.0.
+   * delivery yet).
    */
   private send(peerId: PeerId, message: SignalingMessageType): void {
     this.sendHandler?.(peerId, message);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { RoomFullError } from "../../src/errors.ts";
-import { Room } from "../../src/rooms.ts";
+import { defineRoom, Room } from "../../src/rooms.ts";
 
 const peer = (
   peerId: string,
@@ -14,14 +14,14 @@ const peer = (
 
 describe("Room", () => {
   it("starts empty", () => {
-    const room = new Room("demo", { capacity: 10 });
+    const room = defineRoom({ id: "demo", capacity: 10 });
     expect(room.id).toBe("demo");
     expect(room.size).toBe(0);
     expect(room.peers()).toEqual([]);
   });
 
   it("adds a peer", () => {
-    const room = new Room("demo", { capacity: 10 });
+    const room = defineRoom({ id: "demo", capacity: 10 });
     room.add(peer("alice"));
     expect(room.size).toBe(1);
     expect(room.has("alice")).toBe(true);
@@ -29,7 +29,7 @@ describe("Room", () => {
   });
 
   it("removes a peer by id", () => {
-    const room = new Room("demo", { capacity: 10 });
+    const room = defineRoom({ id: "demo", capacity: 10 });
     room.add(peer("alice"));
     room.add(peer("bob"));
     const removed = room.remove("alice");
@@ -39,7 +39,7 @@ describe("Room", () => {
   });
 
   it("removeBySocket finds peer by socketId", () => {
-    const room = new Room("demo", { capacity: 10 });
+    const room = defineRoom({ id: "demo", capacity: 10 });
     room.add(peer("alice", "socket-1"));
     const removed = room.removeBySocket("socket-1");
     expect(removed?.peerId).toBe("alice");
@@ -47,19 +47,19 @@ describe("Room", () => {
   });
 
   it("removeBySocket returns undefined when no match", () => {
-    const room = new Room("demo", { capacity: 10 });
+    const room = defineRoom({ id: "demo", capacity: 10 });
     expect(room.removeBySocket("nope")).toBeUndefined();
   });
 
   it("add throws RoomFullError when capacity reached", () => {
-    const room = new Room("demo", { capacity: 2 });
+    const room = defineRoom({ id: "demo", capacity: 2 });
     room.add(peer("a"));
     room.add(peer("b"));
     expect(() => room.add(peer("c"))).toThrow(RoomFullError);
   });
 
   it("add replaces an existing peer with the same id (rejoin)", () => {
-    const room = new Room("demo", { capacity: 10 });
+    const room = defineRoom({ id: "demo", capacity: 10 });
     room.add(peer("alice", "socket-1", "publisher"));
     room.add(peer("alice", "socket-2", "viewer"));
     expect(room.size).toBe(1);
@@ -68,7 +68,7 @@ describe("Room", () => {
   });
 
   it("peers() returns a readonly snapshot, not the live map", () => {
-    const room = new Room("demo", { capacity: 10 });
+    const room = defineRoom({ id: "demo", capacity: 10 });
     room.add(peer("alice"));
     const snap = room.peers();
     room.add(peer("bob"));
@@ -76,7 +76,7 @@ describe("Room", () => {
   });
 
   it("isFull reflects current size", () => {
-    const room = new Room("demo", { capacity: 2 });
+    const room = defineRoom({ id: "demo", capacity: 2 });
     expect(room.isFull()).toBe(false);
     room.add(peer("a"));
     expect(room.isFull()).toBe(false);
