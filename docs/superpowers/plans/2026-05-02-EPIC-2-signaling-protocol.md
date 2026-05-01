@@ -911,17 +911,17 @@ Create `packages/signaling-protocol/test/unit/session-construction.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 describe("Session — construction and onSend", () => {
   it("constructs with default options", () => {
-    const session = new Session();
+    const session = defineSession();
     expect(session.socketCount()).toBe(0);
     expect(session.rooms()).toEqual([]);
   });
 
   it("accepts maxPeersPerRoom and authenticate options", () => {
-    const session = new Session({
+    const session = defineSession({
       maxPeersPerRoom: 4,
       authenticate: async () => true,
     });
@@ -929,7 +929,7 @@ describe("Session — construction and onSend", () => {
   });
 
   it("onSend registers and returns an unsubscribe", () => {
-    const session = new Session();
+    const session = defineSession();
     const handler = vi.fn();
     const off = session.onSend(handler);
     expect(typeof off).toBe("function");
@@ -940,7 +940,7 @@ describe("Session — construction and onSend", () => {
   });
 
   it("throws when more than one onSend is registered", () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     expect(() => session.onSend(vi.fn())).toThrow(/onSend/);
   });
@@ -953,24 +953,24 @@ Create `packages/signaling-protocol/test/unit/session-connection.test.ts`:
 
 ```ts
 import { describe, expect, it } from "vitest";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 describe("Session.handleConnection", () => {
   it("registers a socket", async () => {
-    const session = new Session();
+    const session = defineSession();
     await session.handleConnection("socket-1", {});
     expect(session.socketCount()).toBe(1);
   });
 
   it("is idempotent for the same socketId", async () => {
-    const session = new Session();
+    const session = defineSession();
     await session.handleConnection("socket-1", {});
     await session.handleConnection("socket-1", { token: "abc" });
     expect(session.socketCount()).toBe(1);
   });
 
   it("stores the token for later auth checks", async () => {
-    const session = new Session();
+    const session = defineSession();
     await session.handleConnection("socket-1", { token: "jwt.here" });
     // No public reader for token — verify indirectly when authenticate runs (Task 11).
     expect(session.socketCount()).toBe(1);
@@ -1103,14 +1103,14 @@ Create `packages/signaling-protocol/test/unit/session-join-room.test.ts`:
 ```ts
 import { describe, expect, it, vi } from "vitest";
 import { SignalingValidationError } from "../../src/errors.ts";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
 
 describe("Session.handleMessage — join", () => {
   it("parses a valid join and registers the peer in the room", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-1", {});
@@ -1125,7 +1125,7 @@ describe("Session.handleMessage — join", () => {
   });
 
   it("broadcasts peer-joined to existing peers (not to the joiner)", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
 
@@ -1146,7 +1146,7 @@ describe("Session.handleMessage — join", () => {
   });
 
   it("also sends peer-joined for each existing peer back to the joiner", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
 
@@ -1164,7 +1164,7 @@ describe("Session.handleMessage — join", () => {
   });
 
   it("rejects JSON that fails zod validation with SignalingValidationError", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", {});
     await expect(session.handleMessage("socket-1", '{"type":"join"}')).rejects.toBeInstanceOf(
@@ -1173,7 +1173,7 @@ describe("Session.handleMessage — join", () => {
   });
 
   it("rejects malformed JSON with SignalingValidationError", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", {});
     await expect(session.handleMessage("socket-1", "not json")).rejects.toBeInstanceOf(
@@ -1182,7 +1182,7 @@ describe("Session.handleMessage — join", () => {
   });
 
   it("rejects messages from unknown sockets", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await expect(
       session.handleMessage("ghost-socket", join("demo", "alice")),
@@ -1400,7 +1400,7 @@ Create `packages/signaling-protocol/test/unit/session-leave-room.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
@@ -1408,7 +1408,7 @@ const leave = (room: string, peer: string) => JSON.stringify({ type: "leave", ro
 
 describe("Session.handleMessage — leave", () => {
   it("removes the peer from the room", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("socket-a", {});
     await session.handleMessage("socket-a", join("demo", "alice"));
@@ -1419,7 +1419,7 @@ describe("Session.handleMessage — leave", () => {
   });
 
   it("broadcasts peer-left to remaining peers", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-a", {});
@@ -1434,7 +1434,7 @@ describe("Session.handleMessage — leave", () => {
   });
 
   it("is a no-op when the peer is not in the room", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-a", {});
@@ -1543,7 +1543,7 @@ Create `packages/signaling-protocol/test/unit/session-sdp.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
@@ -1553,7 +1553,7 @@ const sdp = (from: string, to: string, type: "offer" | "answer", body = "v=0..."
 
 describe("Session.handleMessage — sdp", () => {
   it("routes an offer from publisher to viewer", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-a", {});
@@ -1574,7 +1574,7 @@ describe("Session.handleMessage — sdp", () => {
   });
 
   it("routes an answer back", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-a", {});
@@ -1663,7 +1663,7 @@ Create `packages/signaling-protocol/test/unit/session-ice.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
@@ -1673,7 +1673,7 @@ const ice = (from: string, to: string, candidate: unknown) =>
 
 describe("Session.handleMessage — ice", () => {
   it("routes an ICE candidate object to the target peer", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-a", {});
@@ -1694,7 +1694,7 @@ describe("Session.handleMessage — ice", () => {
   });
 
   it("routes a null end-of-candidates marker", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-a", {});
@@ -1781,14 +1781,14 @@ Create `packages/signaling-protocol/test/unit/session-disconnect.test.ts`:
 
 ```ts
 import { describe, expect, it, vi } from "vitest";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
 
 describe("Session.handleDisconnect", () => {
   it("drops the socket from the registry", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("socket-a", {});
     expect(session.socketCount()).toBe(1);
@@ -1798,7 +1798,7 @@ describe("Session.handleDisconnect", () => {
   });
 
   it("removes the disconnected peer from any room and broadcasts peer-left", async () => {
-    const session = new Session();
+    const session = defineSession();
     const send = vi.fn();
     session.onSend(send);
     await session.handleConnection("socket-a", {});
@@ -1814,7 +1814,7 @@ describe("Session.handleDisconnect", () => {
   });
 
   it("garbage-collects empty rooms", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("socket-a", {});
     await session.handleMessage("socket-a", join("demo", "alice"));
@@ -1824,7 +1824,7 @@ describe("Session.handleDisconnect", () => {
   });
 
   it("is a no-op for unknown socket", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await expect(session.handleDisconnect("ghost")).resolves.toBeUndefined();
   });
@@ -1906,7 +1906,7 @@ Create `packages/signaling-protocol/test/unit/session-authenticate.test.ts`:
 ```ts
 import { describe, expect, it, vi } from "vitest";
 import { SignalingAuthError } from "../../src/errors.ts";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
@@ -1914,7 +1914,7 @@ const join = (room: string, peer: string, role: "publisher" | "viewer" = "publis
 describe("Session — authenticate", () => {
   it("passes the token and room to the authenticate callback", async () => {
     const authenticate = vi.fn(async () => true);
-    const session = new Session({ authenticate });
+    const session = defineSession({ authenticate });
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", { token: "jwt.here" });
     await session.handleMessage("socket-1", join("demo", "alice"));
@@ -1924,7 +1924,7 @@ describe("Session — authenticate", () => {
 
   it("passes undefined when no token was provided", async () => {
     const authenticate = vi.fn(async () => true);
-    const session = new Session({ authenticate });
+    const session = defineSession({ authenticate });
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", {});
     await session.handleMessage("socket-1", join("demo", "alice"));
@@ -1933,7 +1933,7 @@ describe("Session — authenticate", () => {
   });
 
   it("rejects join with SignalingAuthError when callback returns false", async () => {
-    const session = new Session({ authenticate: async () => false });
+    const session = defineSession({ authenticate: async () => false });
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", { token: "bad" });
     await expect(session.handleMessage("socket-1", join("demo", "alice"))).rejects.toBeInstanceOf(
@@ -1942,7 +1942,7 @@ describe("Session — authenticate", () => {
   });
 
   it("does not register the peer when auth fails", async () => {
-    const session = new Session({ authenticate: async () => false });
+    const session = defineSession({ authenticate: async () => false });
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", {});
     await session.handleMessage("socket-1", join("demo", "alice")).catch(() => {});
@@ -1951,7 +1951,7 @@ describe("Session — authenticate", () => {
   });
 
   it("supports synchronous boolean return from authenticate", async () => {
-    const session = new Session({ authenticate: () => true });
+    const session = defineSession({ authenticate: () => true });
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", {});
     await session.handleMessage("socket-1", join("demo", "alice"));
@@ -1959,7 +1959,7 @@ describe("Session — authenticate", () => {
   });
 
   it("skips auth when no callback is configured", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("socket-1", {});
     await session.handleMessage("socket-1", join("demo", "alice"));
@@ -2068,14 +2068,14 @@ Create `packages/signaling-protocol/test/unit/session-max-peers.test.ts`:
 ```ts
 import { describe, expect, it, vi } from "vitest";
 import { RoomFullError } from "../../src/errors.ts";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
 
 describe("Session — maxPeersPerRoom", () => {
   it("rejects join with RoomFullError when capacity reached", async () => {
-    const session = new Session({ maxPeersPerRoom: 2 });
+    const session = defineSession({ maxPeersPerRoom: 2 });
     session.onSend(vi.fn());
     await session.handleConnection("s1", {});
     await session.handleMessage("s1", join("demo", "alice"));
@@ -2089,7 +2089,7 @@ describe("Session — maxPeersPerRoom", () => {
   });
 
   it("allows the third peer to join a different room", async () => {
-    const session = new Session({ maxPeersPerRoom: 2 });
+    const session = defineSession({ maxPeersPerRoom: 2 });
     session.onSend(vi.fn());
     await session.handleConnection("s1", {});
     await session.handleMessage("s1", join("room-a", "alice"));
@@ -2102,7 +2102,7 @@ describe("Session — maxPeersPerRoom", () => {
   });
 
   it("default capacity is 50", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     for (let i = 0; i < 50; i += 1) {
       await session.handleConnection(`s${i}`, {});
@@ -2159,7 +2159,7 @@ Create `packages/signaling-protocol/test/unit/session-peer-not-found.test.ts`:
 ```ts
 import { describe, expect, it, vi } from "vitest";
 import { PeerNotFoundError } from "../../src/errors.ts";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" = "publisher") =>
   JSON.stringify({ type: "join", room, peer, role });
@@ -2172,7 +2172,7 @@ const ice = (from: string, to: string) =>
 
 describe("Session — PeerNotFoundError", () => {
   it("throws PeerNotFoundError when SDP target is missing", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("s1", {});
     await session.handleMessage("s1", join("demo", "alice"));
@@ -2183,7 +2183,7 @@ describe("Session — PeerNotFoundError", () => {
   });
 
   it("throws PeerNotFoundError when ICE target is missing", async () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("s1", {});
     await session.handleMessage("s1", join("demo", "alice"));
@@ -2196,7 +2196,7 @@ describe("Session — PeerNotFoundError", () => {
   it("does not throw when target peer exists in another room (cross-room not supported)", async () => {
     // Spec is silent on cross-room SDP, but in v0.1.0 we treat any registered peerId as routable.
     // This test pins the behavior — change the spec before changing the test.
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("s1", {});
     await session.handleMessage("s1", join("room-a", "alice"));
@@ -2339,7 +2339,7 @@ Create `packages/signaling-protocol/test/unit/engine.test.ts`:
 ```ts
 import { describe, expect, it, vi } from "vitest";
 import { defineSignalingEngine, SignalingEngine } from "../../src/engine.ts";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 describe("defineSignalingEngine + SignalingEngine", () => {
   it("factory returns a SignalingEngine", () => {
@@ -2450,7 +2450,7 @@ export class SignalingEngine {
    * SDK instances inside one process if needed.
    */
   openSession(): Session {
-    return new Session(this.options);
+    return defineSession(this.options);
   }
 }
 

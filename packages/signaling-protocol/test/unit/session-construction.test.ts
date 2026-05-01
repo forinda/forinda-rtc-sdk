@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
-import { Session } from "../../src/session.ts";
+import { defineSession } from "../../src/session.ts";
 
 describe("Session — construction and onSend", () => {
   it("constructs with default options", () => {
-    const session = new Session();
+    const session = defineSession();
     expect(session.socketCount()).toBe(0);
     expect(session.rooms()).toEqual([]);
   });
 
   it("accepts maxPeersPerRoom and authenticate options", () => {
-    const session = new Session({
+    const session = defineSession({
       maxPeersPerRoom: 4,
       authenticate: async () => true,
     });
@@ -17,7 +17,7 @@ describe("Session — construction and onSend", () => {
   });
 
   it("onSend registers and returns an unsubscribe", () => {
-    const session = new Session();
+    const session = defineSession();
     const handler = vi.fn();
     const off = session.onSend(handler);
     expect(typeof off).toBe("function");
@@ -27,7 +27,7 @@ describe("Session — construction and onSend", () => {
   });
 
   it("throws when more than one onSend is registered", () => {
-    const session = new Session();
+    const session = defineSession();
     session.onSend(vi.fn());
     expect(() => session.onSend(vi.fn())).toThrow(/onSend/);
   });
