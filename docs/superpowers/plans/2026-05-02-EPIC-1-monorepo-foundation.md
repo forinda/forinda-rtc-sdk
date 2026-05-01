@@ -964,19 +964,107 @@ For each package:
 
 ---
 
-### Package 8.6: `signaling-adapter-express`
+### Package 8.6: `signaling-adapter-express` (dual ESM + CJS)
 
-- [ ] **Step 1: Apply template** with:
+Express is the only package in the monorepo that ships **both ESM and CJS** outputs. Express is heavily used in CJS-first Node projects; ESM-only would lock those consumers out. Every other package stays ESM-only.
+
+- [ ] **Step 1: Apply template** with the following overrides (the standard template is overridden in three places — `package.json`, `tsup.config.ts`, and the dist artifacts produced):
+
   - `<NAME>` = `signaling-adapter-express`
-  - `<DESCRIPTION>` = `Express integration for Forinda video SDK signaling protocol`
-  - Add to `package.json`: `"dependencies": { "@forinda/video-sdk-signaling-protocol": "workspace:*", "ws": "^8.18.0" }`, `"peerDependencies": { "express": "^4.21.0 || ^5.0.0" }`, `"devDependencies": { "@types/express": "^5.0.0", "@types/ws": "^8.5.13", "express": "^5.0.0", "tsup": "^8.3.0", "typescript": "^6.0.0", "wireit": "^0.14.9", "oxlint": "^0.11.0" }`
-  - `tsup.config.ts` — Node target as in 8.5.
+  - `<DESCRIPTION>` = `Express integration for Forinda video SDK signaling protocol (dual ESM + CJS)`
+  - **Replace** `package.json` with the version below (note `main` points to CJS, `module` to ESM, `exports` has both `import` and `require` conditions):
+
+    ```jsonc
+    {
+      "name": "@forinda/video-sdk-signaling-adapter-express",
+      "version": "0.0.0",
+      "description": "Express integration for Forinda video SDK signaling protocol (dual ESM + CJS)",
+      "license": "MIT",
+      "type": "module",
+      "sideEffects": false,
+      "main": "./dist/index.cjs",
+      "module": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "exports": {
+        ".": {
+          "types": "./dist/index.d.ts",
+          "import": "./dist/index.js",
+          "require": "./dist/index.cjs"
+        },
+        "./package.json": "./package.json"
+      },
+      "files": ["dist", "README.md", "LICENSE"],
+      "engines": { "node": ">=20.0.0" },
+      "publishConfig": { "access": "public" },
+      "scripts": {
+        "build": "wireit",
+        "typecheck": "wireit",
+        "lint": "wireit"
+      },
+      "wireit": {
+        "build": {
+          "command": "tsup",
+          "files": ["src/**/*.ts", "tsup.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
+          "output": ["dist/**"],
+          "clean": "if-file-deleted",
+          "dependencies": ["^build"]
+        },
+        "typecheck": {
+          "command": "tsc --noEmit",
+          "files": ["src/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
+          "output": []
+        },
+        "lint": {
+          "command": "oxlint src",
+          "files": ["src/**/*.ts", "../../oxlint.json"],
+          "output": []
+        }
+      },
+      "dependencies": {
+        "@forinda/video-sdk-signaling-protocol": "workspace:*",
+        "ws": "^8.18.0"
+      },
+      "peerDependencies": {
+        "express": "^4.21.0 || ^5.0.0"
+      },
+      "devDependencies": {
+        "@types/express": "^5.0.0",
+        "@types/ws": "^8.5.13",
+        "express": "^5.0.0",
+        "tsup": "^8.3.0",
+        "typescript": "^6.0.0",
+        "wireit": "^0.14.9",
+        "oxlint": "^0.11.0"
+      }
+    }
+    ```
+
+  - **Replace** `tsup.config.ts` with the dual-format config below (`format: ['esm', 'cjs']` produces `index.js` (ESM) + `index.cjs` (CJS); `dts: true` emits one shared `index.d.ts`):
+
+    ```ts
+    import { defineConfig } from 'tsup';
+
+    export default defineConfig({
+      entry: ['src/index.ts'],
+      format: ['esm', 'cjs'],
+      dts: true,
+      sourcemap: true,
+      clean: true,
+      target: 'node20',
+      platform: 'node',
+      treeshake: true,
+      outExtension: ({ format }) => ({ js: format === 'cjs' ? '.cjs' : '.js' }),
+    });
+    ```
+
   - `src/index.ts`:
     ```ts
     export {};
     ```
 
 - [ ] **Step 2: Install + build + typecheck + lint + commit.**
+
+  Build verification: confirm `dist/` contains **both** `index.js` (ESM) and `index.cjs` (CJS), plus `index.d.ts`. Source maps `index.js.map` + `index.cjs.map` should also be present.
 
 ---
 

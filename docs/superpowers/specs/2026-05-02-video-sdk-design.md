@@ -82,7 +82,7 @@ forinda-video-sdk/
 | Package manager      | pnpm 9+                                         | pinned via `packageManager` in root `package.json` |
 | Task runner          | wireit                                          | per-package scripts with file-hash caching |
 | Language             | TypeScript 6.0+, `strict: true`                 | |
-| Module format        | ESM-only output                                 | `"type": "module"`, `"sideEffects": false` |
+| Module format        | ESM-only output (exception: `signaling-adapter-express` ships dual ESM + CJS to support CJS-first Express consumers) | `"type": "module"`, `"sideEffects": false` |
 | Library build        | tsup                                            | esbuild-fast, dual `.d.ts` via `--dts` |
 | Server build         | tsup `--target node20 --format esm`             | |
 | Web Components build | tsup with `esm` + `iife` outputs                | IIFE for `<script>` drop-in |
