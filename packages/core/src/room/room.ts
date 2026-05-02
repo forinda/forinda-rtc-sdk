@@ -58,12 +58,25 @@ export class Room implements RoomLeader {
   private joinedRole: RoleValue | null = null;
   private connectPromise: Promise<void> | null = null;
   private joinPromise: Promise<void> | null = null;
+  private readonly directorSet = new Set<string>();
+  private offDirectorMessages: (() => void) | null = null;
 
   constructor(opts: RoomOptions) {
     this.signaling = opts.signaling;
     this.room = opts.room;
     this.peerId =
       opts.peerId ?? (typeof crypto !== "undefined" ? crypto.randomUUID() : `peer-${Date.now()}`);
+    this.offDirectorMessages = this.signaling.on("message", (msg) => {
+      if (msg.type === "peer-joined" && msg.role === "director") {
+        this.directorSet.add(msg.peer);
+      } else if (msg.type === "peer-left") {
+        this.directorSet.delete(msg.peer);
+      } else if (msg.type === "promote") {
+        this.directorSet.add(msg.target);
+      } else if (msg.type === "demote") {
+        this.directorSet.delete(msg.target);
+      }
+    });
   }
 
   /** Current lifecycle state. */
@@ -74,6 +87,16 @@ export class Room implements RoomLeader {
   /** The role the Room joined as, or `null` until the first child starts. */
   get role(): RoleValue | null {
     return this.joinedRole;
+  }
+
+  /**
+   * Live list of director peer ids in this room. Updated on every
+   * `peer-joined` (with role=director), `peer-left`, `promote`, and
+   * `demote` event. When this Room joins as a director, self is added
+   * to the set immediately.
+   */
+  get directors(): readonly string[] {
+    return [...this.directorSet];
   }
 
   /** Subscribe to a typed Room event. Returns an unsubscribe function. */
@@ -140,6 +163,9 @@ export class Room implements RoomLeader {
           role,
         });
         this.joinedRole = role;
+        if (role === "director") {
+          this.directorSet.add(this.peerId);
+        }
       } catch (err) {
         this.joinPromise = null;
         this.emitter.emit("error", err instanceof Error ? err : new Error(String(err)));
@@ -156,6 +182,11 @@ export class Room implements RoomLeader {
   async close(): Promise<void> {
     if (this.roomState === "closed") return;
     this.transition("closed");
+    if (this.offDirectorMessages !== null) {
+      this.offDirectorMessages();
+      this.offDirectorMessages = null;
+    }
+    this.directorSet.clear();
     if (this.joinedRole !== null) {
       try {
         await this.signaling.send({ type: "leave", room: this.room, peer: this.peerId });

@@ -149,6 +149,8 @@ export interface RoomLeader {
   readonly signaling: SignalingTransport;
   /** The role the Room has joined as, or `null` until the first child starts. */
   readonly role: RoleValue | null;
+  /** Live list of director peer ids (includes self iff this peer is a director). */
+  readonly directors: readonly string[];
   /** Open the transport if not already open. Idempotent. */
   ensureConnected(): Promise<void>;
   /**

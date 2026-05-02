@@ -164,3 +164,46 @@ describe("defineRoom — sugar factories share the join", () => {
     await bobRoom.close();
   });
 });
+
+describe("Room — directors set (EPIC-12)", () => {
+  let fx: EngineFixture;
+  beforeEach(() => {
+    fx = defineEngineFixture();
+  });
+  afterEach(async () => {
+    await fx.closeAll();
+  });
+
+  it("starts empty; the joining director appears in directors", async () => {
+    const transport = await fx.open("sa");
+    const room = defineRoom({ signaling: transport, room: "demo", peerId: "alice" });
+
+    expect(room.directors).toEqual([]);
+    await room.ensureConnected();
+    await room.ensureJoined("director");
+    expect(room.directors).toEqual(["alice"]);
+
+    await room.close();
+  });
+
+  it("adds remote directors via peer-joined events", async () => {
+    const aliceT = await fx.open("sa");
+    const aliceRoom = defineRoom({ signaling: aliceT, room: "demo", peerId: "alice" });
+    await aliceRoom.ensureConnected();
+    await aliceRoom.ensureJoined("director");
+
+    const bobT = await fx.open("sb");
+    const bobRoom = defineRoom({ signaling: bobT, room: "demo", peerId: "bob" });
+    await bobRoom.ensureConnected();
+    await bobRoom.ensureJoined("presence");
+
+    // Allow alice to receive bob's peer-joined.
+    await Promise.resolve();
+
+    expect([...aliceRoom.directors].sort()).toEqual(["alice"]);
+    expect([...bobRoom.directors].sort()).toEqual(["alice"]);
+
+    await aliceRoom.close();
+    await bobRoom.close();
+  });
+});
