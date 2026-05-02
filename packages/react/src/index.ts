@@ -32,4 +32,7 @@ export { usePresence, type UsePresenceResult } from "./use-presence.ts";
 export { useChat, type UseChatResult } from "./use-chat.ts";
 export { useRaiseHand, type UseRaiseHandResult } from "./use-raise-hand.ts";
 
+// Recording
+export { useRecorder, type UseRecorderResult } from "./use-recorder.ts";
+
 export { VideoView, type VideoViewProps } from "./video-view.tsx";
