@@ -39,13 +39,14 @@ export const PeerId = z.string().min(1).max(128);
 export const RoomId = z.string().min(1).max(128);
 
 /**
- * The role a peer joins a room with. v0.1.0 ships a one-publisher → many-viewers
- * topology; richer roles (moderator, co-host) arrive in later epics.
+ * The role a peer joins a room with. v0.1 ships publisher / viewer / presence.
+ * EPIC-12 adds `"director"` for moderation; the engine enforces first-claim
+ * wins per room (subsequent director claims throw `SignalingDirectorConflictError`).
  *
  * `"presence"` is the chat-only / observer role — joiners participate in
  * presence + chat but never negotiate media.
  */
-export const Role = z.enum(["publisher", "viewer", "presence"]);
+export const Role = z.enum(["publisher", "viewer", "presence", "director"]);
 
 /**
  * Recursive JSON-compatible value. Used as the value type for free-form
@@ -201,6 +202,77 @@ export const Chat = z.object({
   clientId: z.string().min(1).max(64).optional(),
 });
 
+/** Mute kind — what the director is muting on the target. */
+export const MuteKind = z.enum(["audio", "video"]);
+
+/**
+ * Director → server → target (and `presence-state` to all room members).
+ * Honor-based by default: the engine sets a presence attribute on the
+ * target (`director-muted-audio: true` / `director-muted-video: true`) so
+ * every peer sees the state change. The target's client is expected to
+ * stop the corresponding track. With `enforceModerationCommands: true`,
+ * non-director senders are rejected with `SignalingPermissionError`.
+ */
+export const Mute = z.object({
+  type: z.literal("mute"),
+  target: PeerId,
+  kind: MuteKind,
+});
+
+/** Inverse of `Mute`. Clears the corresponding presence attribute. */
+export const Unmute = z.object({
+  type: z.literal("unmute"),
+  target: PeerId,
+  kind: MuteKind,
+});
+
+/**
+ * Director → server. Forces `target` out of the room. The engine emits a
+ * `peer-left` to remaining members and (when `enforceModerationCommands`)
+ * disconnects the target's socket binding. Reason is forwarded to the
+ * target via a `kicked` notification before disconnect.
+ */
+export const Kick = z.object({
+  type: z.literal("kick"),
+  target: PeerId,
+  reason: z.string().max(256).optional(),
+});
+
+/**
+ * Server → kicked peer. Sent right before the engine drops the target's
+ * room binding. Lets the client surface a friendly UI before the socket
+ * closes.
+ */
+export const Kicked = z.object({
+  type: z.literal("kicked"),
+  room: RoomId,
+  reason: z.string().max(256).optional(),
+});
+
+/** Director → server. Adds `target` to the room's director set. */
+export const Promote = z.object({
+  type: z.literal("promote"),
+  target: PeerId,
+});
+
+/** Director → server. Removes `target` from the director set. */
+export const Demote = z.object({
+  type: z.literal("demote"),
+  target: PeerId,
+});
+
+/**
+ * Director → server → target. Bandwidth ceiling hint. The engine relays
+ * unchanged; honoring it requires SFU integration (EPIC-14). With
+ * enforcement on, non-directors are still rejected even though no SFU
+ * is available — keeps the wire surface symmetric.
+ */
+export const SetBitrate = z.object({
+  type: z.literal("set-bitrate"),
+  target: PeerId,
+  bitsPerSec: z.number().int().positive(),
+});
+
 /**
  * Server → client. One-shot replay of the room's most-recent chats. Sent
  * only when the joiner set `replayHistory: true` on their `join` AND the
@@ -235,6 +307,13 @@ export const SignalingMessage = z.discriminatedUnion("type", [
   PresenceSnapshot,
   Chat,
   ChatHistory,
+  Mute,
+  Unmute,
+  Kick,
+  Kicked,
+  Promote,
+  Demote,
+  SetBitrate,
 ]);
 
 // Inferred TS types — exported so consumers get one definition for runtime + types.
@@ -252,4 +331,12 @@ export type PresenceStateMessage = z.infer<typeof PresenceState>;
 export type PresenceSnapshotMessage = z.infer<typeof PresenceSnapshot>;
 export type ChatMessage = z.infer<typeof Chat>;
 export type ChatHistoryMessage = z.infer<typeof ChatHistory>;
+export type MuteMessage = z.infer<typeof Mute>;
+export type UnmuteMessage = z.infer<typeof Unmute>;
+export type KickMessage = z.infer<typeof Kick>;
+export type KickedMessage = z.infer<typeof Kicked>;
+export type PromoteMessage = z.infer<typeof Promote>;
+export type DemoteMessage = z.infer<typeof Demote>;
+export type SetBitrateMessage = z.infer<typeof SetBitrate>;
+export type MuteKindValue = z.infer<typeof MuteKind>;
 export type SignalingMessageType = z.infer<typeof SignalingMessage>;
