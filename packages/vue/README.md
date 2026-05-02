@@ -245,6 +245,24 @@ const { state, blob, downloadUrl, chunks, error, start, stop, pause, resume } = 
 
 When `stream` is `null` (e.g. before `useUserMedia` resolves) the composable returns inert refs and `start()` is a no-op.
 
+### `useUploader(recorder, uploader)`
+
+Wire a `Recorder` to an `Uploader` for the lifetime of the active scope. Returns reactive `{ state, pendingBytes, error, retry }`.
+
+```ts
+import { defineRecorder, defineUploader } from "@forinda/video-sdk-core";
+import { useUploader, useUserMedia } from "@forinda/video-sdk-vue";
+
+const { stream } = useUserMedia({ audio: true, video: true });
+// Construct recorder/uploader once stream is ready (use v-if pattern).
+
+const recorder = defineRecorder(stream.value!, { timesliceMs: 1000 });
+const uploader = defineUploader({ url: "/api/uploads" });
+const { state, pendingBytes, retry } = useUploader(recorder, uploader);
+```
+
+When the uploader transitions to `"failed"`, the recorder pauses; `retry()` resumes it.
+
 ## Components
 
 ### `<VideoView :stream="..." />`

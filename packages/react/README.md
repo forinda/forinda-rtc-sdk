@@ -225,6 +225,31 @@ const { state, blob, downloadUrl, chunks, error, start, stop, pause, resume } = 
 
 When `stream` is `null` (e.g. before `useUserMedia` resolves) the hook returns inert state and `start()` is a no-op.
 
+### `useUploader(recorder, uploader)`
+
+Wire a `Recorder` to an `Uploader` for the lifetime of the calling component. Returns `{ state, pendingBytes, error, retry }` for "Uploading…" / "Failed (retry?)" UI.
+
+```tsx
+import { defineRecorder, defineUploader } from "@forinda/video-sdk-core";
+import { useMemo } from "react";
+
+const { stream } = useUserMedia({ audio: true, video: true });
+const recorder = useMemo(() => stream && defineRecorder(stream, { timesliceMs: 1000 }), [stream]);
+const uploader = useMemo(() => defineUploader({ url: "/api/uploads" }), []);
+const { state, pendingBytes, retry } = useUploader(recorder, uploader);
+
+return (
+  <>
+    <p>
+      Upload: {state} ({pendingBytes} bytes pending)
+    </p>
+    {state === "failed" && <button onClick={retry}>Retry</button>}
+  </>
+);
+```
+
+When the uploader transitions to `"failed"` the underlying recorder is paused automatically; `retry()` resumes it.
+
 ## Components
 
 ### `<VideoView stream={...} />`

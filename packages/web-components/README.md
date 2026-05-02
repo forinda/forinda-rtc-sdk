@@ -172,6 +172,38 @@ Record any `MediaStream` to a `Blob`. The stream is set as a JS property (not an
 
 > **iOS / Safari:** `MediaRecorder` is unreliable pre-iOS-17. The element will fire `recorder-error` with a `ConfigurationError` if no codec is supported.
 
+#### Streaming uploads (declarative)
+
+Pair `<forinda-recorder>` with `<forinda-uploader>` for one-line streaming uploads. The recorder element discovers slotted uploaders at `start()` and pipes every chunk to each.
+
+```html
+<forinda-video-publisher id="cam" ws="wss://signal.example.com"></forinda-video-publisher>
+<forinda-recorder for="cam" timeslice-ms="1000">
+  <forinda-uploader
+    url="/api/uploads"
+    headers='{"Authorization":"Bearer t"}'
+    max-queued-bytes="200000000"
+  ></forinda-uploader>
+</forinda-recorder>
+```
+
+- `for="cam"` reads the target's `mediaStream` property at `start()` time. Stream changes (e.g. swapping screen-share back to camera) are not auto-followed — call `el.stop()` then `el.start()` to pick up a new stream.
+- Multiple `<forinda-uploader>` children are allowed; each gets its own pipe (useful for fan-out to redundant backends).
+- An uploader entering `"failed"` state pauses the recorder automatically. Call `el.querySelector("forinda-uploader").uploader.retry()` to recover.
+
+### `<forinda-uploader>`
+
+Declarative companion to `<forinda-recorder>`. Lazily builds a `defineUploader` from its attributes; the recorder pipes chunks to it via the slot mechanism above. Can also be used standalone — read `el.uploader` and call `.send(blob)` directly.
+
+**Attributes:**
+
+| Attribute             | Default             | Purpose                                                                                                |
+| --------------------- | ------------------- | ------------------------------------------------------------------------------------------------------ |
+| `url`                 | —                   | Required for `.uploader` to build. POST destination.                                                   |
+| `headers`             | `{}`                | JSON object of extra request headers. Malformed JSON falls back to no headers (with a `console.warn`). |
+| `max-queued-bytes`    | `100 * 1024 * 1024` | Cap on bytes queued; over-cap `send` rejects.                                                          |
+| `keepalive-threshold` | `60_000`            | Chunks at or below this size use `fetch` with `keepalive: true`.                                       |
+
 ### `<forinda-video-device-picker>`
 
 A `<select>` populated with the user's cameras / microphones / speakers, kept in sync via `devicechange`.
