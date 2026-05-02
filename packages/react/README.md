@@ -126,6 +126,51 @@ const stats = useConnectionStats(publisher); // ConnectionStats[]
 const oneViewer = useConnectionStats(viewer); // ConnectionStats | null
 ```
 
+### `useRoomChannel(opts)`
+
+Construct a `RoomChannel` (presence + chat) for the lifetime of the calling component. Falls back to `VideoSdkProvider`'s signaling factory when `opts.signaling` is omitted.
+
+```ts
+const { channel, error } = useRoomChannel({ room: "demo", peerId: "alice" });
+```
+
+| Option             | Default               | Description                                                                       |
+| ------------------ | --------------------- | --------------------------------------------------------------------------------- |
+| `room`             | —                     | Required.                                                                         |
+| `peerId`           | `crypto.randomUUID()` | Self id.                                                                          |
+| `signaling`        | from provider         | Pre-built `SignalingTransport`.                                                   |
+| `manageJoin`       | `true`                | Issue join + leave. Set `false` when sharing a transport with a Publisher/Viewer. |
+| `chatHistoryLimit` | `200`                 | Rolling chat-buffer cap.                                                          |
+| `autoStart`        | `true`                | Call `channel.start()` on mount.                                                  |
+
+### `usePresence(channel)`
+
+Live snapshot of every peer's attributes plus stable write callbacks. Re-renders on `presence`, `presence-snapshot`, and `peer-left` events.
+
+```ts
+const { peers, setAttribute, removeAttribute, clearAttributes } = usePresence(channel);
+// peers: Record<peerId, Record<string, JsonValue>>
+await setAttribute("status", "🎬");
+```
+
+### `useChat(channel)`
+
+Live chat history plus a stable `send` callback. Omit `to` for a room-wide broadcast; pass a peerId for a DM.
+
+```ts
+const { messages, send } = useChat(channel);
+await send("hello room");
+await send("psst", { to: "bob" });
+```
+
+### `useRaiseHand(channel)`
+
+Sugar over `usePresence` for the most common interaction pattern. Reads the channel peer's own `"hand-raised"` attribute.
+
+```ts
+const { raised, raise, lower, toggle } = useRaiseHand(channel);
+```
+
 ## Components
 
 ### `<VideoView stream={...} />`

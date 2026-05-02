@@ -2,11 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { SignalingValidationError } from "@/errors.ts";
 import { defineSession } from "@/session.ts";
 
-const join = (
-  room: string,
-  peer: string,
-  role: "publisher" | "viewer" | "presence" = "presence",
-) => JSON.stringify({ type: "join", room, peer, role });
+const join = (room: string, peer: string, role: "publisher" | "viewer" | "presence" = "presence") =>
+  JSON.stringify({ type: "join", room, peer, role });
 
 const presenceUpdate = (peer: string, attributes: Record<string, unknown>) =>
   JSON.stringify({ type: "presence-update", peer, attributes });
@@ -202,15 +199,15 @@ describe("Session — chat", () => {
     const session = defineSession();
     session.onSend(vi.fn());
     await session.handleConnection("solo", {});
-    await expect(
-      session.handleMessage("solo", chat("ghost", "boo")),
-    ).rejects.toBeInstanceOf(SignalingValidationError);
+    await expect(session.handleMessage("solo", chat("ghost", "boo"))).rejects.toBeInstanceOf(
+      SignalingValidationError,
+    );
   });
 
   it("rejects chat where claimed `from` differs from the socket binding", async () => {
     const { session } = await joinPair();
-    await expect(
-      session.handleMessage("sa", chat("bob", "spoof")),
-    ).rejects.toBeInstanceOf(SignalingValidationError);
+    await expect(session.handleMessage("sa", chat("bob", "spoof"))).rejects.toBeInstanceOf(
+      SignalingValidationError,
+    );
   });
 });

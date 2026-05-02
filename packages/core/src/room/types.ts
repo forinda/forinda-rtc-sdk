@@ -5,11 +5,7 @@
  * pulling the implementation graph.
  */
 
-import type {
-  ChatMessage,
-  JsonValue,
-  RoleValue,
-} from "@forinda/video-sdk-signaling-protocol";
+import type { ChatMessage, JsonValue, RoleValue } from "@forinda/video-sdk-signaling-protocol";
 import type { SignalingTransport } from "@/signaling/transport.ts";
 
 /**

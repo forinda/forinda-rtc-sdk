@@ -54,13 +54,7 @@ export const Role = z.enum(["publisher", "viewer", "presence"]);
  * Use the literal `null` to delete a key on a `presence-update` (engine
  * treats `null` as "remove this attribute").
  */
-export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonValue[]
-  | { [k: string]: JsonValue };
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [k: string]: JsonValue };
 
 const JsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
   z.union([

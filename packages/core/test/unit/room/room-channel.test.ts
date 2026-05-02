@@ -96,10 +96,7 @@ function defineFixture(): Fixture {
  * can find it. Done after `start()` because the channel issues the join,
  * which is what tells the engine which peerId belongs to this socket.
  */
-function bindPeer(
-  transport: ReturnType<typeof defineTransport>,
-  peerId: string,
-): void {
+function bindPeer(transport: ReturnType<typeof defineTransport>, peerId: string): void {
   (transport as unknown as { __peerId: string }).__peerId = peerId;
 }
 

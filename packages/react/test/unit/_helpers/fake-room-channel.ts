@@ -1,9 +1,5 @@
 import { vi } from "vitest";
-import type {
-  ChatHistoryEntry,
-  JsonValue,
-  RoomChannel,
-} from "@forinda/video-sdk-core";
+import type { ChatHistoryEntry, JsonValue, RoomChannel } from "@forinda/video-sdk-core";
 
 /**
  * Hand-rolled `RoomChannel` substitute for React hook tests. Surface matches
@@ -11,7 +7,9 @@ import type {
  * threading a real signaling transport through the test.
  */
 export interface FakeRoomChannel extends RoomChannel {
-  __fire<E extends "presence" | "presence-snapshot" | "peer-joined" | "peer-left" | "chat" | "error">(
+  __fire<
+    E extends "presence" | "presence-snapshot" | "peer-joined" | "peer-left" | "chat" | "error",
+  >(
     event: E,
     payload: unknown,
   ): void;
@@ -32,7 +30,7 @@ export function defineFakeRoomChannel(peerId = "alice"): FakeRoomChannel {
     get chatHistory() {
       return chatBuffer;
     },
-    on<E extends string>(event: E, handler: (p: unknown) => void): () => void {
+    on: ((event: string, handler: (p: unknown) => void) => {
       let bucket = handlers.get(event);
       if (!bucket) {
         bucket = new Set();
@@ -40,7 +38,7 @@ export function defineFakeRoomChannel(peerId = "alice"): FakeRoomChannel {
       }
       bucket.add(handler);
       return () => bucket?.delete(handler);
-    },
+    }) as RoomChannel["on"],
     start: vi.fn(async () => {}),
     stop: vi.fn(async () => {}),
     setAttribute: vi.fn(async (key: string, value: JsonValue) => {

@@ -35,7 +35,24 @@ await session.handleDisconnect(socketId);
 
 ## Wire format
 
-Six message types as a zod discriminated union: `join`, `leave`, `peer-joined`, `peer-left`, `sdp`, `ice`. Validate any inbound message with `SignalingMessage.parse(raw)`.
+Ten message types as a zod discriminated union. Validate any inbound message with `SignalingMessage.parse(raw)`.
+
+| `type`              | direction        | purpose                                                                  |
+| ------------------- | ---------------- | ------------------------------------------------------------------------ |
+| `join`              | client → server  | enter a room as `publisher`, `viewer`, or `presence` (chat-only)         |
+| `leave`             | client → server  | exit a room voluntarily                                                  |
+| `peer-joined`       | server → client  | another peer arrived                                                     |
+| `peer-left`         | server → client  | another peer departed                                                    |
+| `sdp`               | peer → peer (s)  | offer / answer SDP exchange                                              |
+| `ice`               | peer → peer (s)  | ICE candidate (or `null` end-of-candidates)                              |
+| `presence-update`   | client → server  | set / replace / delete this peer's presence attributes (`null` = delete) |
+| `presence-state`    | server → client  | broadcast on any peer's presence change; empty `attributes` = cleared    |
+| `presence-snapshot` | server → joiner  | one-shot full snapshot sent right after join                             |
+| `chat`              | client ↔ peer(s) | broadcast text (no `to`) or DM (`to: peerId`)                            |
+
+Presence attribute values are `JsonValue` (recursive JSON shape). Use `null` to delete a key.
+
+The engine maintains a per-room presence map; joiners always receive a `presence-snapshot` (empty `peers: {}` when nobody has set anything yet) and any subsequent `presence-state` events as they arrive.
 
 ## Errors
 

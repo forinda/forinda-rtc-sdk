@@ -412,10 +412,9 @@ export class Session {
     message: Extract<SignalingMessageType, { type: "chat" }>,
   ): void {
     if (socket.peerId !== message.from || socket.roomId === undefined) {
-      throw new SignalingValidationError(
-        "chat requires a joined socket bound to the same peer",
-        { context: { socketId: socket.socketId, claimed: message.from, bound: socket.peerId } },
-      );
+      throw new SignalingValidationError("chat requires a joined socket bound to the same peer", {
+        context: { socketId: socket.socketId, claimed: message.from, bound: socket.peerId },
+      });
     }
     const room = this.roomMap.get(socket.roomId);
     if (room === undefined) return;

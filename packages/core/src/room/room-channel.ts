@@ -29,11 +29,7 @@ import type {
   PresenceStateMessage,
   SignalingMessageType,
 } from "@forinda/video-sdk-signaling-protocol";
-import type {
-  ChatHistoryEntry,
-  RoomChannelEvents,
-  RoomChannelOptions,
-} from "./types.ts";
+import type { ChatHistoryEntry, RoomChannelEvents, RoomChannelOptions } from "./types.ts";
 
 const DEFAULT_CHAT_HISTORY_LIMIT = 200;
 

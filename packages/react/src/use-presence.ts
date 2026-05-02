@@ -20,9 +20,7 @@ export interface UsePresenceResult {
 
 const EMPTY: Record<string, Record<string, JsonValue>> = {};
 
-function snapshot(
-  channel: RoomChannel | null,
-): Record<string, Record<string, JsonValue>> {
+function snapshot(channel: RoomChannel | null): Record<string, Record<string, JsonValue>> {
   if (!channel) return EMPTY;
   const next: Record<string, Record<string, JsonValue>> = {};
   for (const [peer, attrs] of channel.peers) next[peer] = { ...attrs };
