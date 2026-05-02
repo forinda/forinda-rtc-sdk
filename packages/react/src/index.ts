@@ -22,6 +22,10 @@ export {
 export { useViewer, type UseViewerOptions, type UseViewerResult } from "./use-viewer.ts";
 export { useConnectionStats, type UseConnectionStatsOptions } from "./use-connection-stats.ts";
 
+// Room — higher-level coordinator (eliminates the duplicate-join footgun
+// when sharing one transport between Publisher / Viewer / RoomChannel)
+export { useRoom, type UseRoomOptions, type UseRoomResult } from "./use-room.ts";
+
 // Room-level interaction layer (presence + chat + raise hand)
 export {
   useRoomChannel,

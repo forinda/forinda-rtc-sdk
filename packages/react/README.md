@@ -126,9 +126,28 @@ const stats = useConnectionStats(publisher); // ConnectionStats[]
 const oneViewer = useConnectionStats(viewer); // ConnectionStats | null
 ```
 
+### `useRoom(opts)`
+
+Construct a `Room` for the calling component's lifetime. The Room owns one signaling transport and one `join`; pair it with `usePublisher({ attach: room })`, `useViewer({ attach: room })`, `useRoomChannel({ attach: room })` to share that transport without the duplicate-join footgun.
+
+```ts
+const { room, state, error } = useRoom({ room: "demo", peerId: "alice" });
+const { publisher } = usePublisher({ attach: room, stream });
+const { channel } = useRoomChannel({ attach: room });
+const { messages } = useChat(channel);
+```
+
+| Option      | Default               | Description                     |
+| ----------- | --------------------- | ------------------------------- |
+| `room`      | —                     | Required. Room id.              |
+| `peerId`    | `crypto.randomUUID()` | Self id.                        |
+| `signaling` | from provider         | Pre-built `SignalingTransport`. |
+
+When attached, the child hooks ignore their own `room` / `peerId` / `signaling` options (taken from the Room). Standalone usage is unchanged.
+
 ### `useRoomChannel(opts)`
 
-Construct a `RoomChannel` (presence + chat) for the lifetime of the calling component. Falls back to `VideoSdkProvider`'s signaling factory when `opts.signaling` is omitted.
+Construct a `RoomChannel` (presence + chat) for the lifetime of the calling component. Falls back to `VideoSdkProvider`'s signaling factory when `opts.signaling` is omitted. Pass `attach: room` to share a `Room`'s transport.
 
 ```ts
 const { channel, state, error } = useRoomChannel({ room: "demo", peerId: "alice" });

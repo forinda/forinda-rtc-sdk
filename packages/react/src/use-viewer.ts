@@ -7,11 +7,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  defineAttachedViewer,
   defineViewer,
   type ConnectionState,
   type ConnectionStats,
   type PcFactory,
   type RetryConfig,
+  type Room,
   type SdkError,
   type SignalingTransport,
   type Viewer,
@@ -20,15 +22,23 @@ import { isServer } from "./internal/ssr.ts";
 import { useVideoSdkConfig } from "./provider.tsx";
 
 export interface UseViewerOptions {
-  room: string;
+  /** Required when `attach` is omitted. Ignored when attached (taken from Room). */
+  room?: string;
   publisherId: string;
+  /** Ignored when `attach` is set (taken from Room). */
   peerId?: string;
+  /** Ignored when `attach` is set (Room owns the transport). */
   signaling?: SignalingTransport;
   iceServers?: RTCIceServer[];
   stats?: { interval: number };
   retry?: RetryConfig;
   pcFactory?: PcFactory;
   autoStart?: boolean;
+  /**
+   * Attach to a {@link Room} so the viewer shares the Room's transport
+   * + single-`join` coordination.
+   */
+  attach?: Room;
 }
 
 export interface UseViewerResult {
@@ -57,32 +67,56 @@ export function useViewer(opts: UseViewerOptions): UseViewerResult {
     if (isServer) return;
 
     const o = optsRef.current;
-    const signaling = o.signaling ?? config.signaling?.();
-    if (signaling === undefined) {
-      setError({
-        name: "ConfigurationError",
-        message: "useViewer: no signaling transport (provide opts.signaling or VideoSdkProvider)",
-        code: "configuration_error",
-        retryable: false,
-      } as SdkError);
-      return;
-    }
-
     const ctrl = new AbortController();
-    const v = defineViewer({
-      signaling,
-      room: o.room,
-      publisherId: o.publisherId,
-      ...(o.peerId !== undefined ? { peerId: o.peerId } : {}),
-      ...((o.iceServers ?? config.iceServers !== undefined)
-        ? { iceServers: (o.iceServers ?? config.iceServers) as RTCIceServer[] }
-        : {}),
-      ...(o.stats !== undefined ? { stats: o.stats } : {}),
-      ...((o.retry ?? config.retry !== undefined)
-        ? { retry: (o.retry ?? config.retry) as RetryConfig }
-        : {}),
-      ...(o.pcFactory !== undefined ? { pcFactory: o.pcFactory } : {}),
-    });
+    let v: Viewer;
+    if (o.attach) {
+      v = defineAttachedViewer(o.attach, {
+        publisherId: o.publisherId,
+        ...((o.iceServers ?? config.iceServers !== undefined)
+          ? { iceServers: (o.iceServers ?? config.iceServers) as RTCIceServer[] }
+          : {}),
+        ...(o.stats !== undefined ? { stats: o.stats } : {}),
+        ...((o.retry ?? config.retry !== undefined)
+          ? { retry: (o.retry ?? config.retry) as RetryConfig }
+          : {}),
+        ...(o.pcFactory !== undefined ? { pcFactory: o.pcFactory } : {}),
+      });
+    } else {
+      const signaling = o.signaling ?? config.signaling?.();
+      if (signaling === undefined) {
+        setError({
+          name: "ConfigurationError",
+          message:
+            "useViewer: no signaling transport (provide opts.signaling, opts.attach, or VideoSdkProvider)",
+          code: "configuration_error",
+          retryable: false,
+        } as SdkError);
+        return;
+      }
+      if (o.room === undefined) {
+        setError({
+          name: "ConfigurationError",
+          message: "useViewer: opts.room is required when not attaching to a Room",
+          code: "configuration_error",
+          retryable: false,
+        } as SdkError);
+        return;
+      }
+      v = defineViewer({
+        signaling,
+        room: o.room,
+        publisherId: o.publisherId,
+        ...(o.peerId !== undefined ? { peerId: o.peerId } : {}),
+        ...((o.iceServers ?? config.iceServers !== undefined)
+          ? { iceServers: (o.iceServers ?? config.iceServers) as RTCIceServer[] }
+          : {}),
+        ...(o.stats !== undefined ? { stats: o.stats } : {}),
+        ...((o.retry ?? config.retry !== undefined)
+          ? { retry: (o.retry ?? config.retry) as RetryConfig }
+          : {}),
+        ...(o.pcFactory !== undefined ? { pcFactory: o.pcFactory } : {}),
+      });
+    }
     setViewer(v);
 
     const offState = v.on("state", (s) => {
@@ -116,7 +150,7 @@ export function useViewer(opts: UseViewerOptions): UseViewerResult {
       setError(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart, opts.room, opts.publisherId, opts.peerId]);
+  }, [autoStart, opts.room, opts.publisherId, opts.peerId, opts.attach]);
 
   const start = useCallback(async (): Promise<void> => {
     if (viewer !== null) await viewer.start();

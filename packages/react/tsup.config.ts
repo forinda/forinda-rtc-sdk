@@ -9,6 +9,7 @@ export default defineConfig({
   clean: true,
   target: "es2022",
   treeshake: true,
+  minify: true,
   external: ["react", "react-dom", "@forinda/video-sdk-core"],
   tsconfig: "./tsconfig.build.json",
   banner: { js: createBanner() },

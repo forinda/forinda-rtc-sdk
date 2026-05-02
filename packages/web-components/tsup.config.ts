@@ -10,6 +10,9 @@ export default defineConfig({
   clean: true,
   target: "es2022",
   treeshake: true,
+  // Browser-shipped: minify identifiers + drop dead code. Particularly
+  // important for the IIFE bundle (drop-in <script>).
+  minify: true,
   tsconfig: "./tsconfig.build.json",
   external: ["@forinda/video-sdk-core", "@forinda/video-sdk-signaling-ws"],
   banner: { js: createBanner() },

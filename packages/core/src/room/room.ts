@@ -42,12 +42,7 @@ import type { AttachedViewerOptions } from "@/viewer/types.ts";
 import type { RoleValue } from "@forinda/video-sdk-signaling-protocol";
 import type { SignalingTransport } from "@/signaling/transport.ts";
 import { defineAttachedRoomChannel, type RoomChannel } from "./room-channel.ts";
-import type {
-  AttachedRoomChannelOptions,
-  RoomLeader,
-  RoomOptions,
-  RoomState,
-} from "./types.ts";
+import type { AttachedRoomChannelOptions, RoomLeader, RoomOptions, RoomState } from "./types.ts";
 
 type RoomEvents = {
   state: RoomState;
@@ -82,10 +77,7 @@ export class Room implements RoomLeader {
   }
 
   /** Subscribe to a typed Room event. Returns an unsubscribe function. */
-  on<E extends keyof RoomEvents>(
-    event: E,
-    handler: (payload: RoomEvents[E]) => void,
-  ): () => void {
+  on<E extends keyof RoomEvents>(event: E, handler: (payload: RoomEvents[E]) => void): () => void {
     return this.emitter.on(event, handler);
   }
 

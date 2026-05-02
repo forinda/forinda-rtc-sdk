@@ -10,7 +10,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  defineAttachedRoomChannel,
   defineRoomChannel,
+  type Room,
   type RoomChannel,
   type SignalingTransport,
   type TransportState,
@@ -19,15 +21,24 @@ import { isServer } from "./internal/ssr.ts";
 import { useVideoSdkConfig } from "./provider.tsx";
 
 export interface UseRoomChannelOptions {
-  room: string;
+  /** Required when `attach` is omitted. Ignored when attached (taken from Room). */
+  room?: string;
+  /** Ignored when `attach` is set (taken from Room). */
   peerId?: string;
+  /** Ignored when `attach` is set (Room owns the transport). */
   signaling?: SignalingTransport;
-  /** Issue join + leave on the transport. Default `true`. */
+  /** Issue join + leave on the transport. Default `true`. Ignored when attached. */
   manageJoin?: boolean;
   /** Cap on the rolling chat-history buffer. Default `200`. */
   chatHistoryLimit?: number;
   /** Auto-call `channel.start()` on mount. Default `true`. */
   autoStart?: boolean;
+  /**
+   * Attach to a {@link Room} so the channel shares the Room's transport
+   * + single-`join` coordination. The channel becomes pure presence + chat;
+   * the Room owns the join.
+   */
+  attach?: Room;
 }
 
 export interface UseRoomChannelResult {
@@ -51,31 +62,44 @@ export function useRoomChannel(opts: UseRoomChannelOptions): UseRoomChannelResul
     if (isServer) return;
 
     const o = optsRef.current;
-    const signaling = o.signaling ?? config.signaling?.();
-    if (signaling === undefined) {
-      setError(
-        new Error(
-          "useRoomChannel: no signaling transport (provide opts.signaling or VideoSdkProvider)",
-        ),
-      );
-      return;
-    }
-
     const ctrl = new AbortController();
-    const ch = defineRoomChannel({
-      signaling,
-      room: o.room,
-      ...(o.peerId !== undefined ? { peerId: o.peerId } : {}),
-      ...(o.manageJoin !== undefined ? { manageJoin: o.manageJoin } : {}),
-      ...(o.chatHistoryLimit !== undefined ? { chatHistoryLimit: o.chatHistoryLimit } : {}),
-    });
+    let ch: RoomChannel;
+    let transportForState: SignalingTransport;
+    if (o.attach) {
+      ch = defineAttachedRoomChannel(o.attach, {
+        ...(o.chatHistoryLimit !== undefined ? { chatHistoryLimit: o.chatHistoryLimit } : {}),
+      });
+      transportForState = o.attach.signaling;
+    } else {
+      const signaling = o.signaling ?? config.signaling?.();
+      if (signaling === undefined) {
+        setError(
+          new Error(
+            "useRoomChannel: no signaling transport (provide opts.signaling, opts.attach, or VideoSdkProvider)",
+          ),
+        );
+        return;
+      }
+      if (o.room === undefined) {
+        setError(new Error("useRoomChannel: opts.room is required when not attaching to a Room"));
+        return;
+      }
+      ch = defineRoomChannel({
+        signaling,
+        room: o.room,
+        ...(o.peerId !== undefined ? { peerId: o.peerId } : {}),
+        ...(o.manageJoin !== undefined ? { manageJoin: o.manageJoin } : {}),
+        ...(o.chatHistoryLimit !== undefined ? { chatHistoryLimit: o.chatHistoryLimit } : {}),
+      });
+      transportForState = signaling;
+    }
     setChannel(ch);
-    setState(signaling.state);
+    setState(transportForState.state);
 
     const offError = ch.on("error", (e) => {
       if (!ctrl.signal.aborted) setError(e);
     });
-    const offTransportState = signaling.on("state", (s: TransportState) => {
+    const offTransportState = transportForState.on("state", (s: TransportState) => {
       if (!ctrl.signal.aborted) setState(s);
     });
 
@@ -97,7 +121,7 @@ export function useRoomChannel(opts: UseRoomChannelOptions): UseRoomChannelResul
       setError(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoStart, opts.room, opts.peerId]);
+  }, [autoStart, opts.room, opts.peerId, opts.attach]);
 
   return { channel, state, error };
 }

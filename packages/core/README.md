@@ -60,7 +60,34 @@ await viewer.start();
 - **Publisher** — `definePublisher`: signaling join, per-viewer `RTCPeerConnection` management, SDP/ICE routing, stats aggregation, hot-swap, auto-retry.
 - **Viewer** — `defineViewer`: signaling join, single upstream PC, track event, stats, auto-retry.
 
-**Room-level interaction:**
+**Higher-level Room (recommended for media + chat in the same tab):**
+
+- **Room** — `defineRoom({ signaling, room, peerId? })`: owns the transport's connect/disconnect and the **single** `join` for the room. Eliminates the footgun where a `Publisher` and a `RoomChannel` (or any other child) sharing one transport silently overwrite each other's join binding.
+
+```ts
+import { defineRoom, defineWebSocketSignaling, getUserMedia } from "@forinda/video-sdk-core";
+
+const stream = await getUserMedia({ audio: true, video: true });
+const signaling = defineWebSocketSignaling({ url: "wss://signal.example.com" });
+const room = defineRoom({ signaling, room: "demo", peerId: "alice" });
+
+// Sugar — equivalent to defineAttachedPublisher(room, ...) etc.
+const publisher = room.publisher({ stream });
+const channel = room.channel(); // presence + chat over the same socket
+const recorder = room.recorder(stream); // pure local recording
+
+await publisher.start(); // issues the single join for the Room (role: publisher)
+await channel.start(); // shares the join — no second join, no engine overwrite
+recorder.start();
+// ...
+await room.close(); // sends one leave + closes the transport
+```
+
+The Room **does not** auto-stop its children. Stop publisher / viewer / channel explicitly before `room.close()` if you want their cleanup to fire (each `stop()` is idempotent).
+
+Without the sugar: `defineAttachedPublisher(room, opts)`, `defineAttachedViewer(room, opts)`, `defineAttachedRoomChannel(room, opts)`. Standalone `definePublisher` / `defineViewer` / `defineRoomChannel` continue to work unchanged — use those when each component owns its own transport.
+
+**Room channel (standalone presence + chat):**
 
 - **Room channel** — `defineRoomChannel({ signaling, room, peerId? })`: presence + chat layer that piggybacks on the same signaling transport. No media.
 

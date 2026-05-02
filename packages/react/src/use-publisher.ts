@@ -8,12 +8,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  defineAttachedPublisher,
   definePublisher,
   type ConnectionState,
   type ConnectionStats,
   type PcFactory,
   type Publisher,
   type RetryConfig,
+  type Room,
   type SdkError,
   type SignalingTransport,
 } from "@forinda/video-sdk-core";
@@ -21,9 +23,12 @@ import { isServer } from "./internal/ssr.ts";
 import { useVideoSdkConfig } from "./provider.tsx";
 
 export interface UsePublisherOptions {
-  room: string;
+  /** Required when `attach` is omitted. Ignored when attached (taken from Room). */
+  room?: string;
   stream: MediaStream | null;
+  /** Ignored when `attach` is set (taken from Room). */
   peerId?: string;
+  /** Ignored when `attach` is set (Room owns the transport). */
   signaling?: SignalingTransport;
   iceServers?: RTCIceServer[];
   stats?: { interval: number };
@@ -31,6 +36,12 @@ export interface UsePublisherOptions {
   pcFactory?: PcFactory;
   /** Auto-call `start()` once a stream is supplied. Default `true`. */
   autoStart?: boolean;
+  /**
+   * Attach to a {@link Room} so the publisher shares the Room's transport
+   * + single-`join` coordination. When set, `room`, `peerId`, and
+   * `signaling` are taken from the Room and ignored if also supplied.
+   */
+  attach?: Room;
 }
 
 export interface UsePublisherResult {
@@ -63,33 +74,58 @@ export function usePublisher(opts: UsePublisherOptions): UsePublisherResult {
     if (!hasStream) return;
 
     const o = optsRef.current;
-    const signaling = o.signaling ?? config.signaling?.();
-    if (signaling === undefined) {
-      setError({
-        name: "ConfigurationError",
-        message:
-          "usePublisher: no signaling transport (provide opts.signaling or VideoSdkProvider)",
-        code: "configuration_error",
-        retryable: false,
-      } as SdkError);
-      return;
-    }
-
     const ctrl = new AbortController();
-    const p = definePublisher({
-      signaling,
-      room: o.room,
-      stream: o.stream as MediaStream,
-      ...(o.peerId !== undefined ? { peerId: o.peerId } : {}),
-      ...((o.iceServers ?? config.iceServers !== undefined)
-        ? { iceServers: (o.iceServers ?? config.iceServers) as RTCIceServer[] }
-        : {}),
-      ...(o.stats !== undefined ? { stats: o.stats } : {}),
-      ...((o.retry ?? config.retry !== undefined)
-        ? { retry: (o.retry ?? config.retry) as RetryConfig }
-        : {}),
-      ...(o.pcFactory !== undefined ? { pcFactory: o.pcFactory } : {}),
-    });
+    let p: Publisher;
+    if (o.attach) {
+      // Attached path — Room owns the transport + the join. Just thread
+      // per-publisher tunables through the proxy factory.
+      p = defineAttachedPublisher(o.attach, {
+        stream: o.stream as MediaStream,
+        ...((o.iceServers ?? config.iceServers !== undefined)
+          ? { iceServers: (o.iceServers ?? config.iceServers) as RTCIceServer[] }
+          : {}),
+        ...(o.stats !== undefined ? { stats: o.stats } : {}),
+        ...((o.retry ?? config.retry !== undefined)
+          ? { retry: (o.retry ?? config.retry) as RetryConfig }
+          : {}),
+        ...(o.pcFactory !== undefined ? { pcFactory: o.pcFactory } : {}),
+      });
+    } else {
+      const signaling = o.signaling ?? config.signaling?.();
+      if (signaling === undefined) {
+        setError({
+          name: "ConfigurationError",
+          message:
+            "usePublisher: no signaling transport (provide opts.signaling, opts.attach, or VideoSdkProvider)",
+          code: "configuration_error",
+          retryable: false,
+        } as SdkError);
+        return;
+      }
+      if (o.room === undefined) {
+        setError({
+          name: "ConfigurationError",
+          message: "usePublisher: opts.room is required when not attaching to a Room",
+          code: "configuration_error",
+          retryable: false,
+        } as SdkError);
+        return;
+      }
+      p = definePublisher({
+        signaling,
+        room: o.room,
+        stream: o.stream as MediaStream,
+        ...(o.peerId !== undefined ? { peerId: o.peerId } : {}),
+        ...((o.iceServers ?? config.iceServers !== undefined)
+          ? { iceServers: (o.iceServers ?? config.iceServers) as RTCIceServer[] }
+          : {}),
+        ...(o.stats !== undefined ? { stats: o.stats } : {}),
+        ...((o.retry ?? config.retry !== undefined)
+          ? { retry: (o.retry ?? config.retry) as RetryConfig }
+          : {}),
+        ...(o.pcFactory !== undefined ? { pcFactory: o.pcFactory } : {}),
+      });
+    }
     setPublisher(p);
 
     const offState = p.on("state", (s) => {
@@ -127,7 +163,7 @@ export function usePublisher(opts: UsePublisherOptions): UsePublisherResult {
       setError(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasStream, autoStart, opts.room, opts.peerId]);
+  }, [hasStream, autoStart, opts.room, opts.peerId, opts.attach]);
 
   const start = useCallback(async (): Promise<void> => {
     if (publisher !== null) await publisher.start();
