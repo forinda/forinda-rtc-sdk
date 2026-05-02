@@ -187,6 +187,27 @@ Backlog of work scoped from the post-EPIC-13 critical review (27 gaps) plus defe
 
 ---
 
+## EPIC-VUE — Vue 3 adapter (NEW)
+
+**Scope:** Mirror the entire React surface as Vue 3 composables + a `<VideoView>` Vue component.
+
+**Gaps closed:** none from the original audit (feature add). Adopters using Vue or Nuxt currently must drop down to `@forinda/video-sdk-core` directly or hand-roll composables.
+
+**Depends on:** EPIC-19 (so Vue ships `useRoom` from day one rather than getting a piecemeal release).
+
+**Size:** M.
+
+**Acceptance:**
+
+- New package `@forinda/video-sdk-vue` with composables: `useUserMedia`, `useDisplayMedia`, `useDevices`, `usePublisher`, `useViewer`, `useConnectionStats`, `useRoom`, `useRoomChannel`, `usePresence`, `useChat`, `useRaiseHand`, `useRecorder`. Plus a `<VideoView>` SFC.
+- `VideoSdkPlugin` for app-level config (Vue equivalent of React's `VideoSdkProvider`); composables consume it via `inject`.
+- Vue 3.4+ peer dep. Composition API only.
+- SSR-safe (Nuxt-friendly): early-return inert state on the server.
+- New `examples/vue-publisher-viewer/` Vite + Vue 3 app.
+- Per-package README with composable reference.
+
+---
+
 ## EPIC-14 — SFU adapter (planned earlier, scale unblocker)
 
 **Scope:** Mediasoup or LiveKit interop. Required for >~8 viewers per publisher.

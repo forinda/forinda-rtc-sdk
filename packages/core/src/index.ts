@@ -111,21 +111,34 @@ export {
 export { defineRetryPolicy, RetryPolicy, type RetryConfig } from "./retry/policy.ts";
 
 // Publisher
-export { definePublisher, Publisher } from "./publisher/publisher.ts";
-export type { PublisherEvents, PublisherOptions, ViewerInfo } from "./publisher/types.ts";
+export { definePublisher, defineAttachedPublisher, Publisher } from "./publisher/publisher.ts";
+export type {
+  AttachedPublisherOptions,
+  PublisherEvents,
+  PublisherOptions,
+  ViewerInfo,
+} from "./publisher/types.ts";
 
 // Viewer
-export { defineViewer, Viewer } from "./viewer/viewer.ts";
-export type { ViewerEvents, ViewerOptions } from "./viewer/types.ts";
+export { defineViewer, defineAttachedViewer, Viewer } from "./viewer/viewer.ts";
+export type { AttachedViewerOptions, ViewerEvents, ViewerOptions } from "./viewer/types.ts";
+
+// Room — higher-level coordinator (eliminates the duplicate-join footgun
+// when sharing one transport between Publisher / Viewer / RoomChannel)
+export { defineRoom, Room } from "./room/room.ts";
 
 // Room channel — presence + chat
-export { defineRoomChannel, RoomChannel } from "./room/room-channel.ts";
+export { defineRoomChannel, defineAttachedRoomChannel, RoomChannel } from "./room/room-channel.ts";
 export type {
+  AttachedRoomChannelOptions,
   ChatHistoryEntry,
   PresenceEntry,
   RoomChannelEvents,
   RoomChannelOptions,
+  RoomLeader,
+  RoomOptions,
   RoomPeerEntry,
+  RoomState,
 } from "./room/types.ts";
 export {
   definePresenceDiff,

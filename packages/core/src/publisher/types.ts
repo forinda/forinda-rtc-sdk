@@ -8,6 +8,7 @@
 import type { SdkError } from "@/errors/errors.ts";
 import type { PcFactory } from "@/peer/peer-connection.ts";
 import type { RetryConfig } from "@/retry/policy.ts";
+import type { RoomLeader } from "@/room/types.ts";
 import type { SignalingTransport } from "@/signaling/transport.ts";
 import type { ConnectionState } from "@/state/connection-state.ts";
 import type { ConnectionStats } from "@/stats/types.ts";
@@ -29,6 +30,26 @@ export interface PublisherOptions {
   /** Retry policy. Use defaults when omitted. */
   retry?: RetryConfig;
   /** Override the `RTCPeerConnection` constructor (test injection). */
+  pcFactory?: PcFactory;
+  /**
+   * **Internal.** Set by {@link defineAttachedPublisher} to make this
+   * Publisher coordinate with a {@link RoomLeader} (Room) instead of
+   * managing its own connect/join/leave. Consumers should not set this
+   * directly — use the proxy factory or the `room.publisher()` sugar.
+   */
+  __leader?: RoomLeader;
+}
+
+/**
+ * Constructor options for {@link defineAttachedPublisher}. A subset of
+ * {@link PublisherOptions}: `signaling`, `room`, and `peerId` are taken
+ * from the leader, so consumers only supply media + per-publisher tunables.
+ */
+export interface AttachedPublisherOptions {
+  stream: MediaStream;
+  iceServers?: RTCIceServer[];
+  stats?: { interval: number };
+  retry?: RetryConfig;
   pcFactory?: PcFactory;
 }
 

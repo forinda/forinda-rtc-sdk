@@ -45,15 +45,21 @@ export class RoomChannel {
   private readonly presenceMap = new Map<string, Record<string, JsonValue>>();
   private readonly chatBuffer: ChatHistoryEntry[] = [];
   private readonly ownAttributeKeys = new Set<string>();
+  private readonly leader: RoomChannelOptions["__leader"];
   private started = false;
   private stopped = false;
 
   constructor(opts: RoomChannelOptions) {
-    this.signaling = opts.signaling;
-    this.room = opts.room;
+    this.leader = opts.__leader;
+    this.signaling = opts.__leader?.signaling ?? opts.signaling;
+    this.room = opts.__leader?.room ?? opts.room;
     this.peerId =
-      opts.peerId ?? (typeof crypto !== "undefined" ? crypto.randomUUID() : `peer-${Date.now()}`);
-    this.manageJoin = opts.manageJoin ?? true;
+      opts.__leader?.peerId ??
+      opts.peerId ??
+      (typeof crypto !== "undefined" ? crypto.randomUUID() : `peer-${Date.now()}`);
+    // When attached to a Room, the leader owns join/leave; this channel is
+    // pure presence + chat. `manageJoin` becomes implicit-false.
+    this.manageJoin = opts.__leader ? false : (opts.manageJoin ?? true);
     this.chatHistoryLimit = opts.chatHistoryLimit ?? DEFAULT_CHAT_HISTORY_LIMIT;
   }
 
@@ -88,11 +94,17 @@ export class RoomChannel {
 
     this.disposers.push(this.signaling.on("message", (msg) => this.routeMessage(msg)));
 
-    if (this.manageJoin) {
-      // Only open the transport when we own it. A shared transport (Publisher/
-      // Viewer also using it) may already be `connected` or in-flight to
-      // `connecting`; calling connect again is wasted work and can churn
-      // adapter state on impls that don't guarantee idempotency.
+    if (this.leader) {
+      // Attached: defer transport + join entirely to the Room. Whatever role
+      // the Room joined as is fine — presence/chat work for any role.
+      await this.leader.ensureConnected();
+      // The Room's own start() will have joined; if not, default to presence
+      // (a chat-only joiner against a publisher Room is fine).
+      if (this.leader.role === null) {
+        await this.leader.ensureJoined("presence");
+      }
+    } else if (this.manageJoin) {
+      // Standalone path. Only open the transport when not already in flight.
       if (this.signaling.state !== "connected" && this.signaling.state !== "connecting") {
         await this.signaling.connect();
       }
@@ -254,4 +266,24 @@ export class RoomChannel {
  */
 export function defineRoomChannel(opts: RoomChannelOptions): RoomChannel {
   return new RoomChannel(opts);
+}
+
+/**
+ * Proxy factory for the **attached** case — wires a RoomChannel to share a
+ * {@link "./room.ts".Room}'s transport + single-`join` coordination. The
+ * channel becomes a pure presence + chat overlay; the Room owns the join.
+ *
+ * Equivalent to `room.channel(opts)`.
+ */
+export function defineAttachedRoomChannel(
+  leader: import("./types.ts").RoomLeader,
+  opts: import("./types.ts").AttachedRoomChannelOptions = {},
+): RoomChannel {
+  return new RoomChannel({
+    __leader: leader,
+    signaling: leader.signaling,
+    room: leader.room,
+    peerId: leader.peerId,
+    ...opts,
+  });
 }

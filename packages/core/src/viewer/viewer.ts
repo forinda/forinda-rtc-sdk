@@ -55,12 +55,14 @@ export class Viewer {
   private trackReceived = false;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private successResetTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly leader: ViewerOptions["__leader"];
   private stopping = false;
 
   constructor(opts: ViewerOptions) {
-    this.signaling = opts.signaling;
-    this.room = opts.room;
-    this.peerId = opts.peerId ?? crypto.randomUUID();
+    this.leader = opts.__leader;
+    this.signaling = opts.__leader?.signaling ?? opts.signaling;
+    this.room = opts.__leader?.room ?? opts.room;
+    this.peerId = opts.__leader?.peerId ?? opts.peerId ?? crypto.randomUUID();
     this.publisherId = opts.publisherId;
     this.iceServers = opts.iceServers ?? [];
     this.pcFactory = opts.pcFactory;
@@ -114,8 +116,13 @@ export class Viewer {
     });
     this.disposers.push(offState, offMessage);
 
-    await this.signaling.connect();
-    await this.sendJoin();
+    if (this.leader) {
+      await this.leader.ensureConnected();
+      await this.leader.ensureJoined("viewer");
+    } else {
+      await this.signaling.connect();
+      await this.sendJoin();
+    }
   }
 
   /** Leave the room and tear down. Idempotent. */
@@ -131,14 +138,18 @@ export class Viewer {
       this.successResetTimer = undefined;
     }
     this.teardownPeer();
-    try {
-      await this.sendLeave();
-    } catch {
-      // ignore
+    if (!this.leader) {
+      try {
+        await this.sendLeave();
+      } catch {
+        // ignore
+      }
     }
     for (const d of this.disposers) d();
     this.disposers.length = 0;
-    await this.signaling.disconnect();
+    if (!this.leader) {
+      await this.signaling.disconnect();
+    }
     this.stateMachine.transition("closed");
   }
 
@@ -304,8 +315,13 @@ export class Viewer {
     this.stateMachine.transition("reconnecting");
     this.signalingConnected = false;
     try {
-      await this.signaling.connect();
-      await this.sendJoin();
+      if (this.leader) {
+        await this.leader.ensureConnected();
+        await this.leader.ensureJoined("viewer");
+      } else {
+        await this.signaling.connect();
+        await this.sendJoin();
+      }
     } catch (cause) {
       this.handleSessionFailure(
         new SdkError("reconnect attempt failed", { code: "reconnect_failed", cause }),
@@ -346,4 +362,24 @@ export class Viewer {
  */
 export function defineViewer(opts: ViewerOptions): Viewer {
   return new Viewer(opts);
+}
+
+/**
+ * Proxy factory for the **attached** case — wires a Viewer to share a
+ * {@link "@/room/room.ts".Room}'s transport + single-`join` coordination
+ * instead of self-managing.
+ *
+ * Equivalent to `room.viewer(opts)`.
+ */
+export function defineAttachedViewer(
+  leader: import("@/room/types.ts").RoomLeader,
+  opts: import("./types.ts").AttachedViewerOptions,
+): Viewer {
+  return new Viewer({
+    __leader: leader,
+    signaling: leader.signaling,
+    room: leader.room,
+    peerId: leader.peerId,
+    ...opts,
+  });
 }

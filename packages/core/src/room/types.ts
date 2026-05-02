@@ -26,6 +26,20 @@ export interface RoomChannelOptions {
   manageJoin?: boolean;
   /** Cap on the in-memory chat history buffer. Default `200`. */
   chatHistoryLimit?: number;
+  /**
+   * **Internal.** Set by `defineAttachedRoomChannel`. Use the proxy
+   * factory or `room.channel()` instead of touching this directly.
+   */
+  __leader?: RoomLeader;
+}
+
+/**
+ * Constructor options for `defineAttachedRoomChannel`. `signaling` /
+ * `room` / `peerId` / `manageJoin` come from the leader; consumers supply
+ * only channel-local tunables.
+ */
+export interface AttachedRoomChannelOptions {
+  chatHistoryLimit?: number;
 }
 
 /**
@@ -64,3 +78,44 @@ export type RoomChannelEvents = {
   /** Internal channel error (validation, unexpected message). */
   error: Error;
 };
+
+/**
+ * Internal coordination contract between {@link "./room.ts".Room} and
+ * attached children (`Publisher`, `Viewer`, `RoomChannel`). Children call
+ * `ensureConnected()` + `ensureJoined(role)` from `start()` instead of
+ * managing the transport + join themselves; the Room enforces
+ * exactly-one-join semantics across every attached child.
+ *
+ * Exported so the proxy factories (`defineAttachedPublisher` etc.) can
+ * type-check the `__leader` private option, but not part of the consumer-
+ * facing surface — use `defineRoom` and the proxy factories instead.
+ */
+export interface RoomLeader {
+  readonly room: string;
+  readonly peerId: string;
+  readonly signaling: SignalingTransport;
+  /** The role the Room has joined as, or `null` until the first child starts. */
+  readonly role: RoleValue | null;
+  /** Open the transport if not already open. Idempotent. */
+  ensureConnected(): Promise<void>;
+  /**
+   * Issue the room's `join` with the given role iff no peer has joined yet.
+   * Subsequent calls assert the role matches and resolve without sending.
+   * Throws `ConfigurationError` on role mismatch (one Room can't be both
+   * publisher and viewer — that's a different room).
+   */
+  ensureJoined(role: RoleValue): Promise<void>;
+}
+
+/** Lifecycle states for a {@link "./room.ts".Room}. */
+export type RoomState = "idle" | "connecting" | "connected" | "closed";
+
+/** Constructor options for {@link "./room.ts".defineRoom}. */
+export interface RoomOptions {
+  /** Pre-built signaling transport. The Room owns connect/disconnect. */
+  signaling: SignalingTransport;
+  /** Room id every attached child observes. */
+  room: string;
+  /** Peer id every attached child speaks as. Defaults to `crypto.randomUUID()`. */
+  peerId?: string;
+}

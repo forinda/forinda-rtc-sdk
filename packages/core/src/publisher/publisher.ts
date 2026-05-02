@@ -64,14 +64,19 @@ export class Publisher {
   private readonly viewers = new Map<string, ViewerEntry>();
   private readonly statsConfig: PublisherOptions["stats"];
   private readonly retryPolicy: RetryPolicy;
+  /** Set when this Publisher was constructed via {@link defineAttachedPublisher}. */
+  private readonly leader: PublisherOptions["__leader"];
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private successResetTimer: ReturnType<typeof setTimeout> | undefined;
   private stopping = false;
 
   constructor(opts: PublisherOptions) {
-    this.signaling = opts.signaling;
-    this.room = opts.room;
-    this.peerId = opts.peerId ?? crypto.randomUUID();
+    // When attached to a Room, source signaling/room/peerId from the leader
+    // so the Publisher and the Room can never disagree.
+    this.leader = opts.__leader;
+    this.signaling = opts.__leader?.signaling ?? opts.signaling;
+    this.room = opts.__leader?.room ?? opts.room;
+    this.peerId = opts.__leader?.peerId ?? opts.peerId ?? crypto.randomUUID();
     this.stream = opts.stream;
     this.iceServers = opts.iceServers ?? [];
     this.pcFactory = opts.pcFactory;
@@ -142,8 +147,15 @@ export class Publisher {
     });
     this.disposers.push(offState, offMessage);
 
-    await this.signaling.connect();
-    await this.sendJoin();
+    if (this.leader) {
+      // Room owns connect + the single join. Just register listeners and
+      // let the leader coordinate; standalone behaviour is otherwise identical.
+      await this.leader.ensureConnected();
+      await this.leader.ensureJoined("publisher");
+    } else {
+      await this.signaling.connect();
+      await this.sendJoin();
+    }
   }
 
   /**
@@ -165,14 +177,20 @@ export class Publisher {
     for (const viewer of this.viewers.values()) {
       this.teardownViewer(viewer.peerId);
     }
-    try {
-      await this.sendLeave();
-    } catch {
-      // Ignore send failures during shutdown.
+    if (!this.leader) {
+      try {
+        await this.sendLeave();
+      } catch {
+        // Ignore send failures during shutdown.
+      }
     }
     for (const d of this.disposers) d();
     this.disposers.length = 0;
-    await this.signaling.disconnect();
+    if (!this.leader) {
+      // The Room owns its transport's lifecycle; standalone Publishers
+      // close it themselves.
+      await this.signaling.disconnect();
+    }
     this.stateMachine.transition("closed");
   }
 
@@ -221,8 +239,13 @@ export class Publisher {
     if (this.stopping) return;
     this.stateMachine.transition("reconnecting");
     try {
-      await this.signaling.connect();
-      await this.sendJoin();
+      if (this.leader) {
+        await this.leader.ensureConnected();
+        await this.leader.ensureJoined("publisher");
+      } else {
+        await this.signaling.connect();
+        await this.sendJoin();
+      }
       // signaling state listener will transition us back to `connected`.
     } catch (cause) {
       this.handleSessionFailure(
@@ -426,4 +449,32 @@ export class Publisher {
  */
 export function definePublisher(opts: PublisherOptions): Publisher {
   return new Publisher(opts);
+}
+
+/**
+ * Proxy factory for the **attached** case — wires a Publisher to share a
+ * {@link "@/room/room.ts".Room}'s transport + single-`join` coordination
+ * instead of self-managing.
+ *
+ * ```ts
+ * const room = defineRoom({ signaling, room: "demo", peerId: "alice" });
+ * const publisher = defineAttachedPublisher(room, { stream });
+ * const channel = defineAttachedRoomChannel(room);
+ * await publisher.start();
+ * await channel.start(); // shares the publisher's join — no second binding
+ * ```
+ *
+ * Equivalent to `room.publisher(opts)`.
+ */
+export function defineAttachedPublisher(
+  leader: import("@/room/types.ts").RoomLeader,
+  opts: import("./types.ts").AttachedPublisherOptions,
+): Publisher {
+  return new Publisher({
+    __leader: leader,
+    signaling: leader.signaling,
+    room: leader.room,
+    peerId: leader.peerId,
+    ...opts,
+  });
 }
