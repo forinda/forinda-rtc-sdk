@@ -409,9 +409,7 @@ export class RoomChannel {
     }
   }
 
-  private applyChatHistory(
-    message: Extract<SignalingMessageType, { type: "chat-history" }>,
-  ): void {
+  private applyChatHistory(message: Extract<SignalingMessageType, { type: "chat-history" }>): void {
     if (message.room !== this.room) return;
     const entries: ChatHistoryEntry[] = message.messages.map((m) => ({
       ...m,

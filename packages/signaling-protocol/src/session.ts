@@ -367,12 +367,9 @@ export class Session {
     if (message.role === "director") {
       const existing = this.roomMap.get(message.room);
       if (existing !== undefined && existing.hasAnyDirector()) {
-        throw new SignalingDirectorConflictError(
-          `room ${message.room} already has a director`,
-          {
-            context: { room: message.room, peer: message.peer },
-          },
-        );
+        throw new SignalingDirectorConflictError(`room ${message.room} already has a director`, {
+          context: { room: message.room, peer: message.peer },
+        });
       }
     }
 

@@ -48,6 +48,7 @@
     "typecheck": "wireit",
     "lint": "wireit",
     "test": "wireit",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
@@ -57,9 +58,11 @@
   "devDependencies": {
     "@forinda/test-helpers": "workspace:*",
     "@types/jsdom": "^21.1.7",
+    "@vitest/browser": "^2.1.0",
     "@vitest/coverage-v8": "^2.1.0",
     "jsdom": "^25.0.0",
     "oxlint": "^0.11.0",
+    "playwright": "^1.59.1",
     "tsup": "^8.3.0",
     "typescript": "^6.0.0",
     "vitest": "^2.1.0",

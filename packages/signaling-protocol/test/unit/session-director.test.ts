@@ -1,15 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { defineSignalingEngine } from "@/engine.ts";
-import {
-  SignalingDirectorConflictError,
-  SignalingPermissionError,
-} from "@/errors.ts";
+import { SignalingDirectorConflictError, SignalingPermissionError } from "@/errors.ts";
 import type { SignalingMessageType } from "@/messages.ts";
 
-const join = (
-  peer: string,
-  role: "publisher" | "viewer" | "presence" | "director" = "presence",
-) => JSON.stringify({ type: "join", room: "demo", peer, role });
+const join = (peer: string, role: "publisher" | "viewer" | "presence" | "director" = "presence") =>
+  JSON.stringify({ type: "join", room: "demo", peer, role });
 
 const promote = (target: string) => JSON.stringify({ type: "promote", target });
 const demote = (target: string) => JSON.stringify({ type: "demote", target });

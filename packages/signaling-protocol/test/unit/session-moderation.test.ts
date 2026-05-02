@@ -3,10 +3,8 @@ import { defineSignalingEngine } from "@/engine.ts";
 import { SignalingPermissionError } from "@/errors.ts";
 import type { SignalingMessageType } from "@/messages.ts";
 
-const join = (
-  peer: string,
-  role: "publisher" | "viewer" | "presence" | "director" = "presence",
-) => JSON.stringify({ type: "join", room: "demo", peer, role });
+const join = (peer: string, role: "publisher" | "viewer" | "presence" | "director" = "presence") =>
+  JSON.stringify({ type: "join", room: "demo", peer, role });
 
 const mute = (target: string, kind: "audio" | "video" = "audio") =>
   JSON.stringify({ type: "mute", target, kind });
@@ -42,9 +40,7 @@ describe("Session — mute / unmute (EPIC-12)", () => {
     await session.handleMessage("sa", mute("bob", "audio"));
 
     expect(
-      sent.find(
-        (s) => s.peerId === "bob" && s.msg.type === "mute" && s.msg.kind === "audio",
-      ),
+      sent.find((s) => s.peerId === "bob" && s.msg.type === "mute" && s.msg.kind === "audio"),
     ).toBeDefined();
     const presenceUpdates = sent.filter((s) => s.msg.type === "presence-state");
     expect(presenceUpdates.length).toBeGreaterThan(0);
@@ -136,8 +132,8 @@ describe("Session — set-bitrate (EPIC-12)", () => {
     await session.handleConnection("sc", {});
     await session.handleMessage("sc", join("carol", "presence"));
 
-    await expect(
-      session.handleMessage("sc", setBitrate("bob", 500_000)),
-    ).rejects.toBeInstanceOf(SignalingPermissionError);
+    await expect(session.handleMessage("sc", setBitrate("bob", 500_000))).rejects.toBeInstanceOf(
+      SignalingPermissionError,
+    );
   });
 });
