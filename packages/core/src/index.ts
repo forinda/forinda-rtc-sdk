@@ -112,3 +112,13 @@ export type { PublisherEvents, PublisherOptions, ViewerInfo } from "./publisher/
 // Viewer
 export { defineViewer, Viewer } from "./viewer/viewer.ts";
 export type { ViewerEvents, ViewerOptions } from "./viewer/types.ts";
+
+// Room channel — presence + chat
+export { defineRoomChannel, RoomChannel } from "./room/room-channel.ts";
+export type {
+  ChatHistoryEntry,
+  PresenceEntry,
+  RoomChannelEvents,
+  RoomChannelOptions,
+  RoomPeerEntry,
+} from "./room/types.ts";
