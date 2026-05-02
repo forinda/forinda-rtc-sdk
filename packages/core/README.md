@@ -109,6 +109,31 @@ console.log(channel.peers); // ReadonlyMap<peerId, attrs>
 console.log(channel.chatHistory); // capped at chatHistoryLimit (default 200)
 ```
 
+#### Optimistic chat + ack reconciliation
+
+`sendChat()` is optimistic — it appends a `pending` entry to `chatHistory` synchronously and emits `chat` immediately so your UI can render the message before the round-trip. The server echoes the message back with the same `clientId`; the channel matches the echo and flips the entry to `confirmed`. If no echo arrives within `chatAckTimeoutMs` (default `10_000`), the entry flips to `failed`.
+
+```ts
+channel.on("chat-status", ({ id, status }) => {
+  console.log(id, status); // "<uuid>", "pending" → "confirmed" (or "failed")
+});
+
+const id = await channel.sendChat("hello"); // returns the entry id
+```
+
+`ChatHistoryEntry.status` is `"pending" | "confirmed" | "failed"`; `ChatHistoryEntry.id` matches the `chat-status` event payload.
+
+#### Retry + presence resync
+
+When the underlying transport closes unexpectedly, `RoomChannel` enters `reconnecting`, retries with exponential backoff (per `defineRetryPolicy`), re-issues `join` (when `manageJoin: true`), and re-broadcasts every previously-set own presence attribute so other peers see the right state. Subscribe to the channel-level `state` event for UI feedback:
+
+```ts
+channel.on("state", (s) => console.log(s));
+// "connecting" → "connected" → ("reconnecting" → "connected") → "closed"
+```
+
+In-flight pending chats at the moment of the drop are flipped to `failed` — `signaling.send` resolving doesn't actually prove the engine received the message.
+
 | Option             | Default               | Purpose                                                                                                                                                                |
 | ------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `signaling`        | —                     | Required. Pre-built `SignalingTransport`. Channel never opens or closes it itself.                                                                                     |
@@ -116,18 +141,21 @@ console.log(channel.chatHistory); // capped at chatHistoryLimit (default 200)
 | `peerId`           | `crypto.randomUUID()` | Self identifier.                                                                                                                                                       |
 | `manageJoin`       | `true`                | Issue `join` (role `presence`) on `start()` and matching `leave` on `stop()`. Pass `false` to share a transport with a Publisher/Viewer that already manages the join. |
 | `chatHistoryLimit` | `200`                 | Cap on the rolling chat-history buffer.                                                                                                                                |
+| `chatAckTimeoutMs` | `10_000`              | Wait this long for a server-echo before flipping a pending chat to `failed`.                                                                                           |
+| `retry`            | enabled               | `RetryConfig` for transport-drop recovery. Reconnects, re-issues join, re-broadcasts presence, marks pending chats failed. `{ enabled: false }` to disable.            |
 
-| Method                        | Purpose                                                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `start()` / `stop()`          | Subscribe / unsubscribe; manage `join` / `leave` if owned.                                                      |
-| `setAttribute(key, value)`    | Set or replace one own presence attribute.                                                                      |
-| `removeAttribute(key)`        | Remove one own attribute (sends `null` over the wire).                                                          |
-| `clearAttributes()`           | Remove every attribute previously set by this channel.                                                          |
-| `raiseHand()` / `lowerHand()` | Sugar for `setAttribute("hand-raised", true/false)`.                                                            |
-| `sendChat(body, { to? })`     | Broadcast or DM. `body` ≤ 8192 chars.                                                                           |
-| `peers` (getter)              | `ReadonlyMap<peerId, attributes>` — live view.                                                                  |
-| `chatHistory` (getter)        | Read-only ordered array, oldest first.                                                                          |
-| `on(event, handler)`          | Subscribe to `presence`, `presence-snapshot`, `peer-joined`, `peer-left`, `chat`, `error`. Returns unsubscribe. |
+| Method                        | Purpose                                                                                                                    |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `start()` / `stop()`          | Subscribe / unsubscribe; manage `join` / `leave` if owned.                                                                 |
+| `setAttribute(key, value)`    | Set or replace one own presence attribute.                                                                                 |
+| `removeAttribute(key)`        | Remove one own attribute (sends `null` over the wire).                                                                     |
+| `clearAttributes()`           | Remove every attribute previously set by this channel.                                                                     |
+| `raiseHand()` / `lowerHand()` | Sugar for `setAttribute("hand-raised", true/false)`.                                                                       |
+| `sendChat(body, { to? })`     | Optimistic broadcast or DM (`body` ≤ 8192 chars). Resolves with the entry's `id`.                                          |
+| `peers` (getter)              | `ReadonlyMap<peerId, attributes>` — live view.                                                                             |
+| `chatHistory` (getter)        | Read-only ordered array, oldest first. Each entry has `id` + `status`.                                                     |
+| `state` (getter)              | `"idle" \| "connecting" \| "connected" \| "reconnecting" \| "closed"`.                                                     |
+| `on(event, handler)`          | `presence`, `presence-snapshot`, `peer-joined`, `peer-left`, `chat`, `chat-status`, `state`, `error`. Returns unsubscribe. |
 
 The channel **does not own its transport's lifecycle** — the consumer is responsible for connecting/disconnecting it. Sharing one transport with a `Publisher` or `Viewer` is the common case; pass `manageJoin: false` so the join is issued only once.
 

@@ -64,16 +64,20 @@ export function defineFakeRoomChannel(peerId = "alice"): FakeRoomChannel {
       await this.removeAttribute("hand-raised");
     }),
     sendChat: vi.fn(async (body: string, opts: { to?: string } = {}) => {
+      const id = `fake-${chatBuffer.length}`;
       const entry: ChatHistoryEntry = {
         type: "chat",
         from: peerId,
         body,
         ts: Date.now(),
         receivedAt: Date.now(),
+        id,
+        status: "confirmed",
         ...(opts.to !== undefined ? { to: opts.to } : {}),
       };
       chatBuffer.push(entry);
       handlers.get("chat")?.forEach((h) => h(entry));
+      return id;
     }),
     __fire(event, payload) {
       handlers.get(event)?.forEach((h) => h(payload));

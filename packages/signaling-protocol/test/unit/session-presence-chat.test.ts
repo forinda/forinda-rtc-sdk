@@ -217,7 +217,9 @@ describe("Session — chat clientId echo (EPIC-20)", () => {
   it("echoes a clientId-tagged chat back to the sender", async () => {
     const session = defineSession();
     const sent: Array<{ peerId: string; msg: SignalingMessageType }> = [];
-    session.onSend((peerId, msg) => sent.push({ peerId, msg }));
+    session.onSend((peerId, msg) => {
+      sent.push({ peerId, msg });
+    });
 
     await session.handleConnection("sa", {});
     await session.handleConnection("sb", {});
@@ -257,7 +259,9 @@ describe("Session — chat clientId echo (EPIC-20)", () => {
   it("does NOT echo to the sender when clientId is omitted (legacy clients)", async () => {
     const session = defineSession();
     const sent: Array<{ peerId: string; msg: SignalingMessageType }> = [];
-    session.onSend((peerId, msg) => sent.push({ peerId, msg }));
+    session.onSend((peerId, msg) => {
+      sent.push({ peerId, msg });
+    });
 
     await session.handleConnection("sa", {});
     await session.handleConnection("sb", {});

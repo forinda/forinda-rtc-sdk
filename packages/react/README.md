@@ -176,13 +176,23 @@ await setAttribute("status", "🎬");
 
 ### `useChat(channel)`
 
-Live chat history plus a stable `send` callback. Omit `to` for a room-wide broadcast; pass a peerId for a DM.
+Live chat history plus a `send` callback. Omit `to` for a room-wide broadcast; pass a peerId for a DM. `send()` resolves with the entry's `id` so you can correlate with `chat-status` events on the underlying channel.
 
 ```ts
 const { messages, send } = useChat(channel);
-await send("hello room");
+const id = await send("hello room");
 await send("psst", { to: "bob" });
+
+// Subscribe to status changes via the underlying channel:
+useEffect(() => {
+  if (!channel) return;
+  return channel.on("chat-status", ({ id, status }) => {
+    // status: "pending" | "confirmed" | "failed"
+  });
+}, [channel]);
 ```
+
+`messages[i].status` is `"pending"` until the server echoes the message back, then `"confirmed"`. A `chatAckTimeoutMs` lapse (default 10s) flips it to `"failed"`. Each entry's `id` matches the `chat-status` event payload.
 
 ### `useRaiseHand(channel)`
 

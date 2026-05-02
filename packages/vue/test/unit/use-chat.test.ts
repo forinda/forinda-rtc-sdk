@@ -19,6 +19,8 @@ describe("useChat", () => {
       body: "hi",
       ts: 1,
       receivedAt: 1,
+      id: "bob-1",
+      status: "confirmed",
     });
     const { result, dispose } = withScope(() => useChat(ch));
     expect(result.messages.value).toHaveLength(1);

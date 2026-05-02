@@ -16,28 +16,29 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/signaling-protocol/src/messages.ts` | Add `clientId` to `Chat` zod schema (optional, max 64 chars). |
-| `packages/signaling-protocol/src/session.ts` | In `applyChat`, when `message.clientId !== undefined`, also send the message back to the sender. |
-| `packages/signaling-protocol/test/unit/session-presence-chat.test.ts` | New test: `clientId` round-trips and triggers a self-echo. |
-| `packages/core/src/room/types.ts` | Add `id` + `status` to `ChatHistoryEntry`. New `RoomChannelState` type. New `RoomChannelEvents` keys: `state`, `chat-status`. New options: `retry`, `chatAckTimeoutMs`. |
-| `packages/core/src/room/room-channel.ts` | Optimistic `sendChat`, ack reconciliation, ack timeout, `state` machine, retry/reconnect, presence resync. |
-| `packages/core/test/unit/room/room-channel-chat-status.test.ts` | New: optimistic append, server-echo confirmation, timeout → failed. |
-| `packages/core/test/unit/room/room-channel-state.test.ts` | New: state event firing through start/connect/disconnect. |
-| `packages/core/test/unit/room/room-channel-retry.test.ts` | New: reconnect loop + presence resync + pending-failed marking. |
-| `packages/react/src/use-chat.ts` | Plumb new `id` / `status` (already in `ChatHistoryEntry`). Expose `sendChat` returning `Promise<string>`. New `useChatStatus` for ack subscriptions. |
-| `packages/vue/src/use-chat.ts` | Same surface as React, Vue ergonomics. |
-| `packages/react/test/unit/use-chat.test.tsx` | Cover new return value + status surfacing. |
-| `packages/vue/test/unit/use-chat.test.ts` | Same. |
-| `packages/core/README.md`, `packages/react/README.md`, `packages/vue/README.md` | Document optimistic chat + retry options. |
-| `.changeset/roomchannel-resilience.md` | minor for `core` + `signaling-protocol`; patch for `react`, `vue`, signaling-ws/broadcast (peer-dep cascade). |
+| File                                                                            | Responsibility                                                                                                                                                          |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/signaling-protocol/src/messages.ts`                                   | Add `clientId` to `Chat` zod schema (optional, max 64 chars).                                                                                                           |
+| `packages/signaling-protocol/src/session.ts`                                    | In `applyChat`, when `message.clientId !== undefined`, also send the message back to the sender.                                                                        |
+| `packages/signaling-protocol/test/unit/session-presence-chat.test.ts`           | New test: `clientId` round-trips and triggers a self-echo.                                                                                                              |
+| `packages/core/src/room/types.ts`                                               | Add `id` + `status` to `ChatHistoryEntry`. New `RoomChannelState` type. New `RoomChannelEvents` keys: `state`, `chat-status`. New options: `retry`, `chatAckTimeoutMs`. |
+| `packages/core/src/room/room-channel.ts`                                        | Optimistic `sendChat`, ack reconciliation, ack timeout, `state` machine, retry/reconnect, presence resync.                                                              |
+| `packages/core/test/unit/room/room-channel-chat-status.test.ts`                 | New: optimistic append, server-echo confirmation, timeout → failed.                                                                                                     |
+| `packages/core/test/unit/room/room-channel-state.test.ts`                       | New: state event firing through start/connect/disconnect.                                                                                                               |
+| `packages/core/test/unit/room/room-channel-retry.test.ts`                       | New: reconnect loop + presence resync + pending-failed marking.                                                                                                         |
+| `packages/react/src/use-chat.ts`                                                | Plumb new `id` / `status` (already in `ChatHistoryEntry`). Expose `sendChat` returning `Promise<string>`. New `useChatStatus` for ack subscriptions.                    |
+| `packages/vue/src/use-chat.ts`                                                  | Same surface as React, Vue ergonomics.                                                                                                                                  |
+| `packages/react/test/unit/use-chat.test.tsx`                                    | Cover new return value + status surfacing.                                                                                                                              |
+| `packages/vue/test/unit/use-chat.test.ts`                                       | Same.                                                                                                                                                                   |
+| `packages/core/README.md`, `packages/react/README.md`, `packages/vue/README.md` | Document optimistic chat + retry options.                                                                                                                               |
+| `.changeset/roomchannel-resilience.md`                                          | minor for `core` + `signaling-protocol`; patch for `react`, `vue`, signaling-ws/broadcast (peer-dep cascade).                                                           |
 
 ---
 
 ## Task 1: Wire format — `clientId` on `Chat` + opt-in self-echo
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/messages.ts:180-186`
 - Modify: `packages/signaling-protocol/src/session.ts:410-433`
 - Test: `packages/signaling-protocol/test/unit/session-presence-chat.test.ts`
@@ -212,6 +213,7 @@ git commit -m "feat(signaling-protocol): opt-in clientId on Chat + sender-echo (
 ## Task 2: Extend `ChatHistoryEntry` with `id` and `status`
 
 **Files:**
+
 - Modify: `packages/core/src/room/types.ts:50-52`
 - Modify: `packages/core/src/room/room-channel.ts:247-254` (only the entry construction; rest in later tasks)
 - Test: `packages/core/test/unit/room/room-channel.test.ts` (existing — verify backward compat)
@@ -253,12 +255,7 @@ export interface RoomPeerEntry {
 }
 
 /** Lifecycle states for a `RoomChannel`. */
-export type RoomChannelState =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "closed";
+export type RoomChannelState = "idle" | "connecting" | "connected" | "reconnecting" | "closed";
 
 /** Status update for a single chat entry. */
 export interface ChatStatusEntry {
@@ -398,6 +395,7 @@ git commit -m "feat(core): add id/status to ChatHistoryEntry + new event keys (E
 ## Task 3: Optimistic `sendChat` + `chat-status` event
 
 **Files:**
+
 - Modify: `packages/core/src/room/room-channel.ts:194-203` (the `sendChat` method)
 - Test: `packages/core/test/unit/room/room-channel-chat-status.test.ts` (NEW)
 
@@ -641,6 +639,7 @@ git commit -m "feat(core): optimistic sendChat with server-echo reconciliation (
 ## Task 4: Chat ack timeout → `failed`
 
 **Files:**
+
 - Modify: `packages/core/src/room/room-channel.ts` (constructor, `sendChat`, new helpers)
 - Test: `packages/core/test/unit/room/room-channel-chat-status.test.ts` (extend)
 
@@ -833,6 +832,7 @@ git commit -m "feat(core): chat ack timeout flips pending → failed (EPIC-20 #4
 ## Task 5: Channel-level `state` event
 
 **Files:**
+
 - Modify: `packages/core/src/room/room-channel.ts` (state field + emit on transitions)
 - Test: `packages/core/test/unit/room/room-channel-state.test.ts` (NEW)
 
@@ -1014,6 +1014,7 @@ git commit -m "feat(core): RoomChannel state lifecycle event (EPIC-20 #5/9)"
 ## Task 6: Retry policy + reconnect loop with presence resync
 
 **Files:**
+
 - Modify: `packages/core/src/room/room-channel.ts` (subscribe to transport state, reconnect loop, presence resync)
 - Test: `packages/core/test/unit/room/room-channel-retry.test.ts` (NEW)
 
@@ -1323,6 +1324,7 @@ git commit -m "feat(core): RoomChannel retry + reconnect with presence resync (E
 ## Task 7: React `useChat` — return id + surface chat-status
 
 **Files:**
+
 - Modify: `packages/react/src/use-chat.ts`
 - Test: `packages/react/test/unit/use-chat.test.tsx`
 
@@ -1421,6 +1423,7 @@ git commit -m "feat(react): useChat.send returns entry id (EPIC-20 #7/9)"
 ## Task 8: Vue `useChat` — same surface
 
 **Files:**
+
 - Modify: `packages/vue/src/use-chat.ts`
 - Test: `packages/vue/test/unit/use-chat.test.ts`
 
@@ -1517,6 +1520,7 @@ git commit -m "feat(vue): useChat.send returns entry id (EPIC-20 #8/9)"
 ## Task 9: README updates + changeset
 
 **Files:**
+
 - Modify: `packages/core/README.md` (chat + retry sections)
 - Modify: `packages/react/README.md`
 - Modify: `packages/vue/README.md`
@@ -1526,7 +1530,7 @@ git commit -m "feat(vue): useChat.send returns entry id (EPIC-20 #8/9)"
 
 Find the existing `RoomChannel` section. Insert immediately after the existing `sendChat` example a new subsection:
 
-```markdown
+````markdown
 ### Optimistic chat + ack reconciliation
 
 `sendChat()` is optimistic — it appends a `pending` entry to `chatHistory` synchronously and emits `chat` immediately so your UI can render the message before the round-trip. The server echoes the message back with the same `clientId`; the channel matches the echo and flips the entry to `confirmed`. If no echo arrives within `chatAckTimeoutMs` (default `10_000`), the entry flips to `failed`.
@@ -1541,18 +1545,20 @@ channel.on("chat-status", ({ id, status }) => {
 
 const id = await channel.sendChat("hello"); // returns the pending entry's id
 ```
-```
+````
+
+````
 
 Then find the `defineRoomChannel` options table and add:
 
 ```markdown
 | `retry` | `defineRetryPolicy()` defaults | Reconnect after transport drops; re-issues join, re-broadcasts presence, marks pending chats failed. |
 | `chatAckTimeoutMs` | `10_000` | Time to wait for a server-echo before flipping a pending chat to `failed`. |
-```
+````
 
 Add a sibling `### Retry + presence resync` section under the chat section:
 
-```markdown
+````markdown
 ### Retry + presence resync
 
 When the underlying transport closes unexpectedly, `RoomChannel` enters `reconnecting`, retries with exponential backoff (per `defineRetryPolicy`), re-issues `join` (when `manageJoin: true`), and re-broadcasts every previously-set own presence attribute so other peers see the right state. Subscribe to the channel-level `state` event for UI feedback:
@@ -1561,9 +1567,11 @@ When the underlying transport closes unexpectedly, `RoomChannel` enters `reconne
 channel.on("state", (s) => console.log(s));
 // "connecting" → "connected" → ("reconnecting" → "connected") → "closed"
 ```
+````
 
 Pending chats in flight at the moment of the drop are flipped to `failed` — `signaling.send` resolving doesn't actually prove the engine received the message.
-```
+
+````
 
 - [ ] **Step 2: Update `packages/react/README.md`**
 
@@ -1586,10 +1594,11 @@ useEffect(() => {
     // status: "pending" | "confirmed" | "failed"
   });
 }, [channel]);
-```
+````
 
 `messages[i].status` is `"pending"` until the server echoes the message back, then `"confirmed"`. A `chatAckTimeoutMs` lapse (default 10s) flips it to `"failed"`.
-```
+
+````
 
 - [ ] **Step 3: Update `packages/vue/README.md`**
 
@@ -1613,10 +1622,11 @@ watch(channel, (ch, _prev, onCleanup) => {
   });
   onCleanup(off);
 });
-```
+````
 
 `messages.value[i].status` is `"pending"` until the server echoes the message; the `chatAckTimeoutMs` (default 10s) flips to `"failed"`.
-```
+
+````
 
 - [ ] **Step 4: Create the changeset**
 
@@ -1651,7 +1661,7 @@ Create `.changeset/roomchannel-resilience.md`:
 ### Rationale
 
 Production chat needs a way to tell the user "we sent your message" vs. "we tried — the server never confirmed it." The previous `sendChat` resolved as soon as the message hit the OS socket buffer, which says nothing about whether the engine accepted it. Pairing optimistic UI with a server-echo ack gives both responsiveness and honesty.
-```
+````
 
 - [ ] **Step 5: Format check**
 

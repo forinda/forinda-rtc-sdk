@@ -193,13 +193,24 @@ Accepts a `Ref<RoomChannel | null>`, a getter, or a plain value. Typically the `
 
 ### `useChat(channel)`
 
-Live chat history plus a stable `send` callback. Omit `to` for a room-wide broadcast; pass a peerId for a DM.
+Live chat history plus a `send` callback. Omit `to` for a broadcast; pass a peerId for a DM. `send()` resolves with the entry's `id`.
 
 ```ts
 const { messages, send } = useChat(channel);
-await send("hello room");
+const id = await send("hello room");
 await send("psst", { to: "bob" });
+
+// Status updates: subscribe via the underlying channel.
+watch(channel, (ch, _prev, onCleanup) => {
+  if (!ch) return;
+  const off = ch.on("chat-status", ({ id, status }) => {
+    // status: "pending" | "confirmed" | "failed"
+  });
+  onCleanup(off);
+});
 ```
+
+`messages.value[i].status` is `"pending"` until the server echoes the message; the `chatAckTimeoutMs` (default 10s) flips to `"failed"`. Each entry's `id` matches the `chat-status` event payload.
 
 ### `useRaiseHand(channel)`
 

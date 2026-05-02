@@ -81,12 +81,7 @@ export interface ChatHistoryEntry extends ChatMessage {
 }
 
 /** Lifecycle states for a `RoomChannel`. */
-export type RoomChannelState =
-  | "idle"
-  | "connecting"
-  | "connected"
-  | "reconnecting"
-  | "closed";
+export type RoomChannelState = "idle" | "connecting" | "connected" | "reconnecting" | "closed";
 
 /** Status update for a single chat entry. */
 export interface ChatStatusEntry {
