@@ -30,6 +30,13 @@ import type { PeerId, RoomId, RoomPeer, SocketId } from "./types.ts";
 export interface RoomOptions {
   /** Maximum simultaneous peers. New joiners past this throw {@link RoomFullError}. */
   capacity: number;
+  /**
+   * Cap on the per-room chat-history ring buffer. `0` (default) disables
+   * the buffer entirely — `pushChat` becomes a no-op and `chatHistory`
+   * always returns `[]`. The Session opts joiners into receiving the
+   * history via `replayHistory: true` on their `join`.
+   */
+  chatHistoryLimit?: number;
 }
 
 /**
@@ -42,10 +49,13 @@ export class Room {
   private readonly peerMap = new Map<PeerId, RoomPeer>();
   /** Per-peer presence attributes; empty entries are removed from the map. */
   private readonly presenceMap = new Map<PeerId, Record<string, JsonValue>>();
+  private readonly chatBuffer: import("./messages.ts").ChatMessage[] = [];
+  private readonly chatHistoryLimit: number;
 
   constructor(id: RoomId, opts: RoomOptions) {
     this.id = id;
     this.capacity = opts.capacity;
+    this.chatHistoryLimit = opts.chatHistoryLimit ?? 0;
   }
 
   /** Current number of peers in the room. */
@@ -147,6 +157,24 @@ export class Room {
   /** Drops a peer's presence entry. Returns true when something was removed. */
   clearPresence(peerId: PeerId): boolean {
     return this.presenceMap.delete(peerId);
+  }
+
+  /**
+   * Append a successfully-applied chat to the per-room ring buffer. No-op
+   * when `chatHistoryLimit` is `0`. Old entries are dropped from the front
+   * once the limit is reached.
+   */
+  pushChat(msg: import("./messages.ts").ChatMessage): void {
+    if (this.chatHistoryLimit === 0) return;
+    this.chatBuffer.push(msg);
+    while (this.chatBuffer.length > this.chatHistoryLimit) {
+      this.chatBuffer.shift();
+    }
+  }
+
+  /** Read-only snapshot of the chat history (oldest first). */
+  chatHistory(): readonly import("./messages.ts").ChatMessage[] {
+    return this.chatBuffer;
   }
 }
 
