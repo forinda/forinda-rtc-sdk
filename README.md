@@ -21,12 +21,16 @@ Open-source, framework-agnostic WebRTC SDK. Publish video, view it, chat, raise 
 ## What you get
 
 - **One-publisher → many-viewers WebRTC** with perfect-negotiation, retry policy, auto-reconnect, and stats.
+- **`defineRoom`** — one factory bundles publisher + viewer + chat + recorder over a single signaling socket. Eliminates the duplicate-join footgun.
 - **Screen share** via `getDisplayMedia` — same `Publisher` plumbing as camera, just a different source.
 - **Presence + chat** as a thin layer over the same signaling transport. `raiseHand()` / `lowerHand()` sugar; broadcast or DM messaging; rolling history.
 - **Recording** via `MediaRecorder` with codec auto-pick, bitrate hints, chunked output for streaming uploads, and an in-memory buffer cap so long recordings can't OOM the tab.
 - **Three consumer surfaces** with the same underlying API: vanilla TypeScript, React 18+ hooks, and standards-based Web Components.
+- **Browser packages ship minified** with sourcemaps. `@forinda/video-sdk-core` is ~8 KB gzipped; the full publish + presence + chat + recording stack lands under ~16 KB gzipped.
 
 ## Quick start
+
+### Just publish a video stream
 
 ```bash
 pnpm add @forinda/video-sdk-core @forinda/video-sdk-signaling-ws
@@ -44,6 +48,29 @@ const publisher = definePublisher({
 });
 publisher.on("viewer", ({ peerId }) => console.log("viewer joined:", peerId));
 await publisher.start();
+```
+
+### Publish + chat + record over one socket (recommended for production)
+
+Use `defineRoom` when you need media plus presence/chat in the same browser tab — it owns the shared transport and the single `join`, so the children don't fight over it.
+
+```ts
+import { defineRoom, defineWebSocketSignaling, getUserMedia } from "@forinda/video-sdk-core";
+
+const stream = await getUserMedia({ audio: true, video: true });
+const signaling = defineWebSocketSignaling({ url: "wss://signal.example.com" });
+const room = defineRoom({ signaling, room: "demo", peerId: "alice" });
+
+const publisher = room.publisher({ stream });
+const channel = room.channel(); // presence + chat over the same socket
+const recorder = room.recorder(stream); // local recording
+
+await publisher.start();
+await channel.start();
+
+await channel.raiseHand();
+await channel.sendChat("hi room");
+recorder.start();
 ```
 
 See each package's README for the full API reference.
