@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { definePeerConnection, PeerConnection } from "@/peer/peer-connection.ts";
-import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
+import { defineFakePeerConnection } from "@forinda/test-helpers";
 
 const PC_FACTORY = vi.fn();
 
@@ -10,7 +10,7 @@ afterEach(() => {
 
 describe("PeerConnection", () => {
   it("factory returns a PeerConnection", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     const wrapped = definePeerConnection({
       iceServers: [],
@@ -20,7 +20,7 @@ describe("PeerConnection", () => {
   });
 
   it("constructs a real RTCPeerConnection through the factory", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     definePeerConnection({
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -32,7 +32,7 @@ describe("PeerConnection", () => {
   });
 
   it("emits connectionstate when the underlying PC fires connectionstatechange", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     const wrapped = definePeerConnection({ iceServers: [], pcFactory: PC_FACTORY });
 
@@ -46,7 +46,7 @@ describe("PeerConnection", () => {
   });
 
   it("emits iceconnectionstate", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     const wrapped = definePeerConnection({ iceServers: [], pcFactory: PC_FACTORY });
 
@@ -60,7 +60,7 @@ describe("PeerConnection", () => {
   });
 
   it("emits icecandidate with the candidate or null end-of-candidates", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     const wrapped = definePeerConnection({ iceServers: [], pcFactory: PC_FACTORY });
 
@@ -76,7 +76,7 @@ describe("PeerConnection", () => {
   });
 
   it("emits track when the PC fires a track event", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     const wrapped = definePeerConnection({ iceServers: [], pcFactory: PC_FACTORY });
 
@@ -93,7 +93,7 @@ describe("PeerConnection", () => {
   });
 
   it("close calls the underlying RTCPeerConnection.close and removes listeners", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     const wrapped = definePeerConnection({ iceServers: [], pcFactory: PC_FACTORY });
 
@@ -109,7 +109,7 @@ describe("PeerConnection", () => {
   });
 
   it("exposes the underlying RTCPeerConnection via .raw", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     PC_FACTORY.mockReturnValue(pc);
     const wrapped = definePeerConnection({ iceServers: [], pcFactory: PC_FACTORY });
     expect(wrapped.raw).toBe(pc);

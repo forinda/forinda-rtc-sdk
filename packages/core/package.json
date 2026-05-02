@@ -55,6 +55,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@forinda/test-helpers": "workspace:*",
     "@types/jsdom": "^21.1.7",
     "@vitest/coverage-v8": "^2.1.0",
     "jsdom": "^25.0.0",

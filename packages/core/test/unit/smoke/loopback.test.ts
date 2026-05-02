@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { definePublisher, defineViewer } from "@/index.ts";
-import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
-import { createInMemoryTransportPair } from "../../_mocks/in-memory-signaling.ts";
+import { defineFakePeerConnection } from "@forinda/test-helpers";
+import { defineInMemoryTransportPair } from "@forinda/test-helpers";
 import { fakeMediaStream } from "../../_mocks/fake-media-devices.ts";
 
 describe("public surface — publisher ↔ viewer loopback", () => {
   it("end-to-end: viewer joins, publisher sees viewer event, viewer sees track event", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
 
     // Two distinct fake PCs — publisher's view, viewer's view.
-    const pubPc = createFakePeerConnection();
-    const viewerPc = createFakePeerConnection();
+    const pubPc = defineFakePeerConnection();
+    const viewerPc = defineFakePeerConnection();
 
     // Build paired stream so the viewer's track event fires in tandem with
     // negotiation completion.

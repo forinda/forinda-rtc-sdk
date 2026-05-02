@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConfigurationError } from "@/errors/errors.ts";
 import { definePublisher, Publisher } from "@/publisher/publisher.ts";
-import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
-import { createInMemoryTransportPair } from "../../_mocks/in-memory-signaling.ts";
+import { defineFakePeerConnection } from "@forinda/test-helpers";
+import { defineInMemoryTransportPair } from "@forinda/test-helpers";
 import { fakeMediaStream } from "../../_mocks/fake-media-devices.ts";
 
 describe("Publisher (skeleton)", () => {
   it("factory returns a Publisher", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling,
       room: "demo",
@@ -17,7 +17,7 @@ describe("Publisher (skeleton)", () => {
   });
 
   it("starts in idle state with empty peer list", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling,
       room: "demo",
@@ -28,13 +28,13 @@ describe("Publisher (skeleton)", () => {
   });
 
   it("auto-generates a peerId when not provided", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const p = definePublisher({ signaling, room: "demo", stream: fakeMediaStream() });
     expect(p.peerId).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it("uses an explicit peerId when provided", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling,
       room: "demo",
@@ -45,7 +45,7 @@ describe("Publisher (skeleton)", () => {
   });
 
   it("start() transitions through connecting → connected and emits state events", async () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling,
       room: "demo",
@@ -63,7 +63,7 @@ describe("Publisher (skeleton)", () => {
   });
 
   it("start() sends a join message via the signaling transport", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
     const inbound: unknown[] = [];
     viewerSig.on("message", (m) => inbound.push(m));
 
@@ -86,7 +86,7 @@ describe("Publisher (skeleton)", () => {
   });
 
   it("stop() sends a leave and reaches closed", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
     const inbound: unknown[] = [];
     viewerSig.on("message", (m) => inbound.push(m));
 
@@ -106,7 +106,7 @@ describe("Publisher (skeleton)", () => {
   });
 
   it("stop() is idempotent", async () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling,
       room: "demo",
@@ -120,7 +120,7 @@ describe("Publisher (skeleton)", () => {
   });
 
   it("start() is idempotent (no-op when already started)", async () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling,
       room: "demo",
@@ -137,8 +137,8 @@ describe("Publisher (skeleton)", () => {
 describe("Publisher — per-viewer PC management", () => {
   // Helper: simulate a viewer's peer-joined arrival via the paired transport.
   const simulateViewerJoin = async (
-    pubSig: ReturnType<typeof createInMemoryTransportPair>["publisher"],
-    viewerSig: ReturnType<typeof createInMemoryTransportPair>["viewer"],
+    pubSig: ReturnType<typeof defineInMemoryTransportPair>["publisher"],
+    viewerSig: ReturnType<typeof defineInMemoryTransportPair>["viewer"],
     viewerPeerId: string,
   ): Promise<void> => {
     void pubSig; // pubSig is the side the publisher reads from; we send via viewerSig
@@ -153,8 +153,8 @@ describe("Publisher — per-viewer PC management", () => {
   };
 
   it("emits viewer event when peer-joined arrives", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const p = definePublisher({
       signaling: pubSig,
       room: "demo",
@@ -174,8 +174,8 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("adds local stream tracks to the per-viewer RTCPeerConnection", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const stream = fakeMediaStream();
 
     const p = definePublisher({
@@ -197,8 +197,8 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("kicks off a negotiation by sending an SDP offer to the new viewer", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const inbound: unknown[] = [];
     viewerSig.on("message", (m) => inbound.push(m));
 
@@ -226,8 +226,8 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("uses the configured iceServers when constructing per-viewer PCs", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const pcFactory = vi.fn(() => fakePc);
 
     const p = definePublisher({
@@ -248,8 +248,8 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("tears down the per-viewer PC and emits viewer-left on peer-left", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const p = definePublisher({
       signaling: pubSig,
       room: "demo",
@@ -275,8 +275,8 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("routes inbound SDP answer to the matching viewer's negotiator", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const p = definePublisher({
       signaling: pubSig,
       room: "demo",
@@ -313,8 +313,8 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("routes inbound ICE candidate to the matching viewer's PC", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const p = definePublisher({
       signaling: pubSig,
       room: "demo",
@@ -342,8 +342,8 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("ignores SDP from an unknown peer (defensive drop)", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const p = definePublisher({
       signaling: pubSig,
       room: "demo",
@@ -367,10 +367,10 @@ describe("Publisher — per-viewer PC management", () => {
   });
 
   it("supports multiple simultaneous viewers", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const pcs = [createFakePeerConnection(), createFakePeerConnection()];
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const pcs = [defineFakePeerConnection(), defineFakePeerConnection()];
     let i = 0;
-    const pcFactory = vi.fn(() => pcs[i++] ?? createFakePeerConnection());
+    const pcFactory = vi.fn(() => pcs[i++] ?? defineFakePeerConnection());
 
     const p = definePublisher({
       signaling: pubSig,
@@ -398,7 +398,7 @@ describe("Publisher — stats + track replacers", () => {
   });
 
   const simulateViewerJoin = async (
-    viewerSig: ReturnType<typeof createInMemoryTransportPair>["viewer"],
+    viewerSig: ReturnType<typeof defineInMemoryTransportPair>["viewer"],
     viewerPeerId: string,
   ): Promise<void> => {
     await viewerSig.send({ type: "peer-joined", peer: viewerPeerId, role: "viewer" });
@@ -407,8 +407,8 @@ describe("Publisher — stats + track replacers", () => {
   };
 
   it("emits stats event on each polling tick when stats: { interval } provided", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     fakePc.__setState({ connectionState: "connected", iceConnectionState: "connected" });
 
     const p = definePublisher({
@@ -436,9 +436,9 @@ describe("Publisher — stats + track replacers", () => {
   });
 
   it("getStats() returns one entry per viewer (one-shot, no interval needed)", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const pc1 = createFakePeerConnection();
-    const pc2 = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const pc1 = defineFakePeerConnection();
+    const pc2 = defineFakePeerConnection();
     pc1.__setState({ connectionState: "connected", iceConnectionState: "connected" });
     pc2.__setState({ connectionState: "connected", iceConnectionState: "connected" });
     let i = 0;
@@ -449,7 +449,7 @@ describe("Publisher — stats + track replacers", () => {
       room: "demo",
       peerId: "alice",
       stream: fakeMediaStream(),
-      pcFactory: () => pcs[i++] ?? createFakePeerConnection(),
+      pcFactory: () => pcs[i++] ?? defineFakePeerConnection(),
       stats: { interval: 5000 }, // long interval; getStats() bypasses
     });
     await p.start();
@@ -465,8 +465,8 @@ describe("Publisher — stats + track replacers", () => {
   });
 
   it("getStats() returns empty array when stats not configured", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
 
     const p = definePublisher({
       signaling: pubSig,
@@ -483,12 +483,12 @@ describe("Publisher — stats + track replacers", () => {
   });
 
   it("replaceVideoTrack swaps on every viewer's PC", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
     const senders = [
       { track: { kind: "video" } as MediaStreamTrack, replaceTrack: vi.fn(async () => undefined) },
       { track: { kind: "audio" } as MediaStreamTrack, replaceTrack: vi.fn(async () => undefined) },
     ] as unknown as RTCRtpSender[];
-    const fakePc = createFakePeerConnection();
+    const fakePc = defineFakePeerConnection();
     vi.mocked(fakePc.getSenders).mockReturnValue(senders);
 
     const p = definePublisher({
@@ -509,13 +509,13 @@ describe("Publisher — stats + track replacers", () => {
   });
 
   it("replaceVideoTrack throws ConfigurationError when no viewers connected", async () => {
-    const { publisher: pubSig } = createInMemoryTransportPair();
+    const { publisher: pubSig } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling: pubSig,
       room: "demo",
       peerId: "alice",
       stream: fakeMediaStream(),
-      pcFactory: () => createFakePeerConnection(),
+      pcFactory: () => defineFakePeerConnection(),
     });
     await p.start();
     await expect(p.replaceVideoTrack({ kind: "video" } as MediaStreamTrack)).rejects.toBeInstanceOf(
@@ -525,13 +525,13 @@ describe("Publisher — stats + track replacers", () => {
   });
 
   it("replaceAudioTrack throws ConfigurationError when no viewers connected", async () => {
-    const { publisher: pubSig } = createInMemoryTransportPair();
+    const { publisher: pubSig } = defineInMemoryTransportPair();
     const p = definePublisher({
       signaling: pubSig,
       room: "demo",
       peerId: "alice",
       stream: fakeMediaStream(),
-      pcFactory: () => createFakePeerConnection(),
+      pcFactory: () => defineFakePeerConnection(),
     });
     await p.start();
     await expect(p.replaceAudioTrack({ kind: "audio" } as MediaStreamTrack)).rejects.toBeInstanceOf(

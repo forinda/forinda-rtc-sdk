@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineStatsCollector, StatsCollector } from "@/stats/collector.ts";
-import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
+import { defineFakePeerConnection } from "@forinda/test-helpers";
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -12,20 +12,20 @@ afterEach(() => {
 
 describe("StatsCollector", () => {
   it("factory returns a StatsCollector", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const collector = defineStatsCollector({ pc, peerId: "alice", intervalMs: 1000 });
     expect(collector).toBeInstanceOf(StatsCollector);
   });
 
   it("does not poll until start() is called", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     defineStatsCollector({ pc, peerId: "alice", intervalMs: 1000 });
     await vi.advanceTimersByTimeAsync(5000);
     expect(pc.getStats).not.toHaveBeenCalled();
   });
 
   it("polls getStats on the configured interval after start()", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const collector = defineStatsCollector({ pc, peerId: "alice", intervalMs: 1000 });
     collector.start();
     await vi.advanceTimersByTimeAsync(3000);
@@ -34,7 +34,7 @@ describe("StatsCollector", () => {
   });
 
   it("emits 'stats' with normalized stats on each poll", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     pc.__setState({ connectionState: "connected", iceConnectionState: "connected" });
     const collector = defineStatsCollector({ pc, peerId: "alice", intervalMs: 500 });
     const onStats = vi.fn();
@@ -48,7 +48,7 @@ describe("StatsCollector", () => {
   });
 
   it("stop() cancels further polls", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const collector = defineStatsCollector({ pc, peerId: "alice", intervalMs: 1000 });
     collector.start();
     await vi.advanceTimersByTimeAsync(1000);
@@ -59,7 +59,7 @@ describe("StatsCollector", () => {
   });
 
   it("manual collect() returns the latest stats without affecting the poll loop", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     pc.__setState({ connectionState: "connected", iceConnectionState: "connected" });
     const collector = defineStatsCollector({ pc, peerId: "alice", intervalMs: 1000 });
     const stats = await collector.collect();

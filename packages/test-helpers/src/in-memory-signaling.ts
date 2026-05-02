@@ -1,29 +1,31 @@
+/**
+ * Paired in-memory `SignalingTransport`s for integration tests.
+ *
+ * `defineInMemoryTransportPair()` returns `{ publisher, viewer }`. The pair
+ * is symmetric — the field names label intent, not behavior. Each side's
+ * `send(msg)` enqueues the message into the other's `message` listeners
+ * (via `queueMicrotask`, mirroring real async). Calling `connect()` on
+ * either side flips both to `connected`; `disconnect()` flips both to
+ * `closed`.
+ *
+ * No JSON serialization happens here. Wire-format validation is exercised by
+ * the `@forinda/video-sdk-signaling-protocol` test suite; this helper
+ * focuses on publisher↔viewer choreography in core/react/elements tests.
+ */
+
 import type {
   SignalingMessageType,
   SignalingTransport,
   TransportState,
-} from "@/signaling/transport.ts";
-
-/**
- * Paired in-memory `SignalingTransport` fakes.
- *
- * `createInMemoryTransportPair()` returns `{ publisher, viewer }` where each
- * side's `send(msg)` enqueues the message into the other's `message`
- * listeners (queueMicrotask, mirroring real async). Calling `connect()` on
- * either side flips both to `connected`; `disconnect()` flips both to
- * `closed`.
- *
- * No JSON serialization. Wire-format validation is exercised by the
- * `@forinda/video-sdk-signaling-protocol` test suite (EPIC-2); this fixture
- * focuses on the publisher↔viewer choreography in core.
- */
+} from "@forinda/video-sdk-core";
 
 interface PairedTransport extends SignalingTransport {
   __deliver(message: SignalingMessageType): void;
   __setState(state: TransportState): void;
+  __setPeer(peer: PairedTransport): void;
 }
 
-function createSide(): PairedTransport {
+function defineSide(): PairedTransport {
   const messageHandlers = new Set<(msg: SignalingMessageType) => void>();
   const stateHandlers = new Set<(state: TransportState) => void>();
   let state: TransportState = "idle";
@@ -34,7 +36,6 @@ function createSide(): PairedTransport {
       return state;
     },
     async connect() {
-      // Both sides flip to connected together; no-op if peer already did it.
       if (state === "connected") return;
       state = "connected";
       for (const h of stateHandlers) h(state);
@@ -72,27 +73,26 @@ function createSide(): PairedTransport {
       state = next;
       for (const h of stateHandlers) h(state);
     },
+    __setPeer(p) {
+      peer = p;
+    },
   };
 
-  // late binding helper — set after both sides constructed
-  (t as PairedTransport & { __setPeer: (p: PairedTransport) => void }).__setPeer = (p) => {
-    peer = p;
-  };
   return t;
 }
 
 /**
  * Build two paired in-memory `SignalingTransport`s. Messages sent from
- * `publisher.send` arrive at handlers registered on `viewer.on("message", ...)`
- * and vice versa.
+ * `publisher.send` arrive at handlers registered on
+ * `viewer.on("message", ...)` and vice versa.
  */
-export function createInMemoryTransportPair(): {
+export function defineInMemoryTransportPair(): {
   publisher: SignalingTransport;
   viewer: SignalingTransport;
 } {
-  const a = createSide();
-  const b = createSide();
-  (a as PairedTransport & { __setPeer: (p: PairedTransport) => void }).__setPeer(b);
-  (b as PairedTransport & { __setPeer: (p: PairedTransport) => void }).__setPeer(a);
-  return { publisher: a, viewer: b };
+  const publisher = defineSide();
+  const viewer = defineSide();
+  publisher.__setPeer(viewer);
+  viewer.__setPeer(publisher);
+  return { publisher, viewer };
 }

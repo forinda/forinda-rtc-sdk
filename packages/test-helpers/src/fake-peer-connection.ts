@@ -1,13 +1,22 @@
-import { vi } from "vitest";
-
 /**
- * Hand-rolled `RTCPeerConnection` substitute for unit tests.
+ * `defineFakePeerConnection` — hand-rolled `RTCPeerConnection` substitute for
+ * unit tests.
  *
- * Surface chosen to match what the SDK actually uses — not the entire
- * browser API. Emits the four state events the wrapper subscribes to:
+ * Surface chosen to match what the SDK actually uses (see
+ * `@forinda/video-sdk-core/peer/peer-connection`), not the entire browser
+ * API. Emits the four events the wrapper subscribes to:
  * `connectionstatechange`, `iceconnectionstatechange`, `icecandidate`,
  * `track`.
+ *
+ * The returned object exposes two test-only escape hatches prefixed with
+ * `__` so they're easy to grep for and exclude from production review:
+ *
+ * - `__fire(event, payload?)` — manually dispatch a listener event.
+ * - `__setState({ connectionState?, iceConnectionState?, signalingState? })` —
+ *   patch the read-only state fields the wrapper reads.
  */
+
+import { vi } from "vitest";
 
 export type FakePCEvent =
   | "connectionstatechange"
@@ -26,7 +35,7 @@ export interface FakePeerConnection extends RTCPeerConnection {
   }): void;
 }
 
-export function createFakePeerConnection(): FakePeerConnection {
+export function defineFakePeerConnection(): FakePeerConnection {
   const handlers = new Map<FakePCEvent, Set<EventListener>>();
   let connectionState: RTCPeerConnectionState = "new";
   let iceConnectionState: RTCIceConnectionState = "new";

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { definePublisher } from "@/publisher/publisher.ts";
 import type { SignalingTransport, TransportState } from "@/signaling/transport.ts";
-import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
+import { defineFakePeerConnection } from "@forinda/test-helpers";
 import { fakeMediaStream } from "../../_mocks/fake-media-devices.ts";
 
 beforeEach(() => {
@@ -77,7 +77,7 @@ function createControllableTransport(): SignalingTransport & {
 describe("Publisher — auto-retry", () => {
   it("emits failed → retry event → reconnects after backoff when signaling drops", async () => {
     const signaling = createControllableTransport();
-    const fakePc = createFakePeerConnection();
+    const fakePc = defineFakePeerConnection();
 
     const p = definePublisher({
       signaling,
@@ -114,7 +114,7 @@ describe("Publisher — auto-retry", () => {
 
   it("transitions to closed with retry_exhausted error after maxAttempts", async () => {
     const signaling = createControllableTransport();
-    const fakePc = createFakePeerConnection();
+    const fakePc = defineFakePeerConnection();
 
     const p = definePublisher({
       signaling,
@@ -149,7 +149,7 @@ describe("Publisher — auto-retry", () => {
 
   it("disabled retry transitions straight to closed on signaling drop", async () => {
     const signaling = createControllableTransport();
-    const fakePc = createFakePeerConnection();
+    const fakePc = defineFakePeerConnection();
 
     const p = definePublisher({
       signaling,
@@ -171,7 +171,7 @@ describe("Publisher — auto-retry", () => {
 
   it("stop() during scheduled retry cancels the retry", async () => {
     const signaling = createControllableTransport();
-    const fakePc = createFakePeerConnection();
+    const fakePc = defineFakePeerConnection();
 
     const p = definePublisher({
       signaling,

@@ -9,5 +9,12 @@ export default defineConfig({
   clean: true,
   target: "es2022",
   treeshake: true,
+  tsconfig: "./tsconfig.build.json",
+  external: [
+    "@forinda/video-sdk-core",
+    "@forinda/video-sdk-signaling-protocol",
+    "@forinda/video-sdk-signaling-server",
+    "vitest",
+  ],
   banner: { js: createBanner() },
 });

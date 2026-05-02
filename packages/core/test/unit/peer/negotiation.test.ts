@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { defineNegotiator, Negotiator } from "@/peer/negotiation.ts";
-import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
+import { defineFakePeerConnection } from "@forinda/test-helpers";
 
 describe("Negotiator", () => {
   it("factory returns a Negotiator", () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const send = vi.fn();
     const n = defineNegotiator({
       pc,
@@ -17,7 +17,7 @@ describe("Negotiator", () => {
   });
 
   it("makeOffer creates an offer, sets it as local, and sends an SDP message", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const send = vi.fn();
     const n = defineNegotiator({
       pc,
@@ -40,7 +40,7 @@ describe("Negotiator", () => {
   });
 
   it("handleSdp answer applies the remote description without responding", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const send = vi.fn();
     const n = defineNegotiator({
       pc,
@@ -60,7 +60,7 @@ describe("Negotiator", () => {
   });
 
   it("handleSdp offer applies the remote description, creates an answer, and sends it", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     pc.__setState({ signalingState: "stable" });
     const send = vi.fn();
     const n = defineNegotiator({
@@ -88,7 +88,7 @@ describe("Negotiator", () => {
   });
 
   it("handleIce forwards a candidate to the PC", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const send = vi.fn();
     const n = defineNegotiator({
       pc,
@@ -104,7 +104,7 @@ describe("Negotiator", () => {
   });
 
   it("handleIce(null) skips addIceCandidate (end-of-candidates marker)", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     const send = vi.fn();
     const n = defineNegotiator({
       pc,
@@ -118,7 +118,7 @@ describe("Negotiator", () => {
   });
 
   it("polite peer accepts incoming offer on collision", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     pc.__setState({ signalingState: "have-local-offer" });
     const send = vi.fn();
     const n = defineNegotiator({
@@ -137,7 +137,7 @@ describe("Negotiator", () => {
   });
 
   it("impolite peer ignores incoming offer during collision", async () => {
-    const pc = createFakePeerConnection();
+    const pc = defineFakePeerConnection();
     pc.__setState({ signalingState: "have-local-offer" });
     const send = vi.fn();
     const n = defineNegotiator({

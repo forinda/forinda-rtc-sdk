@@ -1,30 +1,30 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { defineViewer, Viewer } from "@/viewer/viewer.ts";
-import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
-import { createInMemoryTransportPair } from "../../_mocks/in-memory-signaling.ts";
+import { defineFakePeerConnection } from "@forinda/test-helpers";
+import { defineInMemoryTransportPair } from "@forinda/test-helpers";
 
 describe("Viewer (skeleton)", () => {
   it("factory returns a Viewer", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const v = defineViewer({ signaling, room: "demo", publisherId: "alice" });
     expect(v).toBeInstanceOf(Viewer);
   });
 
   it("starts in idle state with null stream", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const v = defineViewer({ signaling, room: "demo", publisherId: "alice" });
     expect(v.state).toBe("idle");
     expect(v.stream).toBeNull();
   });
 
   it("auto-generates a peerId when not provided", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const v = defineViewer({ signaling, room: "demo", publisherId: "alice" });
     expect(v.peerId).toMatch(/^[0-9a-f-]{36}$/);
   });
 
   it("uses an explicit peerId when provided", () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const v = defineViewer({
       signaling,
       room: "demo",
@@ -35,7 +35,7 @@ describe("Viewer (skeleton)", () => {
   });
 
   it("start() transitions to connecting and sends a viewer join", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
     const inbound: unknown[] = [];
     pubSig.on("message", (m) => inbound.push(m));
 
@@ -59,7 +59,7 @@ describe("Viewer (skeleton)", () => {
   });
 
   it("stop() reaches closed", async () => {
-    const { publisher: signaling } = createInMemoryTransportPair();
+    const { publisher: signaling } = defineInMemoryTransportPair();
     const v = defineViewer({
       signaling,
       room: "demo",
@@ -75,7 +75,7 @@ describe("Viewer (skeleton)", () => {
 describe("Viewer — peer-joined → PC + SDP/ICE", () => {
   // helper: deliver a message to viewer (we are sending FROM the publisher side)
   const sendFromPublisher = async (
-    pubSig: ReturnType<typeof createInMemoryTransportPair>["publisher"],
+    pubSig: ReturnType<typeof defineInMemoryTransportPair>["publisher"],
     msg: Parameters<typeof pubSig.send>[0],
   ): Promise<void> => {
     await pubSig.send(msg);
@@ -84,8 +84,8 @@ describe("Viewer — peer-joined → PC + SDP/ICE", () => {
   };
 
   it("builds a PC and waits for offer when publisher joins", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
 
     const v = defineViewer({
       signaling: viewerSig,
@@ -107,8 +107,8 @@ describe("Viewer — peer-joined → PC + SDP/ICE", () => {
   });
 
   it("ignores publisher joins for other publisherIds", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const pcFactory = vi.fn(() => fakePc);
 
     const v = defineViewer({
@@ -130,8 +130,8 @@ describe("Viewer — peer-joined → PC + SDP/ICE", () => {
   });
 
   it("handles inbound SDP offer (from publisher) → setRemoteDescription + sends answer", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     const inbound: unknown[] = [];
     pubSig.on("message", (m) => inbound.push(m));
 
@@ -178,8 +178,8 @@ describe("Viewer — peer-joined → PC + SDP/ICE", () => {
   });
 
   it("forwards inbound ICE candidates from publisher to PC", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
 
     const v = defineViewer({
       signaling: viewerSig,
@@ -208,8 +208,8 @@ describe("Viewer — peer-joined → PC + SDP/ICE", () => {
   });
 
   it("ignores SDP/ICE from other peers (defensive drop)", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
 
     const v = defineViewer({
       signaling: viewerSig,
@@ -239,8 +239,8 @@ describe("Viewer — peer-joined → PC + SDP/ICE", () => {
 
 describe("Viewer — track event + connected gating", () => {
   it("emits track event and exposes stream when PC fires track", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
 
     const v = defineViewer({
       signaling: viewerSig,
@@ -273,8 +273,8 @@ describe("Viewer — track event + connected gating", () => {
   });
 
   it("only transitions to connected when signaling+PC+track all ready", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
 
     const v = defineViewer({
       signaling: viewerSig,
@@ -316,8 +316,8 @@ describe("Viewer — stats", () => {
   });
 
   it("emits stats event on each polling tick", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     fakePc.__setState({ connectionState: "connected", iceConnectionState: "connected" });
 
     const v = defineViewer({
@@ -347,8 +347,8 @@ describe("Viewer — stats", () => {
   });
 
   it("getStats() works without a stats interval configured", async () => {
-    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
-    const fakePc = createFakePeerConnection();
+    const { publisher: pubSig, viewer: viewerSig } = defineInMemoryTransportPair();
+    const fakePc = defineFakePeerConnection();
     fakePc.__setState({ connectionState: "connected", iceConnectionState: "connected" });
 
     const v = defineViewer({

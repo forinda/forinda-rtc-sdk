@@ -38,13 +38,26 @@
   "scripts": {
     "build": "wireit",
     "typecheck": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "test": "wireit"
+  },
+  "dependencies": {
+    "@forinda/video-sdk-core": "workspace:*",
+    "@forinda/video-sdk-signaling-protocol": "workspace:*",
+    "@forinda/video-sdk-signaling-server": "workspace:*"
   },
   "devDependencies": {
+    "@types/ws": "^8.5.0",
+    "@vitest/coverage-v8": "^2.1.0",
     "oxlint": "^0.11.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.0",
-    "wireit": "^0.14.9"
+    "vitest": "^2.1.0",
+    "wireit": "^0.14.9",
+    "ws": "^8.18.0"
+  },
+  "peerDependencies": {
+    "vitest": ">=2.0.0"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -56,18 +69,24 @@
         "src/**/*.ts",
         "tsup.config.ts",
         "tsconfig.json",
+        "tsconfig.build.json",
         "../../tsconfig.base.json"
       ],
       "output": [
         "dist/**"
       ],
       "clean": "if-file-deleted",
-      "dependencies": []
+      "dependencies": [
+        "../core:build",
+        "../signaling-protocol:build",
+        "../signaling-server:build"
+      ]
     },
     "typecheck": {
       "command": "tsc --noEmit",
       "files": [
         "src/**/*.ts",
+        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.base.json"
       ],
@@ -78,6 +97,17 @@
       "files": [
         "src/**/*.ts",
         "../../oxlint.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": "vitest run",
+      "files": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "tsconfig.json",
+        "vitest.config.ts",
+        "../../tsconfig.base.json"
       ],
       "output": []
     }
