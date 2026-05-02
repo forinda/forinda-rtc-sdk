@@ -43,3 +43,7 @@ test-results/
 # Block these defensively.
 https:/
 git+*/
+
+# Local-only working notes (never published, never committed)
+docs/superpowers/inspirations/
+.local/
