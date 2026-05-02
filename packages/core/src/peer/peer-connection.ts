@@ -55,7 +55,7 @@ export class PeerConnection {
   constructor(opts: PeerConnectionOptions) {
     const factory = opts.pcFactory ?? defaultPcFactory;
     const config: RTCConfiguration = {
-      ...(opts.rtcConfig ?? {}),
+      ...opts.rtcConfig,
       iceServers: opts.iceServers,
     };
     this.raw = factory(config);
