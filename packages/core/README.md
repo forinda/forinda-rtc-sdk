@@ -134,6 +134,28 @@ channel.on("state", (s) => console.log(s));
 
 In-flight pending chats at the moment of the drop are flipped to `failed` — `signaling.send` resolving doesn't actually prove the engine received the message.
 
+#### Chat-history replay
+
+Opt into the engine's per-room chat-history replay so late joiners catch up on the conversation:
+
+```ts
+const channel = defineRoomChannel({
+  signaling,
+  room: "demo",
+  peerId: "alice",
+  replayHistory: true,
+});
+
+channel.on("chat-history", (entries) => {
+  console.log(`replayed ${entries.length} historical chats`);
+});
+
+await channel.start();
+// channel.chatHistory now contains the replayed messages (status: "confirmed").
+```
+
+The engine must be configured with `chatHistoryPerRoom > 0` for the replay to fire — otherwise the flag is a no-op. Replayed entries land in `chatHistory` with `status: "confirmed"`; the `chat-history` event fires once per `start()`. Reconnects do NOT re-request the replay (initial catch-up only).
+
 | Option             | Default               | Purpose                                                                                                                                                                |
 | ------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `signaling`        | —                     | Required. Pre-built `SignalingTransport`. Channel never opens or closes it itself.                                                                                     |

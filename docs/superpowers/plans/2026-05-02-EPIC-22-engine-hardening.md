@@ -17,29 +17,30 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/signaling-protocol/src/rate-limit.ts` | Stateless `TokenBucket` helper (capacity + refill). Used by Session for `chat` + `presence-update`. |
-| `packages/signaling-protocol/src/errors.ts` | New `SignalingRateLimitError(code: "rate_limited")`. Re-exported via index. |
-| `packages/signaling-protocol/src/messages.ts` | Add optional `replayHistory` to `JoinRoom`. Add `ChatHistory` schema. Extend `SignalingMessage` union. |
-| `packages/signaling-protocol/src/rooms.ts` | Add `chatHistoryLimit` constructor option + `pushChat(msg)` / `chatHistory()` methods. Optional ring buffer (no-op when limit is 0). |
-| `packages/signaling-protocol/src/session.ts` | Plumb `rateLimit` + `chatHistoryPerRoom` from `SessionOptions`. Bucket lookup in `applyPresenceUpdate` + `applyChat`. Push to room buffer on accepted chat. Send `chat-history` to opt-in joiners after `presence-snapshot`. |
-| `packages/signaling-protocol/src/engine.ts` | Forward the two new options through `SignalingEngineOptions` → `Session`. |
-| `packages/signaling-protocol/src/index.ts` | Re-export the new error class + types. |
-| `packages/signaling-protocol/test/unit/rate-limit.test.ts` | Token-bucket unit tests (refill, burst, exhaustion, recovery). |
-| `packages/signaling-protocol/test/unit/session-rate-limit.test.ts` | End-to-end engine tests for chat + presence rate limiting. |
-| `packages/signaling-protocol/test/unit/session-chat-history.test.ts` | Late-joiner replay, ring buffer cap, replayHistory off (no message). |
-| `packages/core/src/room/room-channel.ts` | New `replayHistory?: boolean` option. Handle inbound `chat-history` (seed buffer, emit event). |
-| `packages/core/src/room/types.ts` | `RoomChannelEvents` gains `chat-history: ChatHistoryEntry[]`. `RoomChannelOptions` gains `replayHistory?: boolean`. |
-| `packages/core/test/unit/room/room-channel-history.test.ts` | New: opt-in joiner receives history, off by default no replay. |
-| `packages/signaling-protocol/README.md`, `packages/core/README.md` | Document new options + wire-format addition. |
-| `.changeset/engine-hardening.md` | minor for `signaling-protocol` + `core`; patch for cascading peer-deps. |
+| File                                                                 | Responsibility                                                                                                                                                                                                               |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/signaling-protocol/src/rate-limit.ts`                      | Stateless `TokenBucket` helper (capacity + refill). Used by Session for `chat` + `presence-update`.                                                                                                                          |
+| `packages/signaling-protocol/src/errors.ts`                          | New `SignalingRateLimitError(code: "rate_limited")`. Re-exported via index.                                                                                                                                                  |
+| `packages/signaling-protocol/src/messages.ts`                        | Add optional `replayHistory` to `JoinRoom`. Add `ChatHistory` schema. Extend `SignalingMessage` union.                                                                                                                       |
+| `packages/signaling-protocol/src/rooms.ts`                           | Add `chatHistoryLimit` constructor option + `pushChat(msg)` / `chatHistory()` methods. Optional ring buffer (no-op when limit is 0).                                                                                         |
+| `packages/signaling-protocol/src/session.ts`                         | Plumb `rateLimit` + `chatHistoryPerRoom` from `SessionOptions`. Bucket lookup in `applyPresenceUpdate` + `applyChat`. Push to room buffer on accepted chat. Send `chat-history` to opt-in joiners after `presence-snapshot`. |
+| `packages/signaling-protocol/src/engine.ts`                          | Forward the two new options through `SignalingEngineOptions` → `Session`.                                                                                                                                                    |
+| `packages/signaling-protocol/src/index.ts`                           | Re-export the new error class + types.                                                                                                                                                                                       |
+| `packages/signaling-protocol/test/unit/rate-limit.test.ts`           | Token-bucket unit tests (refill, burst, exhaustion, recovery).                                                                                                                                                               |
+| `packages/signaling-protocol/test/unit/session-rate-limit.test.ts`   | End-to-end engine tests for chat + presence rate limiting.                                                                                                                                                                   |
+| `packages/signaling-protocol/test/unit/session-chat-history.test.ts` | Late-joiner replay, ring buffer cap, replayHistory off (no message).                                                                                                                                                         |
+| `packages/core/src/room/room-channel.ts`                             | New `replayHistory?: boolean` option. Handle inbound `chat-history` (seed buffer, emit event).                                                                                                                               |
+| `packages/core/src/room/types.ts`                                    | `RoomChannelEvents` gains `chat-history: ChatHistoryEntry[]`. `RoomChannelOptions` gains `replayHistory?: boolean`.                                                                                                          |
+| `packages/core/test/unit/room/room-channel-history.test.ts`          | New: opt-in joiner receives history, off by default no replay.                                                                                                                                                               |
+| `packages/signaling-protocol/README.md`, `packages/core/README.md`   | Document new options + wire-format addition.                                                                                                                                                                                 |
+| `.changeset/engine-hardening.md`                                     | minor for `signaling-protocol` + `core`; patch for cascading peer-deps.                                                                                                                                                      |
 
 ---
 
 ## Task 1: `TokenBucket` helper
 
 **Files:**
+
 - Create: `packages/signaling-protocol/src/rate-limit.ts`
 - Test: `packages/signaling-protocol/test/unit/rate-limit.test.ts`
 
@@ -201,6 +202,7 @@ git commit -m "feat(signaling-protocol): TokenBucket helper for rate limiting (E
 ## Task 2: `SignalingRateLimitError`
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/errors.ts`
 - Modify: `packages/signaling-protocol/src/index.ts`
 
@@ -247,6 +249,7 @@ git commit -m "feat(signaling-protocol): SignalingRateLimitError(code: rate_limi
 ## Task 3: Wire format — `replayHistory` on `JoinRoom`, new `ChatHistory` message
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/messages.ts`
 
 - [ ] **Step 1: Add `replayHistory` to `JoinRoom`**
@@ -347,6 +350,7 @@ git commit -m "feat(signaling-protocol): replayHistory on JoinRoom + ChatHistory
 ## Task 4: `Room` gains an opt-in chat ring buffer
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/rooms.ts`
 
 - [ ] **Step 1: Update `RoomOptions` and add the buffer fields**
@@ -439,6 +443,7 @@ git commit -m "feat(signaling-protocol): Room.pushChat + chatHistory ring buffer
 ## Task 5: Session — wire rate limits
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/session.ts`
 - Modify: `packages/signaling-protocol/src/engine.ts`
 - Test: `packages/signaling-protocol/test/unit/session-rate-limit.test.ts`
@@ -748,6 +753,7 @@ git commit -m "feat(signaling-protocol): per-peer chat + presence rate limits (E
 ## Task 6: Session — chat history persistence + late-joiner replay
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/session.ts`
 - Test: `packages/signaling-protocol/test/unit/session-chat-history.test.ts`
 
@@ -979,6 +985,7 @@ git commit -m "feat(signaling-protocol): chat history ring buffer + replay (EPIC
 ## Task 7: `RoomChannel` — opt into history + apply incoming `chat-history`
 
 **Files:**
+
 - Modify: `packages/core/src/room/types.ts`
 - Modify: `packages/core/src/room/room-channel.ts`
 - Test: `packages/core/test/unit/room/room-channel-history.test.ts`
@@ -1210,6 +1217,7 @@ git commit -m "feat(core): RoomChannel.replayHistory + chat-history event (EPIC-
 ## Task 8: README updates
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/README.md`
 - Modify: `packages/core/README.md`
 
@@ -1289,6 +1297,7 @@ git commit -m "docs: rate limits + chat history replay (EPIC-22 #8/9)"
 ## Task 9: Workspace verify, changeset, tag
 
 **Files:**
+
 - Create: `.changeset/engine-hardening.md`
 
 - [ ] **Step 1: Workspace verify**
@@ -1351,6 +1360,7 @@ git tag -a v0.0.0-epic-22 -m "EPIC-22: Engine rate limits + chat history"
 - ✅ Adapter wiring (RoomChannel.replayHistory) — Task 7.
 
 **Type consistency:**
+
 - `RateLimitOptions` defined once in `session.ts`, re-exported through `engine.ts`.
 - `ChatHistory` schema + `ChatHistoryMessage` inferred type defined together in `messages.ts`.
 - `RoomChannel.replayHistory` (option) ↔ `JoinRoom.replayHistory` (wire) ↔ `chat-history` event payload all line up by name.
@@ -1358,4 +1368,4 @@ git tag -a v0.0.0-epic-22 -m "EPIC-22: Engine rate limits + chat history"
 
 **Placeholders:** none. Every step has concrete code or commands.
 
-**Gotcha worth flagging:** Task 5's bucket lookup happens AFTER the existing peer-binding validation in `applyChat` / `applyPresenceUpdate`, so a malformed message that fails the bind check throws `SignalingValidationError` (existing behavior) rather than charging a token. That's intentional — rate-limit a peer for *legitimate* sends, not for protocol violations.
+**Gotcha worth flagging:** Task 5's bucket lookup happens AFTER the existing peer-binding validation in `applyChat` / `applyPresenceUpdate`, so a malformed message that fails the bind check throws `SignalingValidationError` (existing behavior) rather than charging a token. That's intentional — rate-limit a peer for _legitimate_ sends, not for protocol violations.

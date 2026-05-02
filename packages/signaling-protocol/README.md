@@ -58,12 +58,35 @@ The engine maintains a per-room presence map; joiners always receive a `presence
 
 All thrown errors extend `SignalingProtocolError` and carry a stable `code`:
 
-| Class                      | `code`                 | When thrown                              |
-| -------------------------- | ---------------------- | ---------------------------------------- |
-| `SignalingValidationError` | `signaling_validation` | Invalid JSON or schema-failing message   |
-| `SignalingAuthError`       | `signaling_auth`       | `authenticate` callback returned `false` |
-| `RoomFullError`            | `room_full`            | Room already at `maxPeersPerRoom`        |
-| `PeerNotFoundError`        | `peer_not_found`       | SDP/ICE target peer is not registered    |
+| Class                      | `code`                 | When thrown                                                    |
+| -------------------------- | ---------------------- | -------------------------------------------------------------- |
+| `SignalingValidationError` | `signaling_validation` | Invalid JSON or schema-failing message                         |
+| `SignalingAuthError`       | `signaling_auth`       | `authenticate` callback returned `false`                       |
+| `RoomFullError`            | `room_full`            | Room already at `maxPeersPerRoom`                              |
+| `PeerNotFoundError`        | `peer_not_found`       | SDP/ICE target peer is not registered                          |
+| `SignalingRateLimitError`  | `rate_limited`         | Per-peer chat / presence-update rate-limit bucket is exhausted |
+
+### Per-peer rate limits
+
+```ts
+const engine = defineSignalingEngine({
+  rateLimit: { chatPerSec: 5, presenceUpdatesPerSec: 10 },
+});
+```
+
+Each option enables a per-peer token bucket of size = capacity = refill rate. Burst allowance equals the per-second cap. Over-budget messages reject with `SignalingRateLimitError(code: "rate_limited")`; the message is NOT relayed. Buckets are released when the peer disconnects.
+
+`undefined` (or `0`) on either field disables that limiter independently — the chat budget can be capped without touching presence and vice versa.
+
+### Chat-history replay
+
+```ts
+const engine = defineSignalingEngine({ chatHistoryPerRoom: 50 });
+```
+
+Each room keeps a ring buffer of its last N chats. Joiners that send `replayHistory: true` on their `join` receive a one-shot `chat-history` message right after `presence-snapshot` — empty `messages` array if no history has accumulated yet.
+
+Old clients omit the flag; they never see the new message type and continue working unchanged.
 
 ## License
 
