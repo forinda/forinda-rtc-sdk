@@ -39,5 +39,6 @@ export { useChat, type UseChatResult } from "./use-chat.ts";
 export { useRaiseHand, type UseRaiseHandResult } from "./use-raise-hand.ts";
 
 export { useRecorder, type UseRecorderResult } from "./use-recorder.ts";
+export { useUploader, type UseUploaderResult } from "./use-uploader.ts";
 
 export { VideoView } from "./video-view.ts";
