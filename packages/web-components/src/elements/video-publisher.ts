@@ -111,9 +111,7 @@ export class ForindaVideoPublisher extends HTMLElement {
       return;
     }
     if (!signalingUrl) {
-      this.emitError(
-        new Error("forinda-video-publisher: 'signaling-url' attribute is required"),
-      );
+      this.emitError(new Error("forinda-video-publisher: 'signaling-url' attribute is required"));
       return;
     }
 
@@ -157,9 +155,7 @@ export class ForindaVideoPublisher extends HTMLElement {
       this.disposers.push(
         publisher.on("state", (state) => dispatchTypedEvent(this, "state", state)),
         publisher.on("viewer", (info) => dispatchTypedEvent(this, "viewer", info)),
-        publisher.on("viewer-left", (info) =>
-          dispatchTypedEvent(this, "viewer-left", info),
-        ),
+        publisher.on("viewer-left", (info) => dispatchTypedEvent(this, "viewer-left", info)),
         publisher.on("error", (err) => dispatchTypedEvent(this, "error", err)),
       );
 

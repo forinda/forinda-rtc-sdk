@@ -102,15 +102,11 @@ export class ForindaVideoViewer extends HTMLElement {
       return;
     }
     if (!publisherId) {
-      this.emitError(
-        new Error("forinda-video-viewer: 'publisher-id' attribute is required"),
-      );
+      this.emitError(new Error("forinda-video-viewer: 'publisher-id' attribute is required"));
       return;
     }
     if (!signalingUrl) {
-      this.emitError(
-        new Error("forinda-video-viewer: 'signaling-url' attribute is required"),
-      );
+      this.emitError(new Error("forinda-video-viewer: 'signaling-url' attribute is required"));
       return;
     }
 

@@ -1,8 +1,4 @@
-import {
-  definePublisher,
-  defineViewer,
-  type ConnectionState,
-} from "@forinda/video-sdk-core";
+import { definePublisher, defineViewer, type ConnectionState } from "@forinda/video-sdk-core";
 import { defineWebSocketSignaling } from "@forinda/video-sdk-signaling-ws";
 
 const SIGNALING_URL = "ws://127.0.0.1:8787";

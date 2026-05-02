@@ -17,10 +17,7 @@ export {
   ForindaVideoPublisher,
   type PublisherElementOverrides,
 } from "./elements/video-publisher.ts";
-export {
-  ForindaVideoViewer,
-  type ViewerElementOverrides,
-} from "./elements/video-viewer.ts";
+export { ForindaVideoViewer, type ViewerElementOverrides } from "./elements/video-viewer.ts";
 export {
   ForindaVideoDevicePicker,
   type DeviceKind,

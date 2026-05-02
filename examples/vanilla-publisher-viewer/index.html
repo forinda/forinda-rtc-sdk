@@ -4,15 +4,32 @@
     <meta charset="utf-8" />
     <title>Vanilla publisher / viewer</title>
     <style>
-      body { font-family: system-ui; margin: 2rem; }
-      video { width: 480px; max-width: 100%; background: #111; border-radius: 8px; }
-      .row { display: flex; gap: 1rem; align-items: center; }
-      .mirror { transform: scaleX(-1); }
+      body {
+        font-family: system-ui;
+        margin: 2rem;
+      }
+      video {
+        width: 480px;
+        max-width: 100%;
+        background: #111;
+        border-radius: 8px;
+      }
+      .row {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+      }
+      .mirror {
+        transform: scaleX(-1);
+      }
     </style>
   </head>
   <body>
     <h1>Vanilla publisher / viewer</h1>
-    <p>Open this page once per role. Roles are selected via the URL hash (#publisher or #viewer:&lt;publisherId&gt;).</p>
+    <p>
+      Open this page once per role. Roles are selected via the URL hash (#publisher or
+      #viewer:&lt;publisherId&gt;).
+    </p>
     <div id="links" class="row"></div>
     <hr />
     <div id="status">choose a role…</div>

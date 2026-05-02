@@ -50,9 +50,7 @@ if (!customElements.get(ForindaVideoPublisher.tagName)) {
 }
 
 function makeEl(attrs: Record<string, string | true>): ForindaVideoPublisher {
-  const el = document.createElement(
-    ForindaVideoPublisher.tagName,
-  ) as ForindaVideoPublisher;
+  const el = document.createElement(ForindaVideoPublisher.tagName) as ForindaVideoPublisher;
   for (const [k, v] of Object.entries(attrs)) {
     el.setAttribute(k, v === true ? "" : v);
   }
@@ -160,9 +158,7 @@ describe("<forinda-video-publisher>", () => {
     };
     document.body.appendChild(el);
     await new Promise<void>((r) => el.addEventListener("ready", () => r(), { once: true }));
-    expect(publisherFactory.mock.calls[0]?.[0].iceServers).toEqual([
-      { urls: "stun:stun.example" },
-    ]);
+    expect(publisherFactory.mock.calls[0]?.[0].iceServers).toEqual([{ urls: "stun:stun.example" }]);
     el.remove();
   });
 

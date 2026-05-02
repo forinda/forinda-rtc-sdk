@@ -7,9 +7,7 @@ if (!customElements.get(ForindaVideoDevicePicker.tagName)) {
 }
 
 function makeEl(attrs: Record<string, string>): ForindaVideoDevicePicker {
-  const el = document.createElement(
-    ForindaVideoDevicePicker.tagName,
-  ) as ForindaVideoDevicePicker;
+  const el = document.createElement(ForindaVideoDevicePicker.tagName) as ForindaVideoDevicePicker;
   for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
   return el;
 }
@@ -29,11 +27,26 @@ function defineFakeWatcher() {
 
 const sampleDevices: DeviceList = {
   cameras: [
-    { deviceId: "cam-1", kind: "videoinput", label: "Front Camera", groupId: "g1" } as MediaDeviceInfo,
-    { deviceId: "cam-2", kind: "videoinput", label: "Back Camera", groupId: "g1" } as MediaDeviceInfo,
+    {
+      deviceId: "cam-1",
+      kind: "videoinput",
+      label: "Front Camera",
+      groupId: "g1",
+    } as MediaDeviceInfo,
+    {
+      deviceId: "cam-2",
+      kind: "videoinput",
+      label: "Back Camera",
+      groupId: "g1",
+    } as MediaDeviceInfo,
   ],
   microphones: [
-    { deviceId: "mic-1", kind: "audioinput", label: "Built-in Mic", groupId: "g2" } as MediaDeviceInfo,
+    {
+      deviceId: "mic-1",
+      kind: "audioinput",
+      label: "Built-in Mic",
+      groupId: "g2",
+    } as MediaDeviceInfo,
   ],
   speakers: [],
 };

@@ -21,7 +21,9 @@ function Publisher(): JSX.Element {
       <VideoView stream={stream} muted autoPlay playsInline mirror style={style.video} />
       <p>state: {state}</p>
       <p>viewers: {viewers.length}</p>
-      <p>peerId: <code>{publisher?.peerId ?? "—"}</code></p>
+      <p>
+        peerId: <code>{publisher?.peerId ?? "—"}</code>
+      </p>
       {mediaError && <p style={style.err}>media error: {mediaError.message}</p>}
     </section>
   );
@@ -48,7 +50,9 @@ export function App(): JSX.Element {
       <main style={style.main}>
         <h1>React publisher / viewer</h1>
         <div style={style.row}>
-          <button type="button" onClick={() => setRole("publisher")}>Publish</button>
+          <button type="button" onClick={() => setRole("publisher")}>
+            Publish
+          </button>
           <input
             type="text"
             placeholder="publisher peerId"

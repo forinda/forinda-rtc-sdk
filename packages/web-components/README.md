@@ -21,7 +21,9 @@ pnpm add @forinda/video-sdk-elements @forinda/video-sdk-core @forinda/video-sdk-
   room="demo"
   signaling-url="wss://signal.example.com"
   ice-servers='[{"urls":"stun:stun.l.google.com:19302"}]'
-  audio video mirror
+  audio
+  video
+  mirror
 ></forinda-video-publisher>
 ```
 
@@ -45,26 +47,26 @@ Acquires `getUserMedia`, opens a WebSocket signaling channel, and publishes one-
 
 **Attributes:**
 
-| Attribute       | Type     | Default | Description                                              |
-| --------------- | -------- | ------- | -------------------------------------------------------- |
-| `room`          | string   | —       | Required. Room id this publisher joins.                  |
-| `signaling-url` | string   | —       | Required. WebSocket signaling URL.                       |
-| `peer-id`       | string   | uuid    | Optional self-identifier for the publisher.              |
-| `audio`         | boolean  | implied | Capture audio. Implied if neither `audio` nor `video`.   |
-| `video`         | boolean  | implied | Capture video. Implied if neither `audio` nor `video`.   |
-| `ice-servers`   | JSON     | `[]`    | `RTCIceServer[]` literal.                                |
-| `mirror`        | boolean  | `false` | Apply `transform: scaleX(-1)` to the local preview.      |
-| `manual-play`   | boolean  | `false` | Skip the default `muted/autoplay/playsInline` setup.     |
+| Attribute       | Type    | Default | Description                                            |
+| --------------- | ------- | ------- | ------------------------------------------------------ |
+| `room`          | string  | —       | Required. Room id this publisher joins.                |
+| `signaling-url` | string  | —       | Required. WebSocket signaling URL.                     |
+| `peer-id`       | string  | uuid    | Optional self-identifier for the publisher.            |
+| `audio`         | boolean | implied | Capture audio. Implied if neither `audio` nor `video`. |
+| `video`         | boolean | implied | Capture video. Implied if neither `audio` nor `video`. |
+| `ice-servers`   | JSON    | `[]`    | `RTCIceServer[]` literal.                              |
+| `mirror`        | boolean | `false` | Apply `transform: scaleX(-1)` to the local preview.    |
+| `manual-play`   | boolean | `false` | Skip the default `muted/autoplay/playsInline` setup.   |
 
 **Events** (all `CustomEvent`, do not bubble):
 
-| Event         | `event.detail`                                    |
-| ------------- | ------------------------------------------------- |
-| `ready`       | `{ stream: MediaStream; publisher: Publisher }`   |
+| Event         | `event.detail`                                     |
+| ------------- | -------------------------------------------------- |
+| `ready`       | `{ stream: MediaStream; publisher: Publisher }`    |
 | `state`       | `ConnectionState` from the publisher state machine |
-| `viewer`      | `{ peerId: string }` — viewer joined              |
-| `viewer-left` | `{ peerId: string }`                              |
-| `error`       | `Error`                                           |
+| `viewer`      | `{ peerId: string }` — viewer joined               |
+| `viewer-left` | `{ peerId: string }`                               |
+| `error`       | `Error`                                            |
 
 **Styling:** the internal `<video>` is exposed via the `video` shadow part:
 
@@ -81,23 +83,23 @@ Subscribes to a publisher and renders the inbound stream.
 
 **Attributes:**
 
-| Attribute       | Type    | Default | Description                                              |
-| --------------- | ------- | ------- | -------------------------------------------------------- |
-| `room`          | string  | —       | Required.                                                |
-| `publisher-id`  | string  | —       | Required. The publisher peer id to subscribe to.         |
-| `signaling-url` | string  | —       | Required.                                                |
-| `peer-id`       | string  | uuid    | Optional self-identifier for the viewer.                 |
-| `ice-servers`   | JSON    | `[]`    | `RTCIceServer[]` literal.                                |
-| `manual-play`   | boolean | `false` | Skip default playback setup.                             |
+| Attribute       | Type    | Default | Description                                      |
+| --------------- | ------- | ------- | ------------------------------------------------ |
+| `room`          | string  | —       | Required.                                        |
+| `publisher-id`  | string  | —       | Required. The publisher peer id to subscribe to. |
+| `signaling-url` | string  | —       | Required.                                        |
+| `peer-id`       | string  | uuid    | Optional self-identifier for the viewer.         |
+| `ice-servers`   | JSON    | `[]`    | `RTCIceServer[]` literal.                        |
+| `manual-play`   | boolean | `false` | Skip default playback setup.                     |
 
 **Events:**
 
-| Event   | `event.detail`                              |
-| ------- | ------------------------------------------- |
-| `ready` | `{ viewer: Viewer }`                        |
-| `state` | `ConnectionState`                           |
-| `track` | `{ stream: MediaStream }` (first inbound)   |
-| `error` | `Error`                                     |
+| Event   | `event.detail`                            |
+| ------- | ----------------------------------------- |
+| `ready` | `{ viewer: Viewer }`                      |
+| `state` | `ConnectionState`                         |
+| `track` | `{ stream: MediaStream }` (first inbound) |
+| `error` | `Error`                                   |
 
 The inbound `<video>` is exposed via `::part(video)`. The element sets `srcObject` on the first `track` event and exposes the live stream via the `mediaStream` JS property.
 
@@ -107,17 +109,17 @@ A `<select>` populated with the user's cameras / microphones / speakers, kept in
 
 **Attributes:**
 
-| Attribute     | Type    | Default            | Description                                                  |
-| ------------- | ------- | ------------------ | ------------------------------------------------------------ |
-| `kind`        | enum    | `camera`           | One of `camera`, `microphone`, `speaker`.                    |
-| `placeholder` | string  | `Select a device`  | Disabled first option label.                                 |
+| Attribute     | Type   | Default           | Description                               |
+| ------------- | ------ | ----------------- | ----------------------------------------- |
+| `kind`        | enum   | `camera`          | One of `camera`, `microphone`, `speaker`. |
+| `placeholder` | string | `Select a device` | Disabled first option label.              |
 
 **Events:**
 
-| Event    | `event.detail`                                |
-| -------- | --------------------------------------------- |
-| `change` | `{ deviceId: string; label: string }`         |
-| `error`  | `Error`                                       |
+| Event    | `event.detail`                        |
+| -------- | ------------------------------------- |
+| `change` | `{ deviceId: string; label: string }` |
+| `error`  | `Error`                               |
 
 The internal `<select>` is exposed via `::part(select)`.
 
@@ -127,7 +129,8 @@ The internal `<select>` is exposed via `::part(select)`.
   placeholder="Choose camera"
 ></forinda-video-device-picker>
 <script type="module">
-  document.querySelector("forinda-video-device-picker")
+  document
+    .querySelector("forinda-video-device-picker")
     .addEventListener("change", (e) => console.log("picked", e.detail.deviceId));
 </script>
 ```

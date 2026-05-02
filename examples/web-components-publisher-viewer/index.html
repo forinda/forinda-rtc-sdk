@@ -4,7 +4,10 @@
     <meta charset="utf-8" />
     <title>Web Components publisher / viewer</title>
     <style>
-      body { font-family: system-ui; margin: 2rem; }
+      body {
+        font-family: system-ui;
+        margin: 2rem;
+      }
       forinda-video-publisher,
       forinda-video-viewer {
         width: 480px;
@@ -14,8 +17,15 @@
         border-radius: 8px;
       }
       forinda-video-publisher::part(video),
-      forinda-video-viewer::part(video) { border-radius: 8px; }
-      .row { display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center; }
+      forinda-video-viewer::part(video) {
+        border-radius: 8px;
+      }
+      .row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        align-items: center;
+      }
     </style>
   </head>
   <body>
