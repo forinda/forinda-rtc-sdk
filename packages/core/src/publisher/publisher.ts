@@ -14,9 +14,14 @@
  * for type imports and `instanceof` checks.
  */
 
+import { ConfigurationError } from "@/errors/errors.ts";
 import { defineEmitter, type Emitter } from "@/events/emitter.ts";
 import { defineNegotiator, type Negotiator } from "@/peer/negotiation.ts";
 import { definePeerConnection, type PeerConnection } from "@/peer/peer-connection.ts";
+import {
+  replaceAudioTrack as replaceAudioTrackOnPc,
+  replaceVideoTrack as replaceVideoTrackOnPc,
+} from "@/media/track-replacer.ts";
 import type {
   SignalingMessageType,
   SignalingTransport,
@@ -27,6 +32,8 @@ import {
   type ConnectionState,
   type StateMachine,
 } from "@/state/connection-state.ts";
+import { defineStatsCollector, type StatsCollector } from "@/stats/collector.ts";
+import type { ConnectionStats } from "@/stats/types.ts";
 import type { PublisherEvents, PublisherOptions } from "./types.ts";
 
 /** Per-viewer state held by the publisher. */
@@ -34,6 +41,8 @@ interface ViewerEntry {
   peerId: string;
   pc: PeerConnection;
   negotiator: Negotiator;
+  collector?: StatsCollector;
+  latestStats?: ConnectionStats;
   /** Disposers for any per-viewer listeners we need to detach on tear-down. */
   disposers: (() => void)[];
 }
@@ -52,6 +61,7 @@ export class Publisher {
   private readonly stateMachine: StateMachine = defineStateMachine();
   private readonly disposers: (() => void)[] = [];
   private readonly viewers = new Map<string, ViewerEntry>();
+  private readonly statsConfig: PublisherOptions["stats"];
 
   constructor(opts: PublisherOptions) {
     this.signaling = opts.signaling;
@@ -60,6 +70,7 @@ export class Publisher {
     this.stream = opts.stream;
     this.iceServers = opts.iceServers ?? [];
     this.pcFactory = opts.pcFactory;
+    this.statsConfig = opts.stats;
 
     this.stateMachine.on((s) => this.emitter.emit("state", s));
   }
@@ -207,6 +218,22 @@ export class Publisher {
       negotiator,
       disposers: [offIce],
     };
+
+    if (this.statsConfig !== undefined) {
+      const collector = defineStatsCollector({
+        pc: pc.raw,
+        peerId: viewerPeerId,
+        intervalMs: this.statsConfig.interval,
+      });
+      const offStats = collector.on("stats", (s) => {
+        entry.latestStats = s;
+        this.emitter.emit("stats", this.collectLatestStats());
+      });
+      entry.collector = collector;
+      entry.disposers.push(offStats);
+      collector.start();
+    }
+
     this.viewers.set(viewerPeerId, entry);
     this.emitter.emit("viewer", { peerId: viewerPeerId });
 
@@ -214,10 +241,60 @@ export class Publisher {
     void negotiator.makeOffer();
   }
 
+  /** Snapshot of the most recent stats per viewer. Empty until first poll. */
+  private collectLatestStats(): ConnectionStats[] {
+    const out: ConnectionStats[] = [];
+    for (const v of this.viewers.values()) {
+      if (v.latestStats !== undefined) out.push(v.latestStats);
+    }
+    return out;
+  }
+
+  /**
+   * Manual one-shot stats snapshot — one entry per connected viewer.
+   * Bypasses the polling loop.
+   */
+  async getStats(): Promise<ConnectionStats[]> {
+    const out: ConnectionStats[] = [];
+    for (const v of this.viewers.values()) {
+      if (v.collector !== undefined) {
+        out.push(await v.collector.collect());
+      }
+    }
+    return out;
+  }
+
+  /**
+   * Hot-swap the video track on every connected viewer's outbound stream.
+   * Throws {@link ConfigurationError} when zero viewers are connected.
+   */
+  async replaceVideoTrack(track: MediaStreamTrack): Promise<void> {
+    if (this.viewers.size === 0) {
+      throw new ConfigurationError("no viewers connected — nothing to replace");
+    }
+    for (const v of this.viewers.values()) {
+      await replaceVideoTrackOnPc(v.pc.raw, track);
+    }
+  }
+
+  /**
+   * Hot-swap the audio track on every connected viewer's outbound stream.
+   * Throws {@link ConfigurationError} when zero viewers are connected.
+   */
+  async replaceAudioTrack(track: MediaStreamTrack): Promise<void> {
+    if (this.viewers.size === 0) {
+      throw new ConfigurationError("no viewers connected — nothing to replace");
+    }
+    for (const v of this.viewers.values()) {
+      await replaceAudioTrackOnPc(v.pc.raw, track);
+    }
+  }
+
   /** Internal: tear down a single viewer's PC + listeners. Idempotent. */
   private teardownViewer(viewerPeerId: string): void {
     const entry = this.viewers.get(viewerPeerId);
     if (entry === undefined) return;
+    entry.collector?.stop();
     for (const d of entry.disposers) d();
     entry.pc.close();
     this.viewers.delete(viewerPeerId);

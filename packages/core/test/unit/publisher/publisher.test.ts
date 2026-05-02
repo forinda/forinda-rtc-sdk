@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ConfigurationError } from "@/errors/errors.ts";
 import { definePublisher, Publisher } from "@/publisher/publisher.ts";
 import { createFakePeerConnection } from "../../_mocks/fake-pc.ts";
 import { createInMemoryTransportPair } from "../../_mocks/in-memory-signaling.ts";
@@ -384,6 +385,158 @@ describe("Publisher — per-viewer PC management", () => {
 
     expect([...p.peers()].sort()).toEqual(["bob", "carol"]);
     expect(pcFactory).toHaveBeenCalledTimes(2);
+    await p.stop();
+  });
+});
+
+describe("Publisher — stats + track replacers", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  const simulateViewerJoin = async (
+    viewerSig: ReturnType<typeof createInMemoryTransportPair>["viewer"],
+    viewerPeerId: string,
+  ): Promise<void> => {
+    await viewerSig.send({ type: "peer-joined", peer: viewerPeerId, role: "viewer" });
+    await Promise.resolve();
+    await Promise.resolve();
+  };
+
+  it("emits stats event on each polling tick when stats: { interval } provided", async () => {
+    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const fakePc = createFakePeerConnection();
+    fakePc.__setState({ connectionState: "connected", iceConnectionState: "connected" });
+
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => fakePc,
+      stats: { interval: 1000 },
+    });
+    const onStats = vi.fn();
+    p.on("stats", onStats);
+
+    await p.start();
+    await simulateViewerJoin(viewerSig, "bob");
+
+    await vi.advanceTimersByTimeAsync(2500);
+    expect(onStats).toHaveBeenCalled();
+    const lastCall = onStats.mock.calls[onStats.mock.calls.length - 1]?.[0];
+    expect(Array.isArray(lastCall)).toBe(true);
+    expect(lastCall).toHaveLength(1);
+    expect(lastCall[0].peerId).toBe("bob");
+
+    await p.stop();
+  });
+
+  it("getStats() returns one entry per viewer (one-shot, no interval needed)", async () => {
+    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const pc1 = createFakePeerConnection();
+    const pc2 = createFakePeerConnection();
+    pc1.__setState({ connectionState: "connected", iceConnectionState: "connected" });
+    pc2.__setState({ connectionState: "connected", iceConnectionState: "connected" });
+    let i = 0;
+    const pcs = [pc1, pc2];
+
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => pcs[i++] ?? createFakePeerConnection(),
+      stats: { interval: 5000 }, // long interval; getStats() bypasses
+    });
+    await p.start();
+    await simulateViewerJoin(viewerSig, "bob");
+    await simulateViewerJoin(viewerSig, "carol");
+
+    const stats = await p.getStats();
+    expect(stats).toHaveLength(2);
+    const ids = stats.map((s) => s.peerId).sort();
+    expect(ids).toEqual(["bob", "carol"]);
+
+    await p.stop();
+  });
+
+  it("getStats() returns empty array when stats not configured", async () => {
+    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const fakePc = createFakePeerConnection();
+
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => fakePc,
+    });
+    await p.start();
+    await simulateViewerJoin(viewerSig, "bob");
+
+    expect(await p.getStats()).toEqual([]);
+    await p.stop();
+  });
+
+  it("replaceVideoTrack swaps on every viewer's PC", async () => {
+    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const senders = [
+      { track: { kind: "video" } as MediaStreamTrack, replaceTrack: vi.fn(async () => undefined) },
+      { track: { kind: "audio" } as MediaStreamTrack, replaceTrack: vi.fn(async () => undefined) },
+    ] as unknown as RTCRtpSender[];
+    const fakePc = createFakePeerConnection();
+    vi.mocked(fakePc.getSenders).mockReturnValue(senders);
+
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => fakePc,
+    });
+    await p.start();
+    await simulateViewerJoin(viewerSig, "bob");
+
+    const newTrack = { kind: "video" } as MediaStreamTrack;
+    await p.replaceVideoTrack(newTrack);
+    expect(senders[0]?.replaceTrack).toHaveBeenCalledWith(newTrack);
+
+    await p.stop();
+  });
+
+  it("replaceVideoTrack throws ConfigurationError when no viewers connected", async () => {
+    const { publisher: pubSig } = createInMemoryTransportPair();
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => createFakePeerConnection(),
+    });
+    await p.start();
+    await expect(p.replaceVideoTrack({ kind: "video" } as MediaStreamTrack)).rejects.toBeInstanceOf(
+      ConfigurationError,
+    );
+    await p.stop();
+  });
+
+  it("replaceAudioTrack throws ConfigurationError when no viewers connected", async () => {
+    const { publisher: pubSig } = createInMemoryTransportPair();
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => createFakePeerConnection(),
+    });
+    await p.start();
+    await expect(p.replaceAudioTrack({ kind: "audio" } as MediaStreamTrack)).rejects.toBeInstanceOf(
+      ConfigurationError,
+    );
     await p.stop();
   });
 });
