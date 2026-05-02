@@ -1,0 +1,16 @@
+{
+  "name": "@forinda/e2e",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Playwright end-to-end tests for the Forinda RTC SDK. Not published.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.0",
+    "typescript": "^6.0.0"
+  }
+}
