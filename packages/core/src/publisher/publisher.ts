@@ -136,8 +136,29 @@ export class Publisher {
       this.handleViewerJoined(msg.peer);
     } else if (msg.type === "peer-left") {
       this.teardownViewer(msg.peer);
+    } else if (msg.type === "sdp") {
+      await this.routeSdp(msg.from, msg.sdp);
+    } else if (msg.type === "ice") {
+      await this.routeIce(msg.from, msg.candidate);
     }
-    // SDP/ICE routing handled in Task 6.
+  }
+
+  private async routeSdp(
+    fromPeerId: string,
+    sdp: { type: "offer" | "answer"; sdp: string },
+  ): Promise<void> {
+    const entry = this.viewers.get(fromPeerId);
+    if (entry === undefined) return; // unknown viewer — drop silently
+    await entry.negotiator.handleSdp(sdp);
+  }
+
+  private async routeIce(
+    fromPeerId: string,
+    candidate: Record<string, unknown> | null,
+  ): Promise<void> {
+    const entry = this.viewers.get(fromPeerId);
+    if (entry === undefined) return;
+    await entry.negotiator.handleIce(candidate as RTCIceCandidateInit | null);
   }
 
   /**

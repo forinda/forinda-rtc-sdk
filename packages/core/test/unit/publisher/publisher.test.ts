@@ -273,6 +273,98 @@ describe("Publisher — per-viewer PC management", () => {
     await p.stop();
   });
 
+  it("routes inbound SDP answer to the matching viewer's negotiator", async () => {
+    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const fakePc = createFakePeerConnection();
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => fakePc,
+    });
+    await p.start();
+    await simulateViewerJoin(pubSig, viewerSig, "bob");
+
+    // Drain the offer that was emitted on viewer-joined.
+    await Promise.resolve();
+    await Promise.resolve();
+    const setRemoteCalls = vi.mocked(fakePc.setRemoteDescription).mock.calls.length;
+
+    // Simulate viewer answering.
+    await viewerSig.send({
+      type: "sdp",
+      from: "bob",
+      to: "alice",
+      sdp: { type: "answer", sdp: "v=0...answer-from-bob" },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(vi.mocked(fakePc.setRemoteDescription).mock.calls.length).toBeGreaterThan(
+      setRemoteCalls,
+    );
+    expect(fakePc.setRemoteDescription).toHaveBeenLastCalledWith({
+      type: "answer",
+      sdp: "v=0...answer-from-bob",
+    });
+    await p.stop();
+  });
+
+  it("routes inbound ICE candidate to the matching viewer's PC", async () => {
+    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const fakePc = createFakePeerConnection();
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => fakePc,
+    });
+    await p.start();
+    await simulateViewerJoin(pubSig, viewerSig, "bob");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const candidate = { candidate: "candidate:1 1 udp ...", sdpMid: "0" };
+    await viewerSig.send({
+      type: "ice",
+      from: "bob",
+      to: "alice",
+      candidate,
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fakePc.addIceCandidate).toHaveBeenCalledWith(candidate);
+    await p.stop();
+  });
+
+  it("ignores SDP from an unknown peer (defensive drop)", async () => {
+    const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
+    const fakePc = createFakePeerConnection();
+    const p = definePublisher({
+      signaling: pubSig,
+      room: "demo",
+      peerId: "alice",
+      stream: fakeMediaStream(),
+      pcFactory: () => fakePc,
+    });
+    await p.start();
+
+    await viewerSig.send({
+      type: "sdp",
+      from: "ghost",
+      to: "alice",
+      sdp: { type: "answer", sdp: "v=0..." },
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fakePc.setRemoteDescription).not.toHaveBeenCalled();
+    await p.stop();
+  });
+
   it("supports multiple simultaneous viewers", async () => {
     const { publisher: pubSig, viewer: viewerSig } = createInMemoryTransportPair();
     const pcs = [createFakePeerConnection(), createFakePeerConnection()];
