@@ -22,12 +22,12 @@ pnpm load:signaling --url ws://127.0.0.1:8787 --rooms 100 --peers 10 --chatPerSe
 
 ## Knobs
 
-| Flag           | Default                | Meaning                                  |
-| -------------- | ---------------------- | ---------------------------------------- |
-| `--url`        | `ws://127.0.0.1:8787`  | Signaling server URL                     |
-| `--rooms`      | `10`                   | Number of distinct rooms                 |
-| `--peers`      | `5`                    | Peers per room                           |
-| `--chatPerSec` | `1`                    | Chats per peer per second                |
-| `--duration`   | `10`                   | How long to run, in seconds              |
+| Flag           | Default               | Meaning                     |
+| -------------- | --------------------- | --------------------------- |
+| `--url`        | `ws://127.0.0.1:8787` | Signaling server URL        |
+| `--rooms`      | `10`                  | Number of distinct rooms    |
+| `--peers`      | `5`                   | Peers per room              |
+| `--chatPerSec` | `1`                   | Chats per peer per second   |
+| `--duration`   | `10`                  | How long to run, in seconds |
 
 Total simulated peers = `rooms × peers`. Total send rate = `rooms × peers × chatPerSec`.

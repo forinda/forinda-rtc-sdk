@@ -18,38 +18,39 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/integration-tests/package.json` | Private workspace package; `wireit` test script; depends on every other workspace package via `workspace:*`. |
-| `packages/integration-tests/tsconfig.json` | Extends `tsconfig.base.json`; `@/*` aliases not needed (tests are flat). |
-| `packages/integration-tests/vitest.config.ts` | Node environment; `include: ["test/**/*.test.ts"]`; no coverage thresholds (this package has zero src). |
-| `packages/integration-tests/test/room-end-to-end.test.ts` | Spins a real `defineDevServer`; constructs a `Room` with publisher + channel + recorder; asserts the wire flows + final blob. |
-| `packages/integration-tests/test/reconnect.test.ts` | RoomChannel survives a transport drop, re-issues join + presence resync. |
-| `packages/integration-tests/test/chat-history-replay.test.ts` | Late joiner with `replayHistory: true` receives engine-recorded chats. |
-| `packages/integration-tests/README.md` | One paragraph: what this package is, when to add a test here vs in a per-package suite. |
-| `tools/load-signaling.mjs` | Node script: opens N WebSocket clients per room, fans chat, reports throughput + latency. |
-| `tools/load-signaling.README.md` | How to run + interpret output. |
-| `package.json` (root) | New scripts: `test:integration`, `test:browser`, `load:signaling`, `e2e`. |
-| `packages/core/vitest.browser.config.ts` | Browser project for media-touching tests. |
-| `packages/react/vitest.browser.config.ts` | Same. |
-| `packages/web-components/vitest.browser.config.ts` | Same. |
-| `packages/core/test/browser/user-media.browser.test.ts` | Real `getUserMedia` via `--use-fake-device-for-media-stream`. |
-| `packages/core/test/browser/recorder.browser.test.ts` | Real `MediaRecorder`. |
-| `packages/react/test/browser/use-user-media.browser.test.tsx` | Real React + jsdom-equivalent in browser. |
-| `packages/web-components/test/browser/video-publisher.browser.test.ts` | Element + real `getUserMedia`. |
-| `e2e/package.json` | Private; `playwright/test` + `@playwright/test`; depends on dev-signaling-server + react example. |
-| `e2e/playwright.config.ts` | Boots `dev-signaling-server` + react example via `webServer`. Two browser contexts. Headless Chromium + fake media. |
-| `e2e/tests/publisher-viewer.spec.ts` | Tab A publishes; Tab B subscribes; assert video element renders + dimensions are non-zero. |
-| `e2e/tests/chat.spec.ts` | Tab A sends chat → Tab B receives. |
-| `.github/workflows/ci.yml` | Four new jobs: `integration`, `load`, `browser`, `e2e`. |
-| `README.md` (root) | Add a "Testing" section linking to each test surface + how to run locally. |
-| `.changeset/finish-tests.md` | Patch on every package — pure infra, no user-facing changes. |
+| File                                                                   | Responsibility                                                                                                                |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `packages/integration-tests/package.json`                              | Private workspace package; `wireit` test script; depends on every other workspace package via `workspace:*`.                  |
+| `packages/integration-tests/tsconfig.json`                             | Extends `tsconfig.base.json`; `@/*` aliases not needed (tests are flat).                                                      |
+| `packages/integration-tests/vitest.config.ts`                          | Node environment; `include: ["test/**/*.test.ts"]`; no coverage thresholds (this package has zero src).                       |
+| `packages/integration-tests/test/room-end-to-end.test.ts`              | Spins a real `defineDevServer`; constructs a `Room` with publisher + channel + recorder; asserts the wire flows + final blob. |
+| `packages/integration-tests/test/reconnect.test.ts`                    | RoomChannel survives a transport drop, re-issues join + presence resync.                                                      |
+| `packages/integration-tests/test/chat-history-replay.test.ts`          | Late joiner with `replayHistory: true` receives engine-recorded chats.                                                        |
+| `packages/integration-tests/README.md`                                 | One paragraph: what this package is, when to add a test here vs in a per-package suite.                                       |
+| `tools/load-signaling.mjs`                                             | Node script: opens N WebSocket clients per room, fans chat, reports throughput + latency.                                     |
+| `tools/load-signaling.README.md`                                       | How to run + interpret output.                                                                                                |
+| `package.json` (root)                                                  | New scripts: `test:integration`, `test:browser`, `load:signaling`, `e2e`.                                                     |
+| `packages/core/vitest.browser.config.ts`                               | Browser project for media-touching tests.                                                                                     |
+| `packages/react/vitest.browser.config.ts`                              | Same.                                                                                                                         |
+| `packages/web-components/vitest.browser.config.ts`                     | Same.                                                                                                                         |
+| `packages/core/test/browser/user-media.browser.test.ts`                | Real `getUserMedia` via `--use-fake-device-for-media-stream`.                                                                 |
+| `packages/core/test/browser/recorder.browser.test.ts`                  | Real `MediaRecorder`.                                                                                                         |
+| `packages/react/test/browser/use-user-media.browser.test.tsx`          | Real React + jsdom-equivalent in browser.                                                                                     |
+| `packages/web-components/test/browser/video-publisher.browser.test.ts` | Element + real `getUserMedia`.                                                                                                |
+| `e2e/package.json`                                                     | Private; `playwright/test` + `@playwright/test`; depends on dev-signaling-server + react example.                             |
+| `e2e/playwright.config.ts`                                             | Boots `dev-signaling-server` + react example via `webServer`. Two browser contexts. Headless Chromium + fake media.           |
+| `e2e/tests/publisher-viewer.spec.ts`                                   | Tab A publishes; Tab B subscribes; assert video element renders + dimensions are non-zero.                                    |
+| `e2e/tests/chat.spec.ts`                                               | Tab A sends chat → Tab B receives.                                                                                            |
+| `.github/workflows/ci.yml`                                             | Four new jobs: `integration`, `load`, `browser`, `e2e`.                                                                       |
+| `README.md` (root)                                                     | Add a "Testing" section linking to each test surface + how to run locally.                                                    |
+| `.changeset/finish-tests.md`                                           | Patch on every package — pure infra, no user-facing changes.                                                                  |
 
 ---
 
 ## Task 1: Scaffold `packages/integration-tests/`
 
 **Files:**
+
 - Create: `packages/integration-tests/package.json`
 - Create: `packages/integration-tests/tsconfig.json`
 - Create: `packages/integration-tests/vitest.config.ts`
@@ -144,7 +145,7 @@ export default defineConfig({
 
 - [ ] **Step 4: Create `README.md`**
 
-```markdown
+````markdown
 # @forinda/integration-tests
 
 Cross-package integration tests for the Forinda RTC SDK. Private — not published.
@@ -164,14 +165,16 @@ pnpm --filter @forinda/integration-tests test
 # or from the root:
 pnpm test:integration
 ```
-```
+````
+
+````
 
 - [ ] **Step 5: Install + verify the empty package**
 
 ```bash
 pnpm install
 pnpm --filter @forinda/integration-tests typecheck
-```
+````
 
 Expected: install adds the new package to the workspace; typecheck passes (no test files yet but tsconfig parses).
 
@@ -195,6 +198,7 @@ git commit -m "feat(integration-tests): scaffold cross-package suite (EPIC-8 #1/
 ## Task 2: First integration test — Room end-to-end
 
 **Files:**
+
 - Create: `packages/integration-tests/test/room-end-to-end.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -296,6 +300,7 @@ git commit -m "test(integration): Room end-to-end against dev-signaling-server (
 ## Task 3: Integration — RoomChannel reconnect survives a server restart
 
 **Files:**
+
 - Create: `packages/integration-tests/test/reconnect.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -368,6 +373,7 @@ git commit -m "test(integration): RoomChannel reconnect across server bounce (EP
 ## Task 4: Integration — chat history replay across the wire
 
 **Files:**
+
 - Create: `packages/integration-tests/test/chat-history-replay.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -446,6 +452,7 @@ git commit -m "test(integration): chat-history replay end-to-end (EPIC-8 #4/11)"
 ## Task 5: Load harness — `tools/load-signaling.mjs`
 
 **Files:**
+
 - Create: `tools/load-signaling.mjs`
 - Create: `tools/load-signaling.README.md`
 - Modify: root `package.json`
@@ -506,9 +513,7 @@ await Promise.all(
           ws.once("open", resolve);
           ws.once("error", reject);
         });
-        ws.send(
-          JSON.stringify({ type: "join", room: roomId, peer: peerId, role: "presence" }),
-        );
+        ws.send(JSON.stringify({ type: "join", room: roomId, peer: peerId, role: "presence" }));
         ws.on("message", (raw) => {
           const msg = JSON.parse(raw.toString());
           if (msg.type === "chat" && msg.clientId) {
@@ -584,7 +589,7 @@ Root `package.json` — add to `scripts`:
 
 Create `tools/load-signaling.README.md`:
 
-```markdown
+````markdown
 # load:signaling
 
 Generates synthetic chat traffic against a running signaling server and reports throughput + latency percentiles.
@@ -598,6 +603,7 @@ pnpm dev:server
 # Terminal 2
 pnpm load:signaling --url ws://127.0.0.1:8787 --rooms 100 --peers 10 --chatPerSec 1 --duration 30
 ```
+````
 
 ## Output
 
@@ -609,16 +615,17 @@ pnpm load:signaling --url ws://127.0.0.1:8787 --rooms 100 --peers 10 --chatPerSe
 
 ## Knobs
 
-| Flag           | Default                | Meaning                                  |
-| -------------- | ---------------------- | ---------------------------------------- |
-| `--url`        | `ws://127.0.0.1:8787`  | Signaling server URL                     |
-| `--rooms`      | `10`                   | Number of distinct rooms                 |
-| `--peers`      | `5`                    | Peers per room                           |
-| `--chatPerSec` | `1`                    | Chats per peer per second                |
-| `--duration`   | `10`                   | How long to run, in seconds              |
+| Flag           | Default               | Meaning                     |
+| -------------- | --------------------- | --------------------------- |
+| `--url`        | `ws://127.0.0.1:8787` | Signaling server URL        |
+| `--rooms`      | `10`                  | Number of distinct rooms    |
+| `--peers`      | `5`                   | Peers per room              |
+| `--chatPerSec` | `1`                   | Chats per peer per second   |
+| `--duration`   | `10`                  | How long to run, in seconds |
 
 Total simulated peers = `rooms × peers`. Total send rate = `rooms × peers × chatPerSec`.
-```
+
+````
 
 - [ ] **Step 4: Smoke-test the harness**
 
@@ -633,7 +640,7 @@ pnpm load:signaling --rooms 2 --peers 2 --chatPerSec 1 --duration 3
 
 # Stop the server
 kill $SERVER_PID
-```
+````
 
 Expected: sees `sent=12 received≈12` with single-digit latency.
 
@@ -649,6 +656,7 @@ git commit -m "feat(tools): load:signaling harness (EPIC-8 #5/11)"
 ## Task 6: Vitest browser project — core
 
 **Files:**
+
 - Modify: `packages/core/package.json`
 - Create: `packages/core/vitest.browser.config.ts`
 - Create: `packages/core/test/browser/user-media.browser.test.ts`
@@ -687,10 +695,7 @@ export default defineConfig({
             // Synthetic camera/mic so getUserMedia resolves with deterministic
             // frames + tones in CI. Without these, headless Chromium asks for
             // permission and the test hangs.
-            args: [
-              "--use-fake-ui-for-media-stream",
-              "--use-fake-device-for-media-stream",
-            ],
+            args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
           },
         },
       ],
@@ -782,6 +787,7 @@ git commit -m "test(core): vitest browser project for media + recorder (EPIC-8 #
 ## Task 7: Vitest browser project — react + elements
 
 **Files:**
+
 - Modify: `packages/react/package.json`
 - Create: `packages/react/vitest.browser.config.ts`
 - Create: `packages/react/test/browser/use-user-media.browser.test.tsx`
@@ -817,10 +823,7 @@ export default defineConfig({
         {
           browser: "chromium",
           launch: {
-            args: [
-              "--use-fake-ui-for-media-stream",
-              "--use-fake-device-for-media-stream",
-            ],
+            args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
           },
         },
       ],
@@ -882,10 +885,7 @@ export default defineConfig({
         {
           browser: "chromium",
           launch: {
-            args: [
-              "--use-fake-ui-for-media-stream",
-              "--use-fake-device-for-media-stream",
-            ],
+            args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"],
           },
         },
       ],
@@ -963,6 +963,7 @@ git commit -m "test(react,elements): vitest browser projects (EPIC-8 #7/11)"
 ## Task 8: Playwright e2e — scaffold + dev-server boot
 
 **Files:**
+
 - Create: `e2e/package.json`
 - Create: `e2e/playwright.config.ts`
 - Create: `e2e/tsconfig.json`
@@ -1088,6 +1089,7 @@ git commit -m "feat(e2e): scaffold Playwright project + dev-server webServer (EP
 ## Task 9: Playwright e2e — Publisher↔Viewer two-tab spec
 
 **Files:**
+
 - Create: `e2e/tests/publisher-viewer.spec.ts`
 
 - [ ] **Step 1: Write the spec**
@@ -1156,6 +1158,7 @@ git commit -m "test(e2e): two-tab Publisher↔Viewer spec (EPIC-8 #9/11)"
 ## Task 10: Playwright e2e — chat round-trip spec (deferred)
 
 **Files:**
+
 - Create: `e2e/tests/chat.spec.ts`
 
 > The current React example doesn't expose chat UI. Either (a) add a minimal chat input to the example, or (b) skip this task and ship publisher-viewer coverage only. The plan keeps the scope tight by **deferring** chat e2e to a follow-up, since adding chat UI is mostly example-app polish, not test infrastructure.
@@ -1194,6 +1197,7 @@ git commit -m "test(e2e): placeholder skip for chat round-trip (EPIC-8 #10/11)"
 ## Task 11: CI wiring + READMEs + changeset + tag
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 - Modify: `README.md`
 - Create: `.changeset/finish-tests.md`
@@ -1203,76 +1207,76 @@ git commit -m "test(e2e): placeholder skip for chat round-trip (EPIC-8 #10/11)"
 Append to `.github/workflows/ci.yml` after the existing `build` job:
 
 ```yaml
-  integration:
-    name: Integration tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: "${{ env.PNPM_VERSION }}" }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - run: pnpm test:integration
+integration:
+  name: Integration tests
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with: { version: "${{ env.PNPM_VERSION }}" }
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+    - run: pnpm build
+    - run: pnpm test:integration
 
-  load:
-    name: Load smoke
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: "${{ env.PNPM_VERSION }}" }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - name: Start dev signaling server
-        run: pnpm dev:server &
-      - run: sleep 2
-      - run: pnpm load:signaling --rooms 5 --peers 4 --chatPerSec 2 --duration 5
+load:
+  name: Load smoke
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with: { version: "${{ env.PNPM_VERSION }}" }
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+    - run: pnpm build
+    - name: Start dev signaling server
+      run: pnpm dev:server &
+    - run: sleep 2
+    - run: pnpm load:signaling --rooms 5 --peers 4 --chatPerSec 2 --duration 5
 
-  browser:
-    name: Vitest browser (Chromium)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: "${{ env.PNPM_VERSION }}" }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - run: pnpm exec playwright install chromium --with-deps
-      - run: pnpm test:browser
+browser:
+  name: Vitest browser (Chromium)
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with: { version: "${{ env.PNPM_VERSION }}" }
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+    - run: pnpm build
+    - run: pnpm exec playwright install chromium --with-deps
+    - run: pnpm test:browser
 
-  e2e:
-    name: Playwright e2e
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with: { version: "${{ env.PNPM_VERSION }}" }
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - run: pnpm --filter dev-signaling-server build
-      - run: pnpm --filter @forinda/e2e exec playwright install chromium --with-deps
-      - run: pnpm e2e
-      - if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: e2e/playwright-report/
+e2e:
+  name: Playwright e2e
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with: { version: "${{ env.PNPM_VERSION }}" }
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+    - run: pnpm build
+    - run: pnpm --filter dev-signaling-server build
+    - run: pnpm --filter @forinda/e2e exec playwright install chromium --with-deps
+    - run: pnpm e2e
+    - if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: playwright-report
+        path: e2e/playwright-report/
 ```
 
 - [ ] **Step 2: Update root README**
@@ -1282,13 +1286,13 @@ Find the existing test-running section (search for `pnpm test`) and add a "Testi
 ```markdown
 ## Testing tiers
 
-| Tier | Command | What it runs |
-| ---- | ------- | ------------ |
-| Unit | `pnpm test` | Per-package vitest in jsdom (or node for server packages). The default for day-to-day dev. |
-| Integration | `pnpm test:integration` | Cross-package suite in `packages/integration-tests/`. Real WebSocket round-trips, real engine. |
-| Browser | `pnpm test:browser` | Vitest in headless Chromium (Playwright provider) with synthetic getUserMedia. Covers core/react/elements media paths. |
-| E2E | `pnpm e2e` | Playwright two-tab Publisher↔Viewer flow against the dev signaling server + React example app. |
-| Load | `pnpm load:signaling --rooms 100 --peers 10 --chatPerSec 1 --duration 30` | Generates synthetic chat traffic; reports throughput + p50/p95 latency. |
+| Tier        | Command                                                                   | What it runs                                                                                                           |
+| ----------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Unit        | `pnpm test`                                                               | Per-package vitest in jsdom (or node for server packages). The default for day-to-day dev.                             |
+| Integration | `pnpm test:integration`                                                   | Cross-package suite in `packages/integration-tests/`. Real WebSocket round-trips, real engine.                         |
+| Browser     | `pnpm test:browser`                                                       | Vitest in headless Chromium (Playwright provider) with synthetic getUserMedia. Covers core/react/elements media paths. |
+| E2E         | `pnpm e2e`                                                                | Playwright two-tab Publisher↔Viewer flow against the dev signaling server + React example app.                         |
+| Load        | `pnpm load:signaling --rooms 100 --peers 10 --chatPerSec 1 --duration 30` | Generates synthetic chat traffic; reports throughput + p50/p95 latency.                                                |
 
 CI runs all five on every PR.
 ```
@@ -1343,6 +1347,7 @@ git tag -a v0.0.0-epic-8b -m "EPIC-8 finish: browser + integration + load + e2e 
 - ⚠️ Chat e2e deferred — placeholder skip (Task 10) with a note. Tracked for follow-up.
 
 **Type consistency:**
+
 - Test fixtures use the same `defineDevServer`/`defineFakePeerConnection`/`installFakeMediaRecorder` helpers as existing per-package tests. No new helper APIs.
 - `vitest.browser.config.ts` shape is identical across the three packages (only the `include` glob differs).
 

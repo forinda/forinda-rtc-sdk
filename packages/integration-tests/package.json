@@ -25,7 +25,12 @@
   "wireit": {
     "test": {
       "command": "vitest run",
-      "files": ["test/**/*.ts", "vitest.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "files": [
+        "test/**/*.ts",
+        "vitest.config.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
+      ],
       "output": [],
       "dependencies": [
         "../core:build",
@@ -38,13 +43,23 @@
     },
     "typecheck": {
       "command": "tsc --noEmit",
-      "files": ["test/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "files": [
+        "test/**/*.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
+      ],
       "output": [],
-      "dependencies": ["../core:build", "../test-helpers:build"]
+      "dependencies": [
+        "../core:build",
+        "../test-helpers:build"
+      ]
     },
     "lint": {
       "command": "oxlint test",
-      "files": ["test/**/*.ts", "../../oxlint.json"],
+      "files": [
+        "test/**/*.ts",
+        "../../oxlint.json"
+      ],
       "output": []
     }
   }

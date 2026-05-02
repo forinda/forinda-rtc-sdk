@@ -49,9 +49,7 @@ await Promise.all(
           ws.once("open", resolve);
           ws.once("error", reject);
         });
-        ws.send(
-          JSON.stringify({ type: "join", room: roomId, peer: peerId, role: "presence" }),
-        );
+        ws.send(JSON.stringify({ type: "join", room: roomId, peer: peerId, role: "presence" }));
         ws.on("message", (raw) => {
           const msg = JSON.parse(raw.toString());
           if (msg.type === "chat" && msg.clientId) {
