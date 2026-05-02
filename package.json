@@ -33,6 +33,7 @@
     "format:check": "oxfmt --check .",
     "test": "pnpm -r --filter './packages/*' run test",
     "test:integration": "pnpm --filter @forinda/integration-tests test",
+    "test:browser": "pnpm -r --parallel --filter @forinda/video-sdk-core --filter @forinda/video-sdk-react --filter @forinda/video-sdk-elements test:browser",
     "load:signaling": "node tools/load-signaling.mjs",
     "dev:server": "pnpm --filter dev-signaling-server dev",
     "dev:vanilla": "pnpm --filter example-vanilla-publisher-viewer dev",
