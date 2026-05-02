@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-vue",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Vue 3 composables and components for the Forinda RTC SDK",
   "keywords": [
     "composables",

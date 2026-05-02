@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-signaling-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Standalone reference signaling server for the Forinda video SDK (library + CLI)",
   "keywords": [
     "cli",

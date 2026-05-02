@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-signaling-adapter-ws",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Node WebSocket server adapter for Forinda video SDK signaling protocol",
   "keywords": [
     "node",
