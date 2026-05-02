@@ -32,6 +32,7 @@ import type {
 import type { ChatHistoryEntry, RoomChannelEvents, RoomChannelOptions } from "./types.ts";
 
 const DEFAULT_CHAT_HISTORY_LIMIT = 200;
+const DEFAULT_CHAT_ACK_TIMEOUT_MS = 10_000;
 
 export class RoomChannel {
   readonly room: string;
@@ -46,6 +47,9 @@ export class RoomChannel {
   private readonly chatBuffer: ChatHistoryEntry[] = [];
   /** Outgoing chats awaiting server echo. Keyed by clientId. */
   private readonly pendingChats = new Map<string, ChatHistoryEntry>();
+  private readonly chatAckTimeoutMs: number;
+  /** Per-pending-chat timers; cleared on echo or fail. */
+  private readonly chatAckTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly ownAttributeKeys = new Set<string>();
   private readonly leader: RoomChannelOptions["__leader"];
   private started = false;
@@ -63,6 +67,7 @@ export class RoomChannel {
     // pure presence + chat. `manageJoin` becomes implicit-false.
     this.manageJoin = opts.__leader ? false : (opts.manageJoin ?? true);
     this.chatHistoryLimit = opts.chatHistoryLimit ?? DEFAULT_CHAT_HISTORY_LIMIT;
+    this.chatAckTimeoutMs = opts.chatAckTimeoutMs ?? DEFAULT_CHAT_ACK_TIMEOUT_MS;
   }
 
   /** Read-only view of the room's current presence map. */
@@ -129,6 +134,9 @@ export class RoomChannel {
 
     for (const dispose of this.disposers) dispose();
     this.disposers.length = 0;
+
+    for (const timer of this.chatAckTimers.values()) clearTimeout(timer);
+    this.chatAckTimers.clear();
 
     if (this.manageJoin) {
       try {
@@ -222,6 +230,11 @@ export class RoomChannel {
     this.emitter.emit("chat", entry);
     this.emitter.emit("chat-status", { id, status: "pending" });
 
+    const timer = setTimeout(() => {
+      this.markChatFailed(id);
+    }, this.chatAckTimeoutMs);
+    this.chatAckTimers.set(id, timer);
+
     try {
       await this.signaling.send(msg);
     } catch (cause) {
@@ -233,6 +246,11 @@ export class RoomChannel {
 
   /** Internal: mark a pending chat as failed (timeout, send error, drop). */
   private markChatFailed(id: string): void {
+    const timer = this.chatAckTimers.get(id);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      this.chatAckTimers.delete(id);
+    }
     const entry = this.pendingChats.get(id);
     if (!entry || entry.status !== "pending") return;
     entry.status = "failed";
@@ -293,6 +311,11 @@ export class RoomChannel {
       const id = message.clientId;
       const entry = this.pendingChats.get(id);
       if (entry && entry.status === "pending") {
+        const timer = this.chatAckTimers.get(id);
+        if (timer !== undefined) {
+          clearTimeout(timer);
+          this.chatAckTimers.delete(id);
+        }
         entry.status = "confirmed";
         this.pendingChats.delete(id);
         this.emitter.emit("chat-status", { id, status: "confirmed" });
