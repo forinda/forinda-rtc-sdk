@@ -3,7 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "description": "Local development signaling server for Forinda video SDK examples and tests",
+  "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
+    "directory": "apps/dev-signaling-server"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {

@@ -2,7 +2,16 @@
   "name": "@forinda/video-sdk-signaling-protocol",
   "version": "0.0.0",
   "description": "Pure protocol engine and wire-format zod schemas for the Forinda video SDK signaling layer",
+  "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
+    "directory": "packages/signaling-protocol"
+  },
   "files": [
     "dist",
     "README.md",

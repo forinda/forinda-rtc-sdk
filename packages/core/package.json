@@ -2,7 +2,16 @@
   "name": "@forinda/video-sdk-core",
   "version": "0.0.0",
   "description": "Framework-agnostic WebRTC publish/view core for the Forinda video SDK",
+  "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
+    "directory": "packages/core"
+  },
   "files": [
     "dist",
     "README.md",

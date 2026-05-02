@@ -2,7 +2,16 @@
   "name": "@forinda/video-sdk-signaling-broadcast",
   "version": "0.0.0",
   "description": "Same-tab BroadcastChannel client transport for Forinda video SDK demos and tests",
+  "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
+    "directory": "packages/signaling-broadcast"
+  },
   "files": [
     "dist",
     "README.md",

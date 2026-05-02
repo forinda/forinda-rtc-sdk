@@ -2,7 +2,16 @@
   "name": "@forinda/video-sdk-signaling-server",
   "version": "0.0.0",
   "description": "Standalone reference signaling server for the Forinda video SDK (library + CLI)",
+  "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
+    "directory": "packages/signaling-server"
+  },
   "bin": {
     "forinda-signaling": "./dist/cli.js"
   },
