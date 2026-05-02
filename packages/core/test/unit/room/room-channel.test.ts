@@ -95,7 +95,7 @@ describe("defineRoomChannel — chat", () => {
     await fx.closeAll();
   });
 
-  it("broadcast chat reaches every other room member but not the sender", async () => {
+  it("broadcast chat reaches every other room member and the sender's optimistic entry confirms", async () => {
     const a = await startChannel("sa", "alice", fx);
     const b = await startChannel("sb", "bob", fx);
     const c = await startChannel("sc", "carol", fx);
@@ -105,7 +105,12 @@ describe("defineRoomChannel — chat", () => {
 
     expect(b.channel.chatHistory.map((m) => m.body)).toEqual(["hi room"]);
     expect(c.channel.chatHistory.map((m) => m.body)).toEqual(["hi room"]);
-    expect(a.channel.chatHistory).toHaveLength(0);
+    // Optimistic append: sender's own history holds exactly one entry,
+    // flipped to "confirmed" once the server echo (matched by clientId)
+    // reconciles. No duplicates.
+    expect(a.channel.chatHistory).toHaveLength(1);
+    expect(a.channel.chatHistory[0]?.body).toBe("hi room");
+    expect(a.channel.chatHistory[0]?.status).toBe("confirmed");
   });
 
   it("DM with `to` reaches only the targeted peer", async () => {

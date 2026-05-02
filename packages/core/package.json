@@ -113,7 +113,10 @@
         "tsconfig.json",
         "../../tsconfig.base.json"
       ],
-      "output": []
+      "output": [],
+      "dependencies": [
+        "../signaling-protocol:build"
+      ]
     }
   }
 }

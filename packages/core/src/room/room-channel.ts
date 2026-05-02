@@ -44,6 +44,8 @@ export class RoomChannel {
   /** Live presence map keyed by peerId. */
   private readonly presenceMap = new Map<string, Record<string, JsonValue>>();
   private readonly chatBuffer: ChatHistoryEntry[] = [];
+  /** Outgoing chats awaiting server echo. Keyed by clientId. */
+  private readonly pendingChats = new Map<string, ChatHistoryEntry>();
   private readonly ownAttributeKeys = new Set<string>();
   private readonly leader: RoomChannelOptions["__leader"];
   private started = false;
@@ -188,18 +190,54 @@ export class RoomChannel {
   }
 
   /**
-   * Send a chat message. Omit `to` to broadcast to the whole room; pass a
-   * peerId to deliver as a DM.
+   * Send a chat message. Synchronously appends a `pending` entry to the
+   * local history and emits `chat` + `chat-status: pending`. Resolves with
+   * the entry's `id`. The server echoes the message back; on receipt the
+   * matching pending entry flips to `confirmed` and a second `chat-status`
+   * fires. If `signaling.send` rejects, the entry flips to `failed` before
+   * the rejection propagates.
    */
-  async sendChat(body: string, opts: { to?: string } = {}): Promise<void> {
+  async sendChat(body: string, opts: { to?: string } = {}): Promise<string> {
+    const id = this.generateChatId();
+    const ts = Date.now();
     const msg: ChatMessage = {
       type: "chat",
       from: this.peerId,
       body,
-      ts: Date.now(),
+      ts,
+      clientId: id,
       ...(opts.to !== undefined ? { to: opts.to } : {}),
     };
-    await this.signaling.send(msg);
+    const entry: ChatHistoryEntry = {
+      ...msg,
+      receivedAt: ts,
+      id,
+      status: "pending",
+    };
+    this.chatBuffer.push(entry);
+    while (this.chatBuffer.length > this.chatHistoryLimit) {
+      this.chatBuffer.shift();
+    }
+    this.pendingChats.set(id, entry);
+    this.emitter.emit("chat", entry);
+    this.emitter.emit("chat-status", { id, status: "pending" });
+
+    try {
+      await this.signaling.send(msg);
+    } catch (cause) {
+      this.markChatFailed(id);
+      throw cause;
+    }
+    return id;
+  }
+
+  /** Internal: mark a pending chat as failed (timeout, send error, drop). */
+  private markChatFailed(id: string): void {
+    const entry = this.pendingChats.get(id);
+    if (!entry || entry.status !== "pending") return;
+    entry.status = "failed";
+    this.pendingChats.delete(id);
+    this.emitter.emit("chat-status", { id, status: "failed" });
   }
 
   private routeMessage(message: SignalingMessageType): void {
@@ -245,6 +283,22 @@ export class RoomChannel {
   }
 
   private applyChat(message: ChatMessage): void {
+    // Self-echo of an optimistic send → reconcile the existing pending entry
+    // instead of pushing a duplicate.
+    if (
+      message.from === this.peerId &&
+      message.clientId !== undefined &&
+      this.pendingChats.has(message.clientId)
+    ) {
+      const id = message.clientId;
+      const entry = this.pendingChats.get(id);
+      if (entry && entry.status === "pending") {
+        entry.status = "confirmed";
+        this.pendingChats.delete(id);
+        this.emitter.emit("chat-status", { id, status: "confirmed" });
+      }
+      return;
+    }
     const id = message.clientId ?? this.generateChatId();
     const entry: ChatHistoryEntry = {
       ...message,
