@@ -78,6 +78,55 @@ try {
 }
 ```
 
+### `installFakeMediaRecorder()`
+
+Installs a minimal `MediaRecorder` shim on `globalThis` for jsdom tests. The shim records constructor invocations, exposes the active instance via `current`, and lets tests drive lifecycle events imperatively via `__fire(event, payload?)`.
+
+```ts
+import { installFakeMediaRecorder } from "@forinda/test-helpers";
+import { afterEach, beforeEach, expect, it } from "vitest";
+import { defineRecorder } from "@forinda/video-sdk-core";
+
+let fx: ReturnType<typeof installFakeMediaRecorder>;
+beforeEach(() => (fx = installFakeMediaRecorder()));
+afterEach(() => fx.cleanup());
+
+it("emits a stop event with the assembled blob", async () => {
+  const r = defineRecorder({} as MediaStream);
+  r.start();
+  fx.current?.__fire("dataavailable", { data: new Blob(["x"]) });
+  fx.current?.__fire("stop");
+  // ...
+});
+```
+
+`fx.setSupported((mime) => boolean)` lets tests simulate a browser that rejects specific codec types.
+
+### `defineEngineFixture()`
+
+Wires a real `Session` from `@forinda/video-sdk-signaling-protocol` to N in-memory transports, each routable by `peerId` once the peer joins. Use when you want to test SDK code (Publisher, Viewer, RoomChannel) end-to-end against the actual engine — not a hand-rolled fake state machine.
+
+```ts
+import { defineEngineFixture } from "@forinda/test-helpers";
+import { defineRoomChannel } from "@forinda/video-sdk-core";
+
+const fx = defineEngineFixture();
+const transportA = await fx.open("socket-a");
+const channelA = defineRoomChannel({ signaling: transportA, room: "demo", peerId: "alice" });
+await channelA.start();
+
+const transportB = await fx.open("socket-b");
+const channelB = defineRoomChannel({ signaling: transportB, room: "demo", peerId: "bob" });
+await channelB.start();
+
+await channelA.raiseHand();
+// channelB.peers.get("alice") === { "hand-raised": true }
+
+await fx.closeAll(); // afterEach
+```
+
+The fixture transparently captures `peerId` on every transport's first `join`, so per-peer outbound routing works without manual binding.
+
 ### `recordRtpFlow(source, options?)`
 
 Waits for the first `ConnectionStats` sample whose inbound bitrate is positive — i.e., proof that media actually flowed end-to-end (not just that ICE/DTLS connected). Resolves with the matching sample, rejects on timeout with the count of stat samples observed.

@@ -5,8 +5,10 @@ Framework-agnostic WebRTC publish/view core for the Forinda video SDK. Browser-o
 ## Install
 
 ```bash
-pnpm add @forinda/video-sdk-core @forinda/video-sdk-signaling-protocol
+pnpm add @forinda/video-sdk-core @forinda/video-sdk-signaling-protocol @forinda/video-sdk-signaling-ws
 ```
+
+> `@forinda/video-sdk-signaling-protocol` is the wire-format dep; `@forinda/video-sdk-signaling-ws` provides the WebSocket transport used in the quick-start. Drop it (or swap for `@forinda/video-sdk-signaling-broadcast`) if you bring your own transport.
 
 ## Quick start
 
@@ -102,6 +104,22 @@ console.log(channel.chatHistory); // capped at chatHistoryLimit (default 200)
 
 The channel **does not own its transport's lifecycle** — the consumer is responsible for connecting/disconnecting it. Sharing one transport with a `Publisher` or `Viewer` is the common case; pass `manageJoin: false` so the join is issued only once.
 
+For delta UIs ("Bob just raised his hand"), pair with `definePresenceDiff(prev, next)`:
+
+```ts
+import { definePresenceDiff } from "@forinda/video-sdk-core";
+
+let prev = channel.peers;
+channel.on("presence", () => {
+  const next = channel.peers;
+  const diff = definePresenceDiff(prev, next);
+  diff.added.forEach(({ peer }) => log(`${peer} joined`));
+  diff.changed.forEach(({ peer, changed }) => log(`${peer} updated`, changed));
+  diff.removed.forEach(({ peer }) => log(`${peer} left`));
+  prev = next;
+});
+```
+
 **Recording:**
 
 - **Recorder** — `defineRecorder(stream, opts?)`: typed wrapper over `MediaRecorder`. Picks a supported mime type from `codecPreferences` (or honors an explicit `mimeType`), exposes a tiny state machine, and assembles the final `Blob` on `stop()`.
@@ -122,15 +140,16 @@ recorder.start();
 const blob = await recorder.stop();
 ```
 
-| Option               | Default                               | Purpose                                                         |
-| -------------------- | ------------------------------------- | --------------------------------------------------------------- |
-| `mimeType`           | first supported in `codecPreferences` | Pin a specific codec; throws on `start` if unsupported.         |
-| `codecPreferences`   | `DEFAULT_CODEC_PREFERENCES`           | Fallback list. Default tries VP9, VP8, bare WebM, MP4 in order. |
-| `videoBitsPerSecond` | browser default                       | Forwarded to `MediaRecorder`.                                   |
-| `audioBitsPerSecond` | browser default                       | Forwarded to `MediaRecorder`.                                   |
-| `timesliceMs`        | one chunk on stop                     | Emit `dataavailable` every N ms instead of only at the end.     |
+| Option               | Default                               | Purpose                                                                                                                                                                                                                  |
+| -------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `mimeType`           | first supported in `codecPreferences` | Pin a specific codec; throws on `start` if unsupported.                                                                                                                                                                  |
+| `codecPreferences`   | `DEFAULT_CODEC_PREFERENCES`           | Fallback list. Default tries VP9, VP8, bare WebM, MP4 in order.                                                                                                                                                          |
+| `videoBitsPerSecond` | browser default                       | Forwarded to `MediaRecorder`.                                                                                                                                                                                            |
+| `audioBitsPerSecond` | browser default                       | Forwarded to `MediaRecorder`.                                                                                                                                                                                            |
+| `timesliceMs`        | one chunk on stop                     | Emit `dataavailable` every N ms instead of only at the end.                                                                                                                                                              |
+| `maxBufferedBytes`   | unbounded                             | Hard cap on retained chunk bytes. On overflow the recorder fires `buffer-overflow`, transitions to `error`, and stops the underlying `MediaRecorder`. Prevents OOM on multi-hour recordings without a draining uploader. |
 
-State machine: `idle → recording → (paused ↔ recording) → stopped`. Errors transition to a terminal `error` state and surface as typed `Error` events (never bare DOM events).
+State machine: `idle → recording → (paused ↔ recording) → stopped`. Errors transition to a terminal `error` state and surface as typed `Error` events (never bare DOM events). The recorder exposes `bufferedByteCount` (live size of retained chunks) for monitoring.
 
 Plus two helpers: `isRecordingTypeSupported(mimeType)` and `pickRecordingType(preferences)` for capability detection without instantiating a recorder.
 

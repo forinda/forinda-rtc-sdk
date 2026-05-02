@@ -5,10 +5,10 @@ React 18+ hooks and components for the Forinda RTC SDK. Provides ergonomic wrapp
 ## Install
 
 ```bash
-pnpm add @forinda/video-sdk-react @forinda/video-sdk-core react react-dom
+pnpm add @forinda/video-sdk-react @forinda/video-sdk-core @forinda/video-sdk-signaling-ws react react-dom
 ```
 
-> Peer deps: `@forinda/video-sdk-core`, `react@>=18`. The hooks rely on `useSyncExternalStore`, so React 17 isn't supported.
+> Peer deps: `@forinda/video-sdk-core`, `react@>=18`. The hooks rely on `useSyncExternalStore`, so React 17 isn't supported. `@forinda/video-sdk-signaling-ws` is the WebSocket transport used in the quick-start — swap or omit if you bring your own.
 
 ## Quick start
 
@@ -131,7 +131,9 @@ const oneViewer = useConnectionStats(viewer); // ConnectionStats | null
 Construct a `RoomChannel` (presence + chat) for the lifetime of the calling component. Falls back to `VideoSdkProvider`'s signaling factory when `opts.signaling` is omitted.
 
 ```ts
-const { channel, error } = useRoomChannel({ room: "demo", peerId: "alice" });
+const { channel, state, error } = useRoomChannel({ room: "demo", peerId: "alice" });
+// state: "idle" | "connecting" | "connected" | "reconnecting" | "closed"
+//   — passthrough of the underlying transport state, useful for "Connecting…" UI
 ```
 
 | Option             | Default               | Description                                                                       |
@@ -176,12 +178,20 @@ const { raised, raise, lower, toggle } = useRaiseHand(channel);
 Record any `MediaStream` to a `Blob`. Wraps core's `defineRecorder`; constructs the `MediaRecorder` lazily on the first `start()` call and auto-stops on unmount.
 
 ```ts
-const { state, blob, chunks, error, start, stop, pause, resume } = useRecorder(stream, {
-  mimeType: "video/webm;codecs=vp9,opus",
-  videoBitsPerSecond: 2_500_000,
-  timesliceMs: 1_000,
-});
+const { state, blob, downloadUrl, chunks, error, start, stop, pause, resume } = useRecorder(
+  stream,
+  {
+    mimeType: "video/webm;codecs=vp9,opus",
+    videoBitsPerSecond: 2_500_000,
+    timesliceMs: 1_000,
+    maxBufferedBytes: 200 * 1024 * 1024, // 200 MB cap
+  },
+);
 // state: "idle" | "recording" | "paused" | "stopped" | "error"
+//
+// downloadUrl: string | null
+//   Lazy URL.createObjectURL(blob), revoked automatically on next blob / unmount.
+//   Bind directly to <a download href={downloadUrl}>...
 ```
 
 When `stream` is `null` (e.g. before `useUserMedia` resolves) the hook returns inert state and `start()` is a no-op.
