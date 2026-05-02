@@ -10,5 +10,13 @@ export default defineConfig({
   target: "node20",
   platform: "node",
   treeshake: true,
-  banner: { js: `#!/usr/bin/env node\n${createBanner()}` },
+  external: [
+    "ws",
+    "commander",
+    "picocolors",
+    "@forinda/video-sdk-signaling-adapter-ws",
+    "@forinda/video-sdk-signaling-protocol",
+  ],
+  tsconfig: "./tsconfig.build.json",
+  banner: { js: createBanner() },
 });

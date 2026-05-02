@@ -288,7 +288,19 @@ importers:
       '@forinda/video-sdk-signaling-protocol':
         specifier: workspace:*
         version: link:../signaling-protocol
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
+      picocolors:
+        specifier: ^1.1.1
+        version: 1.1.1
     devDependencies:
+      '@types/ws':
+        specifier: ^8.5.13
+        version: 8.18.1
+      '@vitest/coverage-v8':
+        specifier: ^2.1.0
+        version: 2.1.9(vitest@2.1.9(@types/node@22.19.17)(jsdom@25.0.1))
       oxlint:
         specifier: ^0.11.0
         version: 0.11.1
@@ -298,9 +310,15 @@ importers:
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.17)(jsdom@25.0.1)
       wireit:
         specifier: ^0.14.9
         version: 0.14.12
+      ws:
+        specifier: ^8.18.0
+        version: 8.20.0
 
   packages/signaling-ws:
     devDependencies:
@@ -1350,6 +1368,10 @@ packages:
   combined-stream@1.0.8:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
     engines: {node: '>= 0.8'}
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   commander@4.1.1:
     resolution: {integrity: sha512-NOKm8xhkzAjzFx8B2v5OAHT+u5pRQc2UCa2Vq9jYL/31o2wi9mxBA7LIFs3sV5VSC49z6pEhfbMULvShKj26WA==}
@@ -3280,6 +3302,8 @@ snapshots:
   combined-stream@1.0.8:
     dependencies:
       delayed-stream: 1.0.0
+
+  commander@12.1.0: {}
 
   commander@4.1.1: {}
 

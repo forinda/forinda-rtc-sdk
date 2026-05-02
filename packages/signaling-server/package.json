@@ -26,9 +26,10 @@
     "directory": "packages/signaling-server"
   },
   "bin": {
-    "forinda-signaling": "./dist/cli.js"
+    "forinda-rtc-signaling": "./bin/run.mjs"
   },
   "files": [
+    "bin",
     "dist",
     "README.md",
     "LICENSE"
@@ -50,17 +51,25 @@
   "scripts": {
     "build": "wireit",
     "typecheck": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "test": "wireit",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@forinda/video-sdk-signaling-adapter-ws": "workspace:*",
-    "@forinda/video-sdk-signaling-protocol": "workspace:*"
+    "@forinda/video-sdk-signaling-protocol": "workspace:*",
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
+    "@types/ws": "^8.5.13",
+    "@vitest/coverage-v8": "^2.1.0",
     "oxlint": "^0.11.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.0",
-    "wireit": "^0.14.9"
+    "vitest": "^2.1.0",
+    "wireit": "^0.14.9",
+    "ws": "^8.18.0"
   },
   "engines": {
     "node": ">=20.0.0"
@@ -72,6 +81,7 @@
         "src/**/*.ts",
         "tsup.config.ts",
         "tsconfig.json",
+        "tsconfig.build.json",
         "../../tsconfig.base.json"
       ],
       "output": [
@@ -87,6 +97,7 @@
       "command": "tsc --noEmit",
       "files": [
         "src/**/*.ts",
+        "test/**/*.ts",
         "tsconfig.json",
         "../../tsconfig.base.json"
       ],
@@ -97,6 +108,17 @@
       "files": [
         "src/**/*.ts",
         "../../oxlint.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": "vitest run",
+      "files": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "vitest.config.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
       ],
       "output": []
     }
