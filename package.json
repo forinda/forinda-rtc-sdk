@@ -1,5 +1,5 @@
 {
-  "name": "forinda-video-sdk",
+  "name": "forinda-rtc-sdk",
   "version": "0.0.0",
   "private": true,
   "description": "Open-source, framework-agnostic WebRTC video SDK monorepo",
