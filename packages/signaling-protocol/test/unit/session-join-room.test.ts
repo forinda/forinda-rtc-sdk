@@ -34,8 +34,9 @@ describe("Session.handleMessage — join", () => {
     await session.handleConnection("socket-b", {});
     await session.handleMessage("socket-b", join("demo", "bob", "viewer"));
 
-    // Two calls: alice told about bob, bob told about alice.
-    expect(send).toHaveBeenCalledTimes(2);
+    // Three calls: alice told about bob, bob told about alice, bob's
+    // initial presence-snapshot for the room.
+    expect(send).toHaveBeenCalledTimes(3);
     expect(send).toHaveBeenCalledWith("alice", {
       type: "peer-joined",
       peer: "bob",
@@ -45,6 +46,11 @@ describe("Session.handleMessage — join", () => {
       type: "peer-joined",
       peer: "alice",
       role: "publisher",
+    });
+    expect(send).toHaveBeenCalledWith("bob", {
+      type: "presence-snapshot",
+      room: "demo",
+      peers: {},
     });
   });
 

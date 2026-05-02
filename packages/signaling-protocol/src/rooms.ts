@@ -23,6 +23,7 @@
  */
 
 import { RoomFullError } from "./errors.ts";
+import type { JsonValue } from "./messages.ts";
 import type { PeerId, RoomId, RoomPeer, SocketId } from "./types.ts";
 
 /** Constructor options for a {@link Room}. */
@@ -39,6 +40,8 @@ export class Room {
   readonly id: RoomId;
   private readonly capacity: number;
   private readonly peerMap = new Map<PeerId, RoomPeer>();
+  /** Per-peer presence attributes; empty entries are removed from the map. */
+  private readonly presenceMap = new Map<PeerId, Record<string, JsonValue>>();
 
   constructor(id: RoomId, opts: RoomOptions) {
     this.id = id;
@@ -105,6 +108,45 @@ export class Room {
       }
     }
     return undefined;
+  }
+
+  /**
+   * Merge `attributes` into a peer's presence map. `null` values delete the
+   * key (this is how clients signal "remove this attribute" over the wire,
+   * since `undefined` doesn't survive JSON). When the resulting map is empty
+   * the peer's entry is dropped from the presence index entirely.
+   */
+  setPresence(peerId: PeerId, attributes: Record<string, JsonValue>): void {
+    const existing = this.presenceMap.get(peerId) ?? {};
+    const next: Record<string, JsonValue> = { ...existing };
+    for (const [k, v] of Object.entries(attributes)) {
+      if (v === null) delete next[k];
+      else next[k] = v;
+    }
+    if (Object.keys(next).length === 0) {
+      this.presenceMap.delete(peerId);
+    } else {
+      this.presenceMap.set(peerId, next);
+    }
+  }
+
+  /** Returns the live attribute map for `peerId`, or `undefined` when none. */
+  getPresence(peerId: PeerId): Record<string, JsonValue> | undefined {
+    return this.presenceMap.get(peerId);
+  }
+
+  /**
+   * Snapshot of every peer's presence attributes in this room. Returns a
+   * fresh plain object suitable for sending over the wire as a
+   * `presence-snapshot`.
+   */
+  presenceSnapshot(): Record<PeerId, Record<string, JsonValue>> {
+    return Object.fromEntries(this.presenceMap);
+  }
+
+  /** Drops a peer's presence entry. Returns true when something was removed. */
+  clearPresence(peerId: PeerId): boolean {
+    return this.presenceMap.delete(peerId);
   }
 }
 

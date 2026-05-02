@@ -196,6 +196,12 @@ export class Session {
       case "ice":
         this.applyIce(message);
         return;
+      case "presence-update":
+        this.applyPresenceUpdate(socket, message);
+        return;
+      case "chat":
+        this.applyChat(socket, message);
+        return;
       default:
         // Other message types added in later tasks.
         throw new SignalingValidationError(`unsupported message type ${message.type}`, {
@@ -218,8 +224,16 @@ export class Session {
       const room = this.roomMap.get(socket.roomId);
       if (room !== undefined) {
         room.remove(socket.peerId);
+        const hadPresence = room.clearPresence(socket.peerId);
         for (const remaining of room.peers()) {
           this.send(remaining.peerId, { type: "peer-left", peer: socket.peerId });
+          if (hadPresence) {
+            this.send(remaining.peerId, {
+              type: "presence-state",
+              peer: socket.peerId,
+              attributes: {},
+            });
+          }
         }
         if (room.size === 0) {
           this.roomMap.delete(room.id);
@@ -276,6 +290,14 @@ export class Session {
         role: existing.role,
       });
     }
+    // Send the joiner the room's current presence snapshot. Always sent —
+    // even when empty — so clients can rely on a single arrival to know
+    // their initial view of the room is settled.
+    this.send(message.peer, {
+      type: "presence-snapshot",
+      room: message.room,
+      peers: room.presenceSnapshot(),
+    });
   }
 
   /**
@@ -294,6 +316,8 @@ export class Session {
     if (removed === undefined) return;
     this.peerIndex.delete(message.peer);
 
+    const hadPresence = room.clearPresence(message.peer);
+
     // Clear socket's peer/room association if the leaving peer matches.
     if (socket.peerId === message.peer && socket.roomId === message.room) {
       delete socket.peerId;
@@ -302,6 +326,14 @@ export class Session {
 
     for (const remaining of room.peers()) {
       this.send(remaining.peerId, { type: "peer-left", peer: message.peer });
+      if (hadPresence) {
+        // Empty attributes signal "drop this peer's presence entry."
+        this.send(remaining.peerId, {
+          type: "presence-state",
+          peer: message.peer,
+          attributes: {},
+        });
+      }
     }
 
     if (room.size === 0) {
@@ -337,6 +369,68 @@ export class Session {
       });
     }
     this.send(message.to, message);
+  }
+
+  /**
+   * Internal: merge an inbound `presence-update` into the peer's room
+   * presence map and broadcast a `presence-state` to every member of the
+   * room (including the sender — confirms the merge applied). Rejects when
+   * the sender is not currently bound to a room or the `peer` claim does
+   * not match its socket binding.
+   */
+  private applyPresenceUpdate(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "presence-update" }>,
+  ): void {
+    if (socket.peerId !== message.peer || socket.roomId === undefined) {
+      throw new SignalingValidationError(
+        "presence-update requires a joined socket bound to the same peer",
+        { context: { socketId: socket.socketId, claimed: message.peer, bound: socket.peerId } },
+      );
+    }
+    const room = this.roomMap.get(socket.roomId);
+    if (room === undefined) return;
+    room.setPresence(message.peer, message.attributes);
+    const next = room.getPresence(message.peer) ?? {};
+    for (const member of room.peers()) {
+      this.send(member.peerId, {
+        type: "presence-state",
+        peer: message.peer,
+        attributes: next,
+      });
+    }
+  }
+
+  /**
+   * Internal: route a `chat` message. With `to` set, deliver only to that
+   * peer (silently drops if they're not in the same room). Without `to`,
+   * broadcast to all room members except the sender. The server validates
+   * `from` matches the socket binding before relaying.
+   */
+  private applyChat(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "chat" }>,
+  ): void {
+    if (socket.peerId !== message.from || socket.roomId === undefined) {
+      throw new SignalingValidationError(
+        "chat requires a joined socket bound to the same peer",
+        { context: { socketId: socket.socketId, claimed: message.from, bound: socket.peerId } },
+      );
+    }
+    const room = this.roomMap.get(socket.roomId);
+    if (room === undefined) return;
+
+    if (message.to !== undefined) {
+      if (room.has(message.to)) {
+        this.send(message.to, message);
+      }
+      return;
+    }
+    for (const member of room.peers()) {
+      if (member.peerId !== message.from) {
+        this.send(member.peerId, message);
+      }
+    }
   }
 
   /** Lazy room creation. Capacity propagates from session options. */
