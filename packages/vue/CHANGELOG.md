@@ -1,44 +1,65 @@
-# @forinda/video-sdk-signaling-broadcast
+# @forinda/video-sdk-vue
 
 ## 1.0.0
 
-### Patch Changes
+### Minor Changes
 
-- [`e26b57d`](https://github.com/forinda/forinda-rtc-sdk/commit/e26b57d51437969aee97720d63f787adbf1d76da) Thanks [@forinda](https://github.com/forinda)! - `defineRoom` higher-level coordinator + minified browser bundles.
+- [`e67a6f5`](https://github.com/forinda/forinda-rtc-sdk/commit/e67a6f509366e992d77a05c784933f10e29ee9bf) Thanks [@forinda](https://github.com/forinda)! - Streaming-upload sink for `Recorder` + declarative element wiring.
 
-  ### Added — `defineRoom`
+  ### Added
 
-  `@forinda/video-sdk-core` ships `defineRoom({ signaling, room, peerId? })`, a coordinator that owns one transport's lifecycle and the **single** `join` for a room. Eliminates the silent-overwrite footgun where a `Publisher` and a `RoomChannel` sharing one transport both issue `join` and the engine quietly drops the first peer binding.
+  - **`defineUploader({ url, headers?, maxQueuedBytes?, keepaliveThresholdBytes? })`** — HTTP-POST-per-chunk sink for streaming recordings off the device. Uses `fetch` with `keepalive: true` for chunks at or below the threshold (default 60 KB) so chunks survive a page unload, regular `fetch` above. Internal FIFO queue capped at 100 MiB by default.
+  - **`recorder.pipeTo(uploader)` / `pipeRecorderTo(recorder, uploader)`** — wires `dataavailable` → `uploader.send`. On `failed` → `recorder.pause()`; on recovery via `uploader.retry()` → `recorder.resume()`. Returns a disposer.
+  - **`<forinda-recorder for="…">`** — looks up `document.getElementById(for).mediaStream` at `start()` time. Lets you wire publisher → recorder declaratively without JS.
+  - **`<forinda-uploader url="…" headers="…">`** — slottable inside `<forinda-recorder>`. The recorder discovers slotted uploaders at start and pipes each chunk to them. Multiple uploaders allowed.
+  - **React: `useUploader(recorder, uploader)`** and **Vue: `useUploader(recorder, uploader)`** — adapter helpers exposing `{ state, pendingBytes, error, retry }`.
 
-  Compose via the Room's sugar methods:
+  ### Rationale
+
+  `defineRecorder` previously buffered every chunk in memory until `stop()`, putting a hard ceiling on recording length. `pipeTo(uploader)` drains chunks as they arrive, with explicit backpressure (`failed` → pause, consumer-driven `retry()` → resume) so a flaky upload server can't silently lose data.
+
+- [`59352e4`](https://github.com/forinda/forinda-rtc-sdk/commit/59352e40b0b2f0e8aec3512b4bcba416eebe5fac) Thanks [@forinda](https://github.com/forinda)! - New package: Vue 3 adapter.
+
+  Vue 3.4+ peer dep, Composition API only. Twelve composables that mirror the React surface name-for-name — `useUserMedia`, `useDisplayMedia`, `useDevices`, `usePublisher`, `useViewer`, `useConnectionStats`, `useRoom`, `useRoomChannel`, `usePresence`, `useChat`, `useRaiseHand`, `useRecorder` — plus a `VideoView` component that handles `srcObject` and exposes the underlying `<video>` via `defineExpose`.
 
   ```ts
-  const room = defineRoom({ signaling, room: "demo", peerId: "alice" });
-  const publisher = room.publisher({ stream });
-  const channel = room.channel(); // presence + chat over the same socket
-  const recorder = room.recorder(stream);
-  await publisher.start();
-  await channel.start(); // shares the join — no second peer binding
+  // main.ts
+  import { createApp } from "vue";
+  import { VideoSdkPlugin } from "@forinda/video-sdk-vue";
+  import { defineWebSocketSignaling } from "@forinda/video-sdk-signaling-ws";
+
+  createApp(App)
+    .use(VideoSdkPlugin, {
+      signaling: () =>
+        defineWebSocketSignaling({ url: "wss://signal.example.com" }),
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    })
+    .mount("#app");
   ```
 
-  Or use the proxy factories directly: `defineAttachedPublisher(room, opts)`, `defineAttachedViewer(room, opts)`, `defineAttachedRoomChannel(room, opts)`. Standalone `definePublisher` / `defineViewer` / `defineRoomChannel` are unchanged — the new APIs are purely additive.
+  ```vue
+  <script setup lang="ts">
+  import { usePublisher, VideoView } from "@forinda/video-sdk-vue";
+  const props = defineProps<{ stream: MediaStream }>();
+  const { state, viewers } = usePublisher({
+    room: "demo",
+    stream: props.stream,
+  });
+  </script>
 
-  `@forinda/video-sdk-react` adds `useRoom({ room, peerId? })` and extends `usePublisher` / `useViewer` / `useRoomChannel` with an `attach?: Room` option. When attached, the hook ignores its own `room`/`peerId`/`signaling` (taken from the Room).
+  <template>
+    <VideoView :stream="props.stream" muted autoplay playsinline mirror />
+    <p>state: {{ state }}, viewers: {{ viewers.length }}</p>
+  </template>
+  ```
 
-  ### Changed — minified browser bundles
+  - Reactive state via `ref` / `shallowRef` (foreign objects use `shallowRef` to preserve identity).
+  - Cleanup via `onScopeDispose` — auto-stops publishers/viewers/recorders, releases tracks, revokes object URLs.
+  - SSR-safe (Nuxt-friendly): inert refs on the server; no hydration mismatch.
+  - Same `attach: room` pattern as React for sharing one transport between Publisher / Viewer / RoomChannel.
+  - Bundle: 10.8 KB ESM minified, externalises `vue` and `@forinda/video-sdk-core`.
 
-  `@forinda/video-sdk-core`, `@forinda/video-sdk-react`, `@forinda/video-sdk-elements`, `@forinda/video-sdk-signaling-ws`, `@forinda/video-sdk-signaling-broadcast`, and `@forinda/video-sdk-signaling-protocol` now ship minified ESM (and IIFE for `elements`). Sourcemaps are still emitted, so DevTools stack traces stay readable.
-
-  Server packages (`signaling-server`, `signaling-adapter-*`) intentionally ship unminified — Node-side, no bandwidth concern, cleaner native stack traces.
-
-  Approximate gzipped reductions:
-
-  - `core`: 12.08 KB → 8.40 KB (-30%)
-  - `signaling-protocol`: 5.13 KB → 2.50 KB (-51%)
-  - `signaling-ws`: 1.85 KB → 1.47 KB (-21%)
-  - `react`: 3.41 KB → 3.20 KB (-6%)
-  - `signaling-broadcast`: 814 B → 706 B (-13%)
-  - `elements`: unchanged tiny — most code is in `core` (external)
+### Patch Changes
 
 - [`314182f`](https://github.com/forinda/forinda-rtc-sdk/commit/314182f615a69e6e1dd345308206d35ecbedb1bb) Thanks [@forinda](https://github.com/forinda)! - Director role + moderation commands (EPIC-12).
 
@@ -90,20 +111,6 @@
   - Chat round-trip e2e — placeholder `test.skip` (requires the React example to expose a chat input).
   - Full WebRTC media transit assertion in headless Chromium — needs explicit ICE config (deferred to EPIC-14 SFU integration).
 
-- [`e67a6f5`](https://github.com/forinda/forinda-rtc-sdk/commit/e67a6f509366e992d77a05c784933f10e29ee9bf) Thanks [@forinda](https://github.com/forinda)! - Streaming-upload sink for `Recorder` + declarative element wiring.
-
-  ### Added
-
-  - **`defineUploader({ url, headers?, maxQueuedBytes?, keepaliveThresholdBytes? })`** — HTTP-POST-per-chunk sink for streaming recordings off the device. Uses `fetch` with `keepalive: true` for chunks at or below the threshold (default 60 KB) so chunks survive a page unload, regular `fetch` above. Internal FIFO queue capped at 100 MiB by default.
-  - **`recorder.pipeTo(uploader)` / `pipeRecorderTo(recorder, uploader)`** — wires `dataavailable` → `uploader.send`. On `failed` → `recorder.pause()`; on recovery via `uploader.retry()` → `recorder.resume()`. Returns a disposer.
-  - **`<forinda-recorder for="…">`** — looks up `document.getElementById(for).mediaStream` at `start()` time. Lets you wire publisher → recorder declaratively without JS.
-  - **`<forinda-uploader url="…" headers="…">`** — slottable inside `<forinda-recorder>`. The recorder discovers slotted uploaders at start and pipes each chunk to them. Multiple uploaders allowed.
-  - **React: `useUploader(recorder, uploader)`** and **Vue: `useUploader(recorder, uploader)`** — adapter helpers exposing `{ state, pendingBytes, error, retry }`.
-
-  ### Rationale
-
-  `defineRecorder` previously buffered every chunk in memory until `stop()`, putting a hard ceiling on recording length. `pipeTo(uploader)` drains chunks as they arrive, with explicit backpressure (`failed` → pause, consumer-driven `retry()` → resume) so a flaky upload server can't silently lose data.
-
 - [`ce3a414`](https://github.com/forinda/forinda-rtc-sdk/commit/ce3a414c781c90e648992c6be7af09ccf1afc2cc) Thanks [@forinda](https://github.com/forinda)! - `RoomChannel` resilience: optimistic chat + reconnect with presence resync.
 
   ### Added
@@ -125,19 +132,3 @@
 
 - Updated dependencies [[`e26b57d`](https://github.com/forinda/forinda-rtc-sdk/commit/e26b57d51437969aee97720d63f787adbf1d76da), [`314182f`](https://github.com/forinda/forinda-rtc-sdk/commit/314182f615a69e6e1dd345308206d35ecbedb1bb), [`d311a25`](https://github.com/forinda/forinda-rtc-sdk/commit/d311a25af404cc78a2af5505a6f5351eb2fe4d86), [`195f0e3`](https://github.com/forinda/forinda-rtc-sdk/commit/195f0e3c8afdfc3192db0de71684be545512897d), [`e67a6f5`](https://github.com/forinda/forinda-rtc-sdk/commit/e67a6f509366e992d77a05c784933f10e29ee9bf), [`ce3a414`](https://github.com/forinda/forinda-rtc-sdk/commit/ce3a414c781c90e648992c6be7af09ccf1afc2cc)]:
   - @forinda/video-sdk-core@0.2.0
-  - @forinda/video-sdk-signaling-protocol@0.2.0
-
-## 0.1.1
-
-### Patch Changes
-
-- Updated dependencies [[`0c25d10`](https://github.com/forinda/forinda-rtc-sdk/commit/0c25d108fecb8266696c633904cb4b303a9a4179)]:
-  - @forinda/video-sdk-core@0.1.1
-
-## 0.1.0
-
-### Minor Changes
-
-Initial public release.
-
-- `defineBroadcastChannelSignaling({ channelName? })` — same-tab `BroadcastChannel`-backed `SignalingTransport`. Useful for local demos and integration tests where you want two peers in the same browser tab without a real WebSocket server.

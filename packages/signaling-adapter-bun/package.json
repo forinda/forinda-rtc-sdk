@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-signaling-adapter-bun",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Bun native WebSocket server adapter for Forinda video SDK signaling protocol",
   "keywords": [
     "bun",

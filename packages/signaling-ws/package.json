@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-signaling-ws",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Browser WebSocket client transport for Forinda video SDK signaling",
   "keywords": [
     "browser",

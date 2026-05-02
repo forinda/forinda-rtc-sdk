@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-signaling-adapter-hono",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Hono integration for Forinda video SDK signaling protocol",
   "keywords": [
     "edge",
