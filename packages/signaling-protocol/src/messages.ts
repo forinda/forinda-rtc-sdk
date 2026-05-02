@@ -39,10 +39,43 @@ export const PeerId = z.string().min(1).max(128);
 export const RoomId = z.string().min(1).max(128);
 
 /**
- * The role a peer joins a room with. v0.1.0 supports a one-publisher → many-viewers
- * topology; richer roles (moderator, co-host, etc.) come in later epics.
+ * The role a peer joins a room with. v0.1.0 ships a one-publisher → many-viewers
+ * topology; richer roles (moderator, co-host) arrive in later epics.
+ *
+ * `"presence"` is the chat-only / observer role — joiners participate in
+ * presence + chat but never negotiate media.
  */
-export const Role = z.enum(["publisher", "viewer"]);
+export const Role = z.enum(["publisher", "viewer", "presence"]);
+
+/**
+ * Recursive JSON-compatible value. Used as the value type for free-form
+ * presence attributes — anything you can `JSON.stringify` works.
+ *
+ * Use the literal `null` to delete a key on a `presence-update` (engine
+ * treats `null` as "remove this attribute").
+ */
+export type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [k: string]: JsonValue };
+
+const JsonValueSchema: z.ZodType<JsonValue> = z.lazy(() =>
+  z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.null(),
+    z.array(JsonValueSchema),
+    z.record(z.string(), JsonValueSchema),
+  ]),
+);
+
+/** Validates a presence attribute key (1–64 chars; ASCII-ish recommended). */
+const PresenceAttrKey = z.string().min(1).max(64);
+const PresenceAttrMap = z.record(PresenceAttrKey, JsonValueSchema);
 
 /**
  * Client → server. Enter a room with the chosen identity and role.
@@ -112,6 +145,53 @@ export const IceCand = z.object({
 });
 
 /**
+ * Client → server. Set, replace, or remove one or more of this peer's
+ * presence attributes. The engine merges the incoming map into the peer's
+ * existing presence: a `null` value removes the key, any other value
+ * overwrites.
+ */
+export const PresenceUpdate = z.object({
+  type: z.literal("presence-update"),
+  peer: PeerId,
+  attributes: PresenceAttrMap,
+});
+
+/**
+ * Server → client. Fired whenever any peer's presence map changes (own or
+ * remote). After a peer leaves the room the engine fires one final
+ * `presence-state` with `attributes: {}` to signal the entry is cleared.
+ */
+export const PresenceState = z.object({
+  type: z.literal("presence-state"),
+  peer: PeerId,
+  attributes: PresenceAttrMap,
+});
+
+/**
+ * Server → joining client. Initial snapshot of every peer's presence in the
+ * room, sent once right after the join is accepted. Empty `peers: {}` when
+ * nobody has set any attributes yet.
+ */
+export const PresenceSnapshot = z.object({
+  type: z.literal("presence-snapshot"),
+  room: RoomId,
+  peers: z.record(PeerId, PresenceAttrMap),
+});
+
+/**
+ * Client → server (broadcast) or client → server → specific peer (DM).
+ * `to` omitted means broadcast to the whole room (excluding sender). The
+ * server validates `from` matches the socket's bound peerId before relaying.
+ */
+export const Chat = z.object({
+  type: z.literal("chat"),
+  from: PeerId,
+  to: PeerId.optional(),
+  body: z.string().min(1).max(8192),
+  ts: z.number().int().nonnegative(),
+});
+
+/**
  * The discriminated union of every wire-format message. Use `.parse(raw)` for
  * boundary validation; use `.safeParse(raw)` when you need a non-throwing
  * branch (the Session does this so it can attach context to its own typed
@@ -124,6 +204,10 @@ export const SignalingMessage = z.discriminatedUnion("type", [
   PeerLeft,
   Sdp,
   IceCand,
+  PresenceUpdate,
+  PresenceState,
+  PresenceSnapshot,
+  Chat,
 ]);
 
 // Inferred TS types — exported so consumers get one definition for runtime + types.
@@ -136,4 +220,8 @@ export type PeerJoinedMessage = z.infer<typeof PeerJoined>;
 export type PeerLeftMessage = z.infer<typeof PeerLeft>;
 export type SdpMessage = z.infer<typeof Sdp>;
 export type IceCandMessage = z.infer<typeof IceCand>;
+export type PresenceUpdateMessage = z.infer<typeof PresenceUpdate>;
+export type PresenceStateMessage = z.infer<typeof PresenceState>;
+export type PresenceSnapshotMessage = z.infer<typeof PresenceSnapshot>;
+export type ChatMessage = z.infer<typeof Chat>;
 export type SignalingMessageType = z.infer<typeof SignalingMessage>;
