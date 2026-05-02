@@ -30,7 +30,13 @@
  */
 
 import { SignalingMessage, type SignalingMessageType } from "./messages.ts";
-import { PeerNotFoundError, SignalingAuthError, SignalingValidationError } from "./errors.ts";
+import {
+  PeerNotFoundError,
+  SignalingAuthError,
+  SignalingRateLimitError,
+  SignalingValidationError,
+} from "./errors.ts";
+import { defineTokenBucket, type TokenBucket } from "./rate-limit.ts";
 import { defineRoom, type Room } from "./rooms.ts";
 import type { PeerId, RoomId, RoomSnapshot, SendHandler, SocketId } from "./types.ts";
 
@@ -45,12 +51,34 @@ export type AuthenticateFn = (
   room: string,
 ) => boolean | Promise<boolean>;
 
+/** Per-peer rate-limit configuration. Each value is messages-per-second; `undefined` disables that limiter. */
+export interface RateLimitOptions {
+  /** Cap on `chat` messages per peer per second. */
+  chatPerSec?: number;
+  /** Cap on `presence-update` messages per peer per second. */
+  presenceUpdatesPerSec?: number;
+}
+
 /** Session constructor options. */
 export interface SessionOptions {
   /** Maximum simultaneous peers per room. Defaults to {@link DEFAULT_MAX_PEERS_PER_ROOM}. */
   maxPeersPerRoom?: number;
   /** Pluggable auth check called when a peer attempts a join. Default: allow all. */
   authenticate?: AuthenticateFn;
+  /**
+   * Per-peer rate limits on inbound `chat` and `presence-update` messages.
+   * Over-budget messages reject with {@link SignalingRateLimitError} and are
+   * NOT relayed. Disabled by default — `rateLimit` undefined or both fields
+   * `undefined` means no throttling.
+   */
+  rateLimit?: RateLimitOptions;
+  /**
+   * Cap on the per-room chat-history ring buffer. `0` (default) disables.
+   * Joiners that set `replayHistory: true` on their `join` receive a
+   * `chat-history` message right after `presence-snapshot` containing the
+   * last N chats.
+   */
+  chatHistoryPerRoom?: number;
 }
 
 /**
@@ -90,15 +118,46 @@ export const DEFAULT_MAX_PEERS_PER_ROOM = 50;
 export class Session {
   private readonly maxPeersPerRoom: number;
   private readonly authenticate: AuthenticateFn | undefined;
+  private readonly rateLimit: RateLimitOptions | undefined;
+  private readonly chatHistoryPerRoom: number;
   private readonly sockets = new Map<SocketId, SocketRecord>();
   private readonly roomMap = new Map<RoomId, Room>();
   /** Cross-room peer index: peerId → socket record. Maintained by applyJoin/Leave/Disconnect. */
   private readonly peerIndex = new Map<PeerId, SocketRecord>();
+  /** Per-peer rate-limit token buckets. Lazily created on first applicable inbound. */
+  private readonly buckets = new Map<PeerId, { chat?: TokenBucket; presence?: TokenBucket }>();
   private sendHandler: SendHandler | undefined;
 
   constructor(opts: SessionOptions = {}) {
     this.maxPeersPerRoom = opts.maxPeersPerRoom ?? DEFAULT_MAX_PEERS_PER_ROOM;
     this.authenticate = opts.authenticate;
+    this.rateLimit = opts.rateLimit;
+    this.chatHistoryPerRoom = opts.chatHistoryPerRoom ?? 0;
+  }
+
+  /** Lazily build (or fetch) the per-peer rate-limit buckets. */
+  private bucketsFor(peerId: PeerId): { chat?: TokenBucket; presence?: TokenBucket } {
+    let entry = this.buckets.get(peerId);
+    if (entry === undefined) {
+      entry = {};
+      if (this.rateLimit?.chatPerSec !== undefined && this.rateLimit.chatPerSec > 0) {
+        entry.chat = defineTokenBucket({
+          capacity: this.rateLimit.chatPerSec,
+          refillPerSec: this.rateLimit.chatPerSec,
+        });
+      }
+      if (
+        this.rateLimit?.presenceUpdatesPerSec !== undefined &&
+        this.rateLimit.presenceUpdatesPerSec > 0
+      ) {
+        entry.presence = defineTokenBucket({
+          capacity: this.rateLimit.presenceUpdatesPerSec,
+          refillPerSec: this.rateLimit.presenceUpdatesPerSec,
+        });
+      }
+      this.buckets.set(peerId, entry);
+    }
+    return entry;
   }
 
   /** Number of currently registered sockets. */
@@ -240,6 +299,7 @@ export class Session {
         }
       }
       this.peerIndex.delete(socket.peerId);
+      this.buckets.delete(socket.peerId);
     }
 
     this.sockets.delete(socketId);
@@ -388,6 +448,12 @@ export class Session {
         { context: { socketId: socket.socketId, claimed: message.peer, bound: socket.peerId } },
       );
     }
+    const bucket = this.bucketsFor(socket.peerId).presence;
+    if (bucket !== undefined && !bucket.consume()) {
+      throw new SignalingRateLimitError("presence-update rate limit exceeded", {
+        context: { socketId: socket.socketId, peer: socket.peerId },
+      });
+    }
     const room = this.roomMap.get(socket.roomId);
     if (room === undefined) return;
     room.setPresence(message.peer, message.attributes);
@@ -414,6 +480,12 @@ export class Session {
     if (socket.peerId !== message.from || socket.roomId === undefined) {
       throw new SignalingValidationError("chat requires a joined socket bound to the same peer", {
         context: { socketId: socket.socketId, claimed: message.from, bound: socket.peerId },
+      });
+    }
+    const bucket = this.bucketsFor(socket.peerId).chat;
+    if (bucket !== undefined && !bucket.consume()) {
+      throw new SignalingRateLimitError("chat rate limit exceeded", {
+        context: { socketId: socket.socketId, peer: socket.peerId },
       });
     }
     const room = this.roomMap.get(socket.roomId);

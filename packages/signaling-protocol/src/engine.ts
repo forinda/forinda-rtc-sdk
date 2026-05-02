@@ -11,7 +11,7 @@
  * exported for type imports and `instanceof` checks only.
  */
 
-import { Session, type AuthenticateFn } from "./session.ts";
+import { Session, type AuthenticateFn, type RateLimitOptions } from "./session.ts";
 
 /** Options passed to {@link defineSignalingEngine} / `new SignalingEngine()`. */
 export interface SignalingEngineOptions {
@@ -19,6 +19,18 @@ export interface SignalingEngineOptions {
   maxPeersPerRoom?: number;
   /** Optional auth check called on every join. Default: allow all. */
   authenticate?: AuthenticateFn;
+  /**
+   * Per-peer rate limits forwarded to every {@link Session} this engine
+   * creates. Disabled by default — over-budget messages reject with
+   * `SignalingRateLimitError(code: "rate_limited")`.
+   */
+  rateLimit?: RateLimitOptions;
+  /**
+   * Per-room chat-history buffer cap forwarded to every {@link Session}.
+   * `0` (default) disables. Joiners that set `replayHistory: true` on their
+   * `join` receive the replay as a `chat-history` message.
+   */
+  chatHistoryPerRoom?: number;
 }
 
 /**
