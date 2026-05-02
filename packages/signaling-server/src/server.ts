@@ -43,6 +43,13 @@ export function defineSignalingServer(opts: SignalingServerOptions = {}): WebSoc
     ...(opts.engine !== undefined ? { engine: opts.engine } : {}),
     ...(opts.authenticate !== undefined ? { authenticate: opts.authenticate } : {}),
     ...(opts.maxPeersPerRoom !== undefined ? { maxPeersPerRoom: opts.maxPeersPerRoom } : {}),
+    ...(opts.rateLimit !== undefined ? { rateLimit: opts.rateLimit } : {}),
+    ...(opts.chatHistoryPerRoom !== undefined
+      ? { chatHistoryPerRoom: opts.chatHistoryPerRoom }
+      : {}),
+    ...(opts.enforceModerationCommands !== undefined
+      ? { enforceModerationCommands: opts.enforceModerationCommands }
+      : {}),
     ...(opts.socketId !== undefined ? { socketId: opts.socketId } : {}),
     ...(opts.extractToken !== undefined ? { extractToken: opts.extractToken } : {}),
   });

@@ -35,12 +35,18 @@ export interface WebSocketSignalingServerOptions {
   wss?: WebSocketServer;
   /** Port to bind a freshly-created `WebSocketServer` on. Required if `wss` omitted. */
   port?: number;
-  /** Bring your own `SignalingEngine`. Default: `defineSignalingEngine({ authenticate, maxPeersPerRoom })`. */
+  /** Bring your own `SignalingEngine`. Default: `defineSignalingEngine({ authenticate, maxPeersPerRoom, ... })`. */
   engine?: SignalingEngine;
   /** Forwarded to a default-constructed engine. Ignored when `engine` is supplied. */
   authenticate?: AuthenticateFn;
   /** Forwarded to a default-constructed engine. Ignored when `engine` is supplied. */
   maxPeersPerRoom?: number;
+  /** Forwarded to a default-constructed engine. Ignored when `engine` is supplied. */
+  rateLimit?: import("@forinda/video-sdk-signaling-protocol").SignalingEngineOptions["rateLimit"];
+  /** Forwarded to a default-constructed engine. Ignored when `engine` is supplied. */
+  chatHistoryPerRoom?: number;
+  /** Forwarded to a default-constructed engine. Ignored when `engine` is supplied. */
+  enforceModerationCommands?: boolean;
   /** Generate a socket id from the upgrade request. Defaults to `crypto.randomUUID()`. */
   socketId?: (request: IncomingMessage) => string;
   /** Extract a per-connection token (passed to `authenticate`). Defaults to `?token=` query. */
@@ -96,6 +102,13 @@ export function defineWebSocketSignalingServer(
     defineSignalingEngine({
       ...(opts.authenticate !== undefined ? { authenticate: opts.authenticate } : {}),
       ...(opts.maxPeersPerRoom !== undefined ? { maxPeersPerRoom: opts.maxPeersPerRoom } : {}),
+      ...(opts.rateLimit !== undefined ? { rateLimit: opts.rateLimit } : {}),
+      ...(opts.chatHistoryPerRoom !== undefined
+        ? { chatHistoryPerRoom: opts.chatHistoryPerRoom }
+        : {}),
+      ...(opts.enforceModerationCommands !== undefined
+        ? { enforceModerationCommands: opts.enforceModerationCommands }
+        : {}),
     });
 
   const session = engine.openSession();
