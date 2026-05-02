@@ -31,6 +31,8 @@ export interface SignalingEngineOptions {
    * `join` receive the replay as a `chat-history` message.
    */
   chatHistoryPerRoom?: number;
+  /** Forwarded to every {@link Session}. See `SessionOptions.enforceModerationCommands`. */
+  enforceModerationCommands?: boolean;
 }
 
 /**

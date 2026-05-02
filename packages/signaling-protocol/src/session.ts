@@ -33,6 +33,8 @@ import { SignalingMessage, type SignalingMessageType } from "./messages.ts";
 import {
   PeerNotFoundError,
   SignalingAuthError,
+  SignalingDirectorConflictError,
+  SignalingPermissionError,
   SignalingRateLimitError,
   SignalingValidationError,
 } from "./errors.ts";
@@ -79,6 +81,15 @@ export interface SessionOptions {
    * last N chats.
    */
   chatHistoryPerRoom?: number;
+  /**
+   * When `true`, the engine rejects director-only commands (`mute`,
+   * `unmute`, `kick`, `promote`, `demote`, `set-bitrate`) from non-director
+   * senders with {@link SignalingPermissionError}. Default `false`: the
+   * engine relays the message and the target client decides whether to
+   * obey (honor-based mode). `kick` is always engine-enforced when
+   * enforcement is on (forced disconnect).
+   */
+  enforceModerationCommands?: boolean;
 }
 
 /**
@@ -120,6 +131,7 @@ export class Session {
   private readonly authenticate: AuthenticateFn | undefined;
   private readonly rateLimit: RateLimitOptions | undefined;
   private readonly chatHistoryPerRoom: number;
+  private readonly enforceModerationCommands: boolean;
   private readonly sockets = new Map<SocketId, SocketRecord>();
   private readonly roomMap = new Map<RoomId, Room>();
   /** Cross-room peer index: peerId → socket record. Maintained by applyJoin/Leave/Disconnect. */
@@ -133,6 +145,7 @@ export class Session {
     this.authenticate = opts.authenticate;
     this.rateLimit = opts.rateLimit;
     this.chatHistoryPerRoom = opts.chatHistoryPerRoom ?? 0;
+    this.enforceModerationCommands = opts.enforceModerationCommands ?? false;
   }
 
   /** Lazily build (or fetch) the per-peer rate-limit buckets. */
@@ -261,6 +274,28 @@ export class Session {
       case "chat":
         this.applyChat(socket, message);
         return;
+      case "promote":
+        this.applyPromote(socket, message);
+        return;
+      case "demote":
+        this.applyDemote(socket, message);
+        return;
+      case "mute":
+        this.applyMute(socket, message);
+        return;
+      case "unmute":
+        this.applyUnmute(socket, message);
+        return;
+      case "kick":
+        this.applyKick(socket, message);
+        return;
+      case "set-bitrate":
+        this.applySetBitrate(socket, message);
+        return;
+      case "kicked":
+        // Server-only message — clients should never send this. Treat as
+        // no-op (forward-compatible).
+        return;
       default:
         // Other message types added in later tasks.
         throw new SignalingValidationError(`unsupported message type ${message.type}`, {
@@ -283,6 +318,7 @@ export class Session {
       const room = this.roomMap.get(socket.roomId);
       if (room !== undefined) {
         room.remove(socket.peerId);
+        room.removeDirector(socket.peerId);
         const hadPresence = room.clearPresence(socket.peerId);
         for (const remaining of room.peers()) {
           this.send(remaining.peerId, { type: "peer-left", peer: socket.peerId });
@@ -326,6 +362,20 @@ export class Session {
       }
     }
 
+    // EPIC-12: first-claim director rule. Reject any join with role=director
+    // when this room already has at least one director.
+    if (message.role === "director") {
+      const existing = this.roomMap.get(message.room);
+      if (existing !== undefined && existing.hasAnyDirector()) {
+        throw new SignalingDirectorConflictError(
+          `room ${message.room} already has a director`,
+          {
+            context: { room: message.room, peer: message.peer },
+          },
+        );
+      }
+    }
+
     const room = this.getOrCreateRoom(message.room);
     const existingPeers = room.peers();
 
@@ -333,6 +383,9 @@ export class Session {
     socket.roomId = message.room;
     room.add({ peerId: message.peer, socketId: socket.socketId, role: message.role });
     this.peerIndex.set(message.peer, socket);
+    if (message.role === "director") {
+      room.addDirector(message.peer);
+    }
 
     // Tell each existing peer about the new joiner.
     for (const existing of existingPeers) {
@@ -385,6 +438,7 @@ export class Session {
     const removed = room.remove(message.peer);
     if (removed === undefined) return;
     this.peerIndex.delete(message.peer);
+    room.removeDirector(message.peer);
 
     const hadPresence = room.clearPresence(message.peer);
 
@@ -519,6 +573,154 @@ export class Session {
         this.send(member.peerId, message);
       }
     }
+  }
+
+  /**
+   * Internal: enforce the director-only check when `enforceModerationCommands`
+   * is on. With enforcement off, all roles can issue commands and the engine
+   * just relays them (honor mode).
+   */
+  private requireDirectorOrRelay(socket: SocketRecord, action: string): void {
+    if (!this.enforceModerationCommands) return;
+    if (socket.roomId === undefined || socket.peerId === undefined) {
+      throw new SignalingValidationError(`${action} requires a joined socket`, {
+        context: { socketId: socket.socketId, action },
+      });
+    }
+    const room = this.roomMap.get(socket.roomId);
+    if (room === undefined || !room.isDirector(socket.peerId)) {
+      throw new SignalingPermissionError(
+        `${action} is director-only when enforceModerationCommands is on`,
+        { context: { socketId: socket.socketId, peer: socket.peerId, action } },
+      );
+    }
+  }
+
+  private applyPromote(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "promote" }>,
+  ): void {
+    this.requireDirectorOrRelay(socket, "promote");
+    const room = socket.roomId !== undefined ? this.roomMap.get(socket.roomId) : undefined;
+    if (room === undefined) return;
+    if (!room.has(message.target)) {
+      throw new PeerNotFoundError(`promote target ${message.target} is not in the room`, {
+        context: { peer: message.target, room: socket.roomId },
+      });
+    }
+    room.addDirector(message.target);
+    this.send(message.target, message);
+  }
+
+  private applyDemote(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "demote" }>,
+  ): void {
+    this.requireDirectorOrRelay(socket, "demote");
+    const room = socket.roomId !== undefined ? this.roomMap.get(socket.roomId) : undefined;
+    if (room === undefined) return;
+    room.removeDirector(message.target);
+    this.send(message.target, message);
+  }
+
+  private applyMute(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "mute" }>,
+  ): void {
+    this.requireDirectorOrRelay(socket, "mute");
+    const room = socket.roomId !== undefined ? this.roomMap.get(socket.roomId) : undefined;
+    if (room === undefined) return;
+    if (!room.has(message.target)) return;
+
+    this.send(message.target, message);
+
+    const attrKey = message.kind === "audio" ? "director-muted-audio" : "director-muted-video";
+    room.setPresence(message.target, { [attrKey]: true });
+    const next = room.getPresence(message.target) ?? {};
+    for (const member of room.peers()) {
+      this.send(member.peerId, {
+        type: "presence-state",
+        peer: message.target,
+        attributes: next,
+      });
+    }
+  }
+
+  private applyUnmute(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "unmute" }>,
+  ): void {
+    this.requireDirectorOrRelay(socket, "unmute");
+    const room = socket.roomId !== undefined ? this.roomMap.get(socket.roomId) : undefined;
+    if (room === undefined) return;
+    if (!room.has(message.target)) return;
+
+    this.send(message.target, message);
+
+    const attrKey = message.kind === "audio" ? "director-muted-audio" : "director-muted-video";
+    room.setPresence(message.target, { [attrKey]: null });
+    const next = room.getPresence(message.target) ?? {};
+    for (const member of room.peers()) {
+      this.send(member.peerId, {
+        type: "presence-state",
+        peer: message.target,
+        attributes: next,
+      });
+    }
+  }
+
+  private applyKick(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "kick" }>,
+  ): void {
+    this.requireDirectorOrRelay(socket, "kick");
+    const roomId = socket.roomId;
+    if (roomId === undefined) return;
+    const room = this.roomMap.get(roomId);
+    if (room === undefined || !room.has(message.target)) return;
+
+    const notification: Extract<SignalingMessageType, { type: "kicked" }> = {
+      type: "kicked",
+      room: roomId,
+      ...(message.reason !== undefined ? { reason: message.reason } : {}),
+    };
+    this.send(message.target, notification);
+
+    if (!this.enforceModerationCommands) return;
+
+    room.remove(message.target);
+    room.removeDirector(message.target);
+    const hadPresence = room.clearPresence(message.target);
+    this.peerIndex.delete(message.target);
+    this.buckets.delete(message.target);
+    for (const member of room.peers()) {
+      this.send(member.peerId, { type: "peer-left", peer: message.target });
+      if (hadPresence) {
+        this.send(member.peerId, {
+          type: "presence-state",
+          peer: message.target,
+          attributes: {},
+        });
+      }
+    }
+    if (room.size === 0) this.roomMap.delete(room.id);
+
+    for (const s of this.sockets.values()) {
+      if (s.peerId === message.target && s.roomId === roomId) {
+        delete s.peerId;
+        delete s.roomId;
+      }
+    }
+  }
+
+  private applySetBitrate(
+    socket: SocketRecord,
+    message: Extract<SignalingMessageType, { type: "set-bitrate" }>,
+  ): void {
+    this.requireDirectorOrRelay(socket, "set-bitrate");
+    const room = socket.roomId !== undefined ? this.roomMap.get(socket.roomId) : undefined;
+    if (room === undefined || !room.has(message.target)) return;
+    this.send(message.target, message);
   }
 
   /** Lazy room creation. Capacity + chat-history limit propagate from session options. */
