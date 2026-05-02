@@ -3,11 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "description": "Open-source, framework-agnostic WebRTC video SDK monorepo",
+  "keywords": [
+    "monorepo",
+    "peer-to-peer",
+    "rtc",
+    "sdk",
+    "video",
+    "webrtc"
+  ],
   "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
   "bugs": {
     "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forinda/forinda-rtc-sdk.git"

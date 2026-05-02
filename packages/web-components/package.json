@@ -2,11 +2,23 @@
   "name": "@forinda/video-sdk-elements",
   "version": "0.0.0",
   "description": "Web Components (custom HTML elements) for the Forinda video SDK",
+  "keywords": [
+    "custom-elements",
+    "html",
+    "sdk",
+    "video",
+    "web-components",
+    "webrtc"
+  ],
   "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
   "bugs": {
     "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",

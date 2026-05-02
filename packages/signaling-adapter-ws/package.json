@@ -2,11 +2,24 @@
   "name": "@forinda/video-sdk-signaling-adapter-ws",
   "version": "0.0.0",
   "description": "Node WebSocket server adapter for Forinda video SDK signaling protocol",
+  "keywords": [
+    "node",
+    "sdk",
+    "server",
+    "signaling",
+    "webrtc",
+    "websocket",
+    "ws"
+  ],
   "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
   "bugs": {
     "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",

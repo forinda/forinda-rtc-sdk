@@ -37,3 +37,9 @@ coverage/
 # playwright
 playwright-report/
 test-results/
+
+# npm CLI quirk: when `pnpm pkg set` forwards URLs, npm sometimes
+# interprets the URL as a directory path and writes cache logs there.
+# Block these defensively.
+https:/
+git+*/

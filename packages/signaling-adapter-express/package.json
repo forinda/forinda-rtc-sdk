@@ -2,11 +2,23 @@
   "name": "@forinda/video-sdk-signaling-adapter-express",
   "version": "0.0.0",
   "description": "Express integration for Forinda video SDK signaling protocol",
+  "keywords": [
+    "express",
+    "node",
+    "sdk",
+    "server",
+    "signaling",
+    "webrtc"
+  ],
   "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
   "bugs": {
     "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",

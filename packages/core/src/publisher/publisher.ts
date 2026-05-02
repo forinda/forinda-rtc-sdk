@@ -14,7 +14,7 @@
  * for type imports and `instanceof` checks.
  */
 
-import { ConfigurationError } from "@/errors/errors.ts";
+import { ConfigurationError, SdkError } from "@/errors/errors.ts";
 import { defineEmitter, type Emitter } from "@/events/emitter.ts";
 import { defineNegotiator, type Negotiator } from "@/peer/negotiation.ts";
 import { definePeerConnection, type PeerConnection } from "@/peer/peer-connection.ts";
@@ -22,6 +22,7 @@ import {
   replaceAudioTrack as replaceAudioTrackOnPc,
   replaceVideoTrack as replaceVideoTrackOnPc,
 } from "@/media/track-replacer.ts";
+import { defineRetryPolicy, type RetryPolicy } from "@/retry/policy.ts";
 import type {
   SignalingMessageType,
   SignalingTransport,
@@ -62,6 +63,10 @@ export class Publisher {
   private readonly disposers: (() => void)[] = [];
   private readonly viewers = new Map<string, ViewerEntry>();
   private readonly statsConfig: PublisherOptions["stats"];
+  private readonly retryPolicy: RetryPolicy;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
+  private successResetTimer: ReturnType<typeof setTimeout> | undefined;
+  private stopping = false;
 
   constructor(opts: PublisherOptions) {
     this.signaling = opts.signaling;
@@ -71,8 +76,25 @@ export class Publisher {
     this.iceServers = opts.iceServers ?? [];
     this.pcFactory = opts.pcFactory;
     this.statsConfig = opts.stats;
+    this.retryPolicy = defineRetryPolicy(opts.retry ?? {});
 
-    this.stateMachine.on((s) => this.emitter.emit("state", s));
+    this.stateMachine.on((s) => {
+      this.emitter.emit("state", s);
+      if (s === "connected") this.scheduleSuccessReset();
+    });
+  }
+
+  /**
+   * Schedule a `markSuccess` call after the success-reset window so the
+   * retry budget recovers if the session stays connected.
+   */
+  private scheduleSuccessReset(): void {
+    if (this.successResetTimer !== undefined) clearTimeout(this.successResetTimer);
+    // Small constant matches the default 30s window; consumers don't
+    // override successResetMs at this layer (it's encoded in the policy).
+    this.successResetTimer = setTimeout(() => {
+      this.retryPolicy.markSuccess();
+    }, 30_000);
   }
 
   /** Current lifecycle state. */
@@ -103,10 +125,14 @@ export class Publisher {
     this.stateMachine.transition("connecting");
 
     const offState = this.signaling.on("state", (s: TransportState) => {
+      if (this.stopping) return;
       if (s === "connected") {
         this.stateMachine.transition("connected");
       } else if (s === "closed" && this.state !== "closed") {
-        this.stateMachine.transition("failed");
+        // Treat unexpected signaling close as a session failure → retry.
+        this.handleSessionFailure(
+          new SdkError("signaling closed unexpectedly", { code: "signaling_closed" }),
+        );
       } else if (s === "reconnecting") {
         this.stateMachine.transition("reconnecting");
       }
@@ -127,6 +153,15 @@ export class Publisher {
    */
   async stop(): Promise<void> {
     if (this.state === "closed") return;
+    this.stopping = true;
+    if (this.retryTimer !== undefined) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = undefined;
+    }
+    if (this.successResetTimer !== undefined) {
+      clearTimeout(this.successResetTimer);
+      this.successResetTimer = undefined;
+    }
     for (const viewer of this.viewers.values()) {
       this.teardownViewer(viewer.peerId);
     }
@@ -139,6 +174,62 @@ export class Publisher {
     this.disposers.length = 0;
     await this.signaling.disconnect();
     this.stateMachine.transition("closed");
+  }
+
+  /**
+   * Internal: handle a session-level failure (signaling drop, etc.).
+   * Transitions to `failed`, schedules retry if budget allows; otherwise
+   * goes to `closed` with a `retry_exhausted` error.
+   */
+  private handleSessionFailure(cause: SdkError): void {
+    if (this.stopping) return;
+    this.stateMachine.transition("failed");
+
+    // Tear down per-viewer state — we'll rebuild on reconnect.
+    for (const viewer of [...this.viewers.values()]) {
+      this.teardownViewer(viewer.peerId);
+    }
+
+    const delay = this.retryPolicy.nextDelayMs();
+    if (delay === null) {
+      this.emitter.emit(
+        "error",
+        new SdkError("retry budget exhausted", {
+          code: "retry_exhausted",
+          cause,
+        }),
+      );
+      this.stateMachine.transition("closed");
+      return;
+    }
+
+    this.emitter.emit("retry", {
+      attempt: this.retryPolicy.attempt,
+      nextDelayMs: delay,
+      lastError: cause,
+    });
+
+    this.retryTimer = setTimeout(() => {
+      void this.attemptReconnect();
+    }, delay);
+  }
+
+  /** Internal: full session restart after retry backoff. */
+  private async attemptReconnect(): Promise<void> {
+    if (this.stopping) return;
+    this.stateMachine.transition("reconnecting");
+    try {
+      await this.signaling.connect();
+      await this.sendJoin();
+      // signaling state listener will transition us back to `connected`.
+    } catch (cause) {
+      this.handleSessionFailure(
+        new SdkError("reconnect attempt failed", {
+          code: "reconnect_failed",
+          cause,
+        }),
+      );
+    }
   }
 
   /** Internal: route an inbound signaling message. */

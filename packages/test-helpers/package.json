@@ -3,11 +3,22 @@
   "version": "0.0.0",
   "private": true,
   "description": "Internal test helpers for the Forinda video SDK monorepo (not published)",
+  "keywords": [
+    "fixtures",
+    "internal",
+    "sdk",
+    "test",
+    "webrtc"
+  ],
   "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
   "bugs": {
     "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",

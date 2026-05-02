@@ -2,11 +2,24 @@
   "name": "@forinda/video-sdk-signaling-server",
   "version": "0.0.0",
   "description": "Standalone reference signaling server for the Forinda video SDK (library + CLI)",
+  "keywords": [
+    "cli",
+    "node",
+    "sdk",
+    "server",
+    "signaling",
+    "standalone",
+    "webrtc"
+  ],
   "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
   "bugs": {
     "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
   },
   "license": "MIT",
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
