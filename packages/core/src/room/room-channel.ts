@@ -58,6 +58,7 @@ export class RoomChannel {
   private readonly chatAckTimeoutMs: number;
   /** Per-pending-chat timers; cleared on echo or fail. */
   private readonly chatAckTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private readonly replayHistory: boolean;
   private readonly ownAttributeKeys = new Set<string>();
   private readonly leader: RoomChannelOptions["__leader"];
   private readonly retryPolicy: RetryPolicy;
@@ -77,6 +78,7 @@ export class RoomChannel {
     this.manageJoin = opts.__leader ? false : (opts.manageJoin ?? true);
     this.chatHistoryLimit = opts.chatHistoryLimit ?? DEFAULT_CHAT_HISTORY_LIMIT;
     this.chatAckTimeoutMs = opts.chatAckTimeoutMs ?? DEFAULT_CHAT_ACK_TIMEOUT_MS;
+    this.replayHistory = opts.replayHistory ?? false;
     this.retryPolicy = defineRetryPolicy(opts.retry ?? {});
   }
 
@@ -149,6 +151,7 @@ export class RoomChannel {
         room: this.room,
         peer: this.peerId,
         role: "presence",
+        ...(this.replayHistory ? { replayHistory: true } : {}),
       });
     }
 
@@ -397,10 +400,32 @@ export class RoomChannel {
       case "chat":
         this.applyChat(message);
         return;
+      case "chat-history":
+        this.applyChatHistory(message);
+        return;
       default:
         // Ignore SDP / ICE / join — those belong to Publisher / Viewer.
         return;
     }
+  }
+
+  private applyChatHistory(
+    message: Extract<SignalingMessageType, { type: "chat-history" }>,
+  ): void {
+    if (message.room !== this.room) return;
+    const entries: ChatHistoryEntry[] = message.messages.map((m) => ({
+      ...m,
+      receivedAt: Date.now(),
+      id: m.clientId ?? this.generateChatId(),
+      status: "confirmed",
+    }));
+    // Prepend the replay to the existing buffer (history first, then any
+    // optimistic chats sent before the replay arrived). Trim to the limit.
+    this.chatBuffer.unshift(...entries);
+    while (this.chatBuffer.length > this.chatHistoryLimit) {
+      this.chatBuffer.shift();
+    }
+    this.emitter.emit("chat-history", entries);
   }
 
   private applyPresenceSnapshot(message: PresenceSnapshotMessage): void {

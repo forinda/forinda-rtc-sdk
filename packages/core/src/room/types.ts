@@ -41,6 +41,14 @@ export interface RoomChannelOptions {
    */
   chatAckTimeoutMs?: number;
   /**
+   * Opt the channel into receiving the engine's chat-history replay on
+   * `start()`. The engine sends a one-shot `chat-history` message right
+   * after `presence-snapshot`; the channel seeds `chatHistory` with the
+   * replayed messages and emits a `chat-history` event. Default `false`
+   * preserves v0.1 behavior.
+   */
+  replayHistory?: boolean;
+  /**
    * **Internal.** Set by `defineAttachedRoomChannel`. Use the proxy
    * factory or `room.channel()` instead of touching this directly.
    */
@@ -56,6 +64,7 @@ export interface AttachedRoomChannelOptions {
   chatHistoryLimit?: number;
   retry?: RetryConfig;
   chatAckTimeoutMs?: number;
+  replayHistory?: boolean;
 }
 
 /**
@@ -113,6 +122,8 @@ export type RoomChannelEvents = {
   "peer-left": { peer: string };
   /** Fires for every `chat` delivered to this peer (broadcast or DM). */
   chat: ChatHistoryEntry;
+  /** Fires once on start when the engine replays chat history (opt-in via `replayHistory: true`). */
+  "chat-history": ChatHistoryEntry[];
   /** Fires when an outgoing chat's status changes. */
   "chat-status": ChatStatusEntry;
   /** Channel-level lifecycle state. */

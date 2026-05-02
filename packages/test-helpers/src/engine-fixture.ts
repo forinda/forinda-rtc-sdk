@@ -41,8 +41,13 @@ export interface EngineFixture {
   closeAll(): Promise<void>;
 }
 
-export function defineEngineFixture(): EngineFixture {
-  const session = defineSession();
+export interface EngineFixtureOptions {
+  /** Forwarded to `defineSession({ chatHistoryPerRoom })`. */
+  chatHistoryPerRoom?: number;
+}
+
+export function defineEngineFixture(opts: EngineFixtureOptions = {}): EngineFixture {
+  const session = defineSession(opts);
   const transports = new Map<string, FixtureTransport>();
 
   session.onSend((peerId, msg) => {
