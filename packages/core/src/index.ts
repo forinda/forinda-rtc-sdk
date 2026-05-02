@@ -127,6 +127,13 @@ export type {
   RoomChannelOptions,
   RoomPeerEntry,
 } from "./room/types.ts";
+export {
+  definePresenceDiff,
+  type PresenceDiff,
+  type PresenceDiffChange,
+  type PresenceDiffEntry,
+  type PresenceMap,
+} from "./room/presence-diff.ts";
 
 // Recording — MediaRecorder wrapper
 export { defineRecorder, Recorder } from "./recording/recorder.ts";

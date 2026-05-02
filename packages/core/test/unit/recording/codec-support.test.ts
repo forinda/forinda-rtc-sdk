@@ -4,10 +4,7 @@ import {
   isRecordingTypeSupported,
   pickRecordingType,
 } from "@/recording/codec-support.ts";
-import {
-  installFakeMediaRecorder,
-  type InstalledFakeRecorder,
-} from "../../_mocks/fake-media-recorder.ts";
+import { installFakeMediaRecorder, type InstalledFakeRecorder } from "@forinda/test-helpers";
 
 let fixture: InstalledFakeRecorder;
 

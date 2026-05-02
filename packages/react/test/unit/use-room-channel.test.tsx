@@ -58,6 +58,15 @@ describe("useRoomChannel", () => {
     expect(result.current.error).toBeNull();
   });
 
+  it("surfaces transport state transitions via `state`", async () => {
+    const signaling = defineFakeTransport();
+    const { result } = renderHook(() =>
+      useRoomChannel({ room: "demo", peerId: "alice", signaling }),
+    );
+
+    await waitFor(() => expect(result.current.state).toBe("connected"));
+  });
+
   it("sets an error when no signaling is provided", () => {
     const { result } = renderHook(() => useRoomChannel({ room: "demo" }));
 

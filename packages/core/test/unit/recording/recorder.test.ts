@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ConfigurationError } from "@/errors/errors.ts";
 import { defineRecorder } from "@/recording/recorder.ts";
-import {
-  installFakeMediaRecorder,
-  type InstalledFakeRecorder,
-} from "../../_mocks/fake-media-recorder.ts";
+import { installFakeMediaRecorder, type InstalledFakeRecorder } from "@forinda/test-helpers";
 
 const fakeStream = (): MediaStream => ({}) as unknown as MediaStream;
 
@@ -160,5 +157,26 @@ describe("defineRecorder — lifecycle", () => {
     const r = defineRecorder(fakeStream());
     r.start();
     expect(() => r.start()).toThrow(ConfigurationError);
+  });
+
+  it("emits buffer-overflow + transitions to error when maxBufferedBytes is exceeded", () => {
+    const onOverflow = vi.fn();
+    const onError = vi.fn();
+    const r = defineRecorder(fakeStream(), { maxBufferedBytes: 5 });
+    r.on("buffer-overflow", onOverflow);
+    r.on("error", onError);
+
+    r.start();
+    fx.current?.__fire("dataavailable", { data: new Blob(["aa"]) }); // 2 bytes — under cap
+    expect(r.bufferedByteCount).toBe(2);
+
+    fx.current?.__fire("dataavailable", { data: new Blob(["bbbbb"]) }); // would push to 7 — over cap
+
+    expect(onOverflow).toHaveBeenCalledOnce();
+    expect(onOverflow).toHaveBeenCalledWith({ bufferedBytes: 2, limit: 5 });
+    expect(onError).toHaveBeenCalledOnce();
+    expect(r.state).toBe("error");
+    expect(r.bufferedByteCount).toBe(2); // overflow chunk was dropped
+    expect(fx.current?.stop).toHaveBeenCalled();
   });
 });

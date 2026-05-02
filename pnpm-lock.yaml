@@ -160,6 +160,9 @@ importers:
 
   packages/react:
     devDependencies:
+      '@forinda/test-helpers':
+        specifier: workspace:*
+        version: link:../test-helpers
       '@forinda/video-sdk-core':
         specifier: workspace:*
         version: link:../core
@@ -491,6 +494,9 @@ importers:
 
   packages/web-components:
     devDependencies:
+      '@forinda/test-helpers':
+        specifier: workspace:*
+        version: link:../test-helpers
       '@forinda/video-sdk-core':
         specifier: workspace:*
         version: link:../core

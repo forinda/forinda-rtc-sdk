@@ -24,6 +24,12 @@ export interface UseRecorderResult {
   state: RecorderState;
   /** Final blob — `null` until `stop()` resolves. */
   blob: Blob | null;
+  /**
+   * Object URL for `blob`, created lazily and revoked when `blob` changes
+   * or the component unmounts. `null` while no blob is available. Bind
+   * directly to an `<a download href={downloadUrl}>` for one-line downloads.
+   */
+  downloadUrl: string | null;
   /** Read-only accumulated chunks. */
   chunks: readonly Blob[];
   error: Error | null;
@@ -97,10 +103,24 @@ export function useRecorder(
     recorderRef.current?.resume();
   }, []);
 
+  // Mint a fresh object URL for each blob; revoke the old one as soon as
+  // the new blob arrives or the component unmounts. Anything else leaks.
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (blob === null || isServer) {
+      setDownloadUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    setDownloadUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [blob]);
+
   return {
     recorder: recorderRef.current,
     state,
     blob,
+    downloadUrl,
     chunks,
     error,
     start,

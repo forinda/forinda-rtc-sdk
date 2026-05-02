@@ -28,6 +28,15 @@ export interface RecorderOptions {
    * `timesliceMs` ms instead of only on stop. Useful for streaming uploads.
    */
   timesliceMs?: number;
+  /**
+   * Hard cap on total in-memory chunk bytes. When exceeded the recorder
+   * emits a `buffer-overflow` event, transitions to `error`, and stops the
+   * underlying `MediaRecorder`. Prevents OOM on multi-hour recordings when
+   * the consumer hasn't drained chunks via `timesliceMs` + an uploader.
+   *
+   * Default: unbounded.
+   */
+  maxBufferedBytes?: number;
 }
 
 /** One chunk delivered via `dataavailable` (raw `MediaRecorder` blob plus a wall-clock stamp). */
@@ -43,6 +52,8 @@ export type RecorderEvents = {
   pause: void;
   resume: void;
   stop: { blob: Blob; mimeType: string; durationMs: number };
+  /** Fires when `maxBufferedBytes` is exceeded, before the recorder errors out. */
+  "buffer-overflow": { bufferedBytes: number; limit: number };
   error: Error;
   state: RecorderState;
 };

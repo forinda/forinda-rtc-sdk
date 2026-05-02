@@ -1,63 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ForindaRecorder } from "@/elements/recorder.ts";
+import { installFakeMediaRecorder, type InstalledFakeRecorder } from "@forinda/test-helpers";
 
-interface FakeRecorderInstance {
-  state: "inactive" | "recording" | "paused";
-  start: ReturnType<typeof vi.fn>;
-  stop: ReturnType<typeof vi.fn>;
-  pause: ReturnType<typeof vi.fn>;
-  resume: ReturnType<typeof vi.fn>;
-  __fire(event: string, payload?: unknown): void;
-}
-
-let lastInstance: FakeRecorderInstance | null = null;
+let fx: InstalledFakeRecorder;
 
 beforeEach(() => {
-  lastInstance = null;
-  function FakeCtor(
-    this: FakeRecorderInstance,
-    _stream: MediaStream,
-    options?: MediaRecorderOptions,
-  ) {
-    const handlers = new Map<string, Set<(e: unknown) => void>>();
-    this.state = "inactive";
-    this.start = vi.fn(() => {
-      this.state = "recording";
-    });
-    this.stop = vi.fn(() => {
-      this.state = "inactive";
-    });
-    this.pause = vi.fn(() => {
-      this.state = "paused";
-    });
-    this.resume = vi.fn(() => {
-      this.state = "recording";
-    });
-    (this as unknown as { addEventListener: MediaRecorder["addEventListener"] }).addEventListener =
-      ((event: string, handler: (e: unknown) => void) => {
-        let bucket = handlers.get(event);
-        if (!bucket) {
-          bucket = new Set();
-          handlers.set(event, bucket);
-        }
-        bucket.add(handler);
-      }) as MediaRecorder["addEventListener"];
-    (
-      this as unknown as { removeEventListener: MediaRecorder["removeEventListener"] }
-    ).removeEventListener = (() => {}) as MediaRecorder["removeEventListener"];
-    this.__fire = (event, payload = {}) => {
-      handlers.get(event)?.forEach((h) => h(payload));
-    };
-    void options;
-    lastInstance = this;
-  }
-  (FakeCtor as unknown as { isTypeSupported: (m: string) => boolean }).isTypeSupported = () => true;
-  Object.defineProperty(globalThis, "MediaRecorder", {
-    configurable: true,
-    writable: true,
-    value: FakeCtor,
-  });
-  // jsdom URL.createObjectURL doesn't return anything useful; stub for assertion stability.
+  fx = installFakeMediaRecorder();
   if (typeof URL.createObjectURL !== "function") {
     (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = () =>
       "blob:fake";
@@ -67,9 +15,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  Reflect.deleteProperty(globalThis as object, "MediaRecorder");
+  fx.cleanup();
   vi.restoreAllMocks();
-  lastInstance = null;
 });
 
 if (!customElements.get(ForindaRecorder.tagName)) {
@@ -122,7 +69,7 @@ describe("<forinda-recorder>", () => {
 
     el.start();
 
-    expect(lastInstance?.start).toHaveBeenCalledWith(200);
+    expect(fx.current?.start).toHaveBeenCalledWith(200);
     el.remove();
   });
 
@@ -133,11 +80,11 @@ describe("<forinda-recorder>", () => {
     const button = el.shadowRoot?.querySelector("button") as HTMLButtonElement;
 
     button.click();
-    expect(lastInstance?.start).toHaveBeenCalledOnce();
+    expect(fx.current?.start).toHaveBeenCalledOnce();
     expect(button.textContent).toBe("Stop");
 
     button.click();
-    expect(lastInstance?.stop).toHaveBeenCalledOnce();
+    expect(fx.current?.stop).toHaveBeenCalledOnce();
     el.remove();
   });
 
@@ -150,9 +97,9 @@ describe("<forinda-recorder>", () => {
     el.addEventListener("recorder-stop", stopHandler);
 
     el.start();
-    lastInstance?.__fire("dataavailable", { data: new Blob(["x"], { type: "video/webm" }) });
+    fx.current?.__fire("dataavailable", { data: new Blob(["x"], { type: "video/webm" }) });
     const stopPromise = el.stop();
-    lastInstance?.__fire("stop");
+    fx.current?.__fire("stop");
     await stopPromise;
 
     expect(stopHandler).toHaveBeenCalledOnce();
@@ -171,10 +118,10 @@ describe("<forinda-recorder>", () => {
   it("auto-starts when 'auto-start' attribute is present and stream is set", () => {
     const el = makeEl({ "auto-start": "" });
     document.body.appendChild(el);
-    expect(lastInstance).toBeNull();
+    expect(fx.current).toBeNull();
 
     el.stream = fakeStream();
-    expect(lastInstance?.start).toHaveBeenCalledOnce();
+    expect(fx.current?.start).toHaveBeenCalledOnce();
     el.remove();
   });
 
@@ -186,6 +133,6 @@ describe("<forinda-recorder>", () => {
 
     el.remove();
 
-    expect(lastInstance?.stop).toHaveBeenCalledOnce();
+    expect(fx.current?.stop).toHaveBeenCalledOnce();
   });
 });

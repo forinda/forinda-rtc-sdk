@@ -28,6 +28,7 @@ export class Recorder {
   private readonly options: RecorderOptions;
   private readonly emitter: Emitter<RecorderEvents> = defineEmitter();
   private readonly chunkList: Blob[] = [];
+  private bufferedBytes = 0;
   private mediaRecorder: MediaRecorder | null = null;
   private resolvedMimeType: string | null = null;
   private recorderState: RecorderState = "idle";
@@ -50,6 +51,11 @@ export class Recorder {
   /** Current state. */
   get state(): RecorderState {
     return this.recorderState;
+  }
+
+  /** Sum of `data.size` across every retained chunk. */
+  get bufferedByteCount(): number {
+    return this.bufferedBytes;
   }
 
   /** Read-only chunk buffer (oldest first). */
@@ -155,10 +161,29 @@ export class Recorder {
   private attachListeners(recorder: MediaRecorder): void {
     recorder.addEventListener("dataavailable", (event) => {
       const data = (event as BlobEvent).data;
-      if (data && data.size > 0) {
-        this.chunkList.push(data);
-        this.emitter.emit("dataavailable", { data, timestamp: Date.now() });
+      if (!data || data.size === 0) return;
+      const limit = this.options.maxBufferedBytes;
+      if (limit !== undefined && this.bufferedBytes + data.size > limit) {
+        this.emitter.emit("buffer-overflow", {
+          bufferedBytes: this.bufferedBytes,
+          limit,
+        });
+        const err = new SdkError(
+          `Recorder: in-memory buffer would exceed maxBufferedBytes=${limit}`,
+          { code: "recorder_buffer_overflow" },
+        );
+        this.transition("error");
+        this.emitter.emit("error", err);
+        try {
+          recorder.stop();
+        } catch {
+          // Recorder may already be transitioning; suppress secondary errors.
+        }
+        return;
       }
+      this.chunkList.push(data);
+      this.bufferedBytes += data.size;
+      this.emitter.emit("dataavailable", { data, timestamp: Date.now() });
     });
     recorder.addEventListener("pause", () => {
       this.transition("paused");

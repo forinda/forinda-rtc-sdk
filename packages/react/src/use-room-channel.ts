@@ -13,6 +13,7 @@ import {
   defineRoomChannel,
   type RoomChannel,
   type SignalingTransport,
+  type TransportState,
 } from "@forinda/video-sdk-core";
 import { isServer } from "./internal/ssr.ts";
 import { useVideoSdkConfig } from "./provider.tsx";
@@ -31,12 +32,15 @@ export interface UseRoomChannelOptions {
 
 export interface UseRoomChannelResult {
   channel: RoomChannel | null;
+  /** Underlying signaling transport state. Convenient for "Connecting…" UI. */
+  state: TransportState;
   error: Error | null;
 }
 
 export function useRoomChannel(opts: UseRoomChannelOptions): UseRoomChannelResult {
   const config = useVideoSdkConfig();
   const [channel, setChannel] = useState<RoomChannel | null>(null);
+  const [state, setState] = useState<TransportState>("idle");
   const [error, setError] = useState<Error | null>(null);
   const optsRef = useRef(opts);
   optsRef.current = opts;
@@ -66,9 +70,13 @@ export function useRoomChannel(opts: UseRoomChannelOptions): UseRoomChannelResul
       ...(o.chatHistoryLimit !== undefined ? { chatHistoryLimit: o.chatHistoryLimit } : {}),
     });
     setChannel(ch);
+    setState(signaling.state);
 
     const offError = ch.on("error", (e) => {
       if (!ctrl.signal.aborted) setError(e);
+    });
+    const offTransportState = signaling.on("state", (s: TransportState) => {
+      if (!ctrl.signal.aborted) setState(s);
     });
 
     if (autoStart) {
@@ -82,12 +90,14 @@ export function useRoomChannel(opts: UseRoomChannelOptions): UseRoomChannelResul
     return () => {
       ctrl.abort();
       offError();
+      offTransportState();
       void ch.stop();
       setChannel(null);
+      setState("idle");
       setError(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart, opts.room, opts.peerId]);
 
-  return { channel, error };
+  return { channel, state, error };
 }

@@ -51,6 +51,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@forinda/test-helpers": "workspace:*",
     "@forinda/video-sdk-core": "workspace:*",
     "@testing-library/dom": "^10.0.0",
     "@testing-library/jest-dom": "^6.0.0",

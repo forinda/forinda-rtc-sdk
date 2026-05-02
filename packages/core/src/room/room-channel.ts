@@ -89,10 +89,13 @@ export class RoomChannel {
     this.disposers.push(this.signaling.on("message", (msg) => this.routeMessage(msg)));
 
     if (this.manageJoin) {
-      // The transport may already be connected when shared with a Publisher/
-      // Viewer; calling connect on an idempotent transport is safe and lets
-      // the channel work standalone too.
-      await this.signaling.connect();
+      // Only open the transport when we own it. A shared transport (Publisher/
+      // Viewer also using it) may already be `connected` or in-flight to
+      // `connecting`; calling connect again is wasted work and can churn
+      // adapter state on impls that don't guarantee idempotency.
+      if (this.signaling.state !== "connected" && this.signaling.state !== "connecting") {
+        await this.signaling.connect();
+      }
       await this.signaling.send({
         type: "join",
         room: this.room,
