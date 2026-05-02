@@ -9,12 +9,16 @@
  * — when `attach` is set, those hooks defer to the Room instead of opening
  * their own transport.
  *
+ * EPIC-12: also exposes `role`, `directors`, and `sendCommand` for
+ * moderation UIs.
+ *
  * SSR-safe: returns inert state on the server.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   defineRoom,
+  type RoleValue,
   type Room,
   type SignalingTransport,
   type TransportState,
@@ -29,11 +33,26 @@ export interface UseRoomOptions {
   signaling?: SignalingTransport;
 }
 
+/** Director-only command shapes — flat union, mirrors the wire format. */
+export type ModerationCommand =
+  | { type: "mute"; target: string; kind: "audio" | "video" }
+  | { type: "unmute"; target: string; kind: "audio" | "video" }
+  | { type: "kick"; target: string; reason?: string }
+  | { type: "promote"; target: string }
+  | { type: "demote"; target: string }
+  | { type: "set-bitrate"; target: string; bitsPerSec: number };
+
 export interface UseRoomResult {
   room: Room | null;
   /** Underlying signaling transport state — useful for "Connecting…" UI. */
   state: TransportState;
   error: Error | null;
+  /** The role the Room has joined as, or `null` until the first child starts. */
+  role: RoleValue | null;
+  /** Live list of director peer ids (re-renders on peer-joined/promote/demote). */
+  directors: readonly string[];
+  /** Send a moderation command — director-only when the engine has `enforceModerationCommands: true`. */
+  sendCommand: (cmd: ModerationCommand) => Promise<void>;
 }
 
 export function useRoom(opts: UseRoomOptions): UseRoomResult {
@@ -41,6 +60,8 @@ export function useRoom(opts: UseRoomOptions): UseRoomResult {
   const [room, setRoom] = useState<Room | null>(null);
   const [state, setState] = useState<TransportState>("idle");
   const [error, setError] = useState<Error | null>(null);
+  const [role, setRole] = useState<RoleValue | null>(null);
+  const [directors, setDirectors] = useState<readonly string[]>([]);
   const optsRef = useRef(opts);
   optsRef.current = opts;
 
@@ -64,25 +85,63 @@ export function useRoom(opts: UseRoomOptions): UseRoomResult {
     });
     setRoom(r);
     setState(signaling.state);
+    setRole(r.role);
+    setDirectors([...r.directors]);
 
     const offError = r.on("error", (e) => {
       if (!ctrl.signal.aborted) setError(e);
     });
+    const offJoined = r.on("joined", () => {
+      if (ctrl.signal.aborted) return;
+      setRole(r.role);
+      setDirectors([...r.directors]);
+    });
     const offTransportState = signaling.on("state", (s: TransportState) => {
       if (!ctrl.signal.aborted) setState(s);
+    });
+    // EPIC-12: keep role + directors reactive. Pull from the room snapshot
+    // on every relevant inbound message.
+    const offMessage = signaling.on("message", (msg) => {
+      if (ctrl.signal.aborted) return;
+      if (
+        msg.type === "peer-joined" ||
+        msg.type === "peer-left" ||
+        msg.type === "promote" ||
+        msg.type === "demote"
+      ) {
+        setRole(r.role);
+        setDirectors([...r.directors]);
+      }
     });
 
     return () => {
       ctrl.abort();
       offError();
+      offJoined();
       offTransportState();
+      offMessage();
       void r.close();
       setRoom(null);
       setState("idle");
       setError(null);
+      setRole(null);
+      setDirectors([]);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opts.room, opts.peerId]);
 
-  return { room, state, error };
+  const sendCommand = useCallback(
+    async (cmd: ModerationCommand): Promise<void> => {
+      if (!room) return;
+      // After the join (caller decides via room.ensureJoined("director")), the
+      // local role is set — pull it now so an immediately-following
+      // sendCommand reflects the latest snapshot.
+      setRole(room.role);
+      setDirectors([...room.directors]);
+      await room.signaling.send(cmd);
+    },
+    [room],
+  );
+
+  return { room, state, error, role, directors, sendCommand };
 }

@@ -47,6 +47,8 @@ import type { AttachedRoomChannelOptions, RoomLeader, RoomOptions, RoomState } f
 type RoomEvents = {
   state: RoomState;
   error: Error;
+  /** Fires once `ensureJoined` succeeds (the engine accepted the join). */
+  joined: { role: RoleValue };
 };
 
 export class Room implements RoomLeader {
@@ -166,6 +168,7 @@ export class Room implements RoomLeader {
         if (role === "director") {
           this.directorSet.add(this.peerId);
         }
+        this.emitter.emit("joined", { role });
       } catch (err) {
         this.joinPromise = null;
         this.emitter.emit("error", err instanceof Error ? err : new Error(String(err)));
