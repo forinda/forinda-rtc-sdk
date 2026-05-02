@@ -42,7 +42,7 @@ export function installFakeMediaDevices(): {
     },
     cleanup: () => {
       if (original === undefined) {
-        delete (navigator as Navigator & { mediaDevices?: MediaDevices }).mediaDevices;
+        Reflect.deleteProperty(navigator, "mediaDevices");
       } else {
         Object.defineProperty(navigator, "mediaDevices", {
           configurable: true,
