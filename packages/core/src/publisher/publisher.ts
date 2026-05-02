@@ -185,9 +185,11 @@ export class Publisher {
     if (this.stopping) return;
     this.stateMachine.transition("failed");
 
-    // Tear down per-viewer state — we'll rebuild on reconnect.
-    for (const viewer of [...this.viewers.values()]) {
-      this.teardownViewer(viewer.peerId);
+    // Tear down per-viewer state — we'll rebuild on reconnect. Snapshot
+    // the peer ids first because teardownViewer mutates `this.viewers`.
+    const viewerIds = Array.from(this.viewers.keys());
+    for (const viewerId of viewerIds) {
+      this.teardownViewer(viewerId);
     }
 
     const delay = this.retryPolicy.nextDelayMs();

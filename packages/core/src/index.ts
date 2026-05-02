@@ -92,3 +92,22 @@ export {
   type StatsCollectorEvents,
   type StatsCollectorOptions,
 } from "./stats/collector.ts";
+
+// State machine
+export {
+  defineStateMachine,
+  StateMachine,
+  type ConnectionState,
+  type StateMachineOptions,
+} from "./state/connection-state.ts";
+
+// Retry policy
+export { defineRetryPolicy, RetryPolicy, type RetryConfig } from "./retry/policy.ts";
+
+// Publisher
+export { definePublisher, Publisher } from "./publisher/publisher.ts";
+export type { PublisherEvents, PublisherOptions, ViewerInfo } from "./publisher/types.ts";
+
+// Viewer
+export { defineViewer, Viewer } from "./viewer/viewer.ts";
+export type { ViewerEvents, ViewerOptions } from "./viewer/types.ts";
