@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ForindaRecorder } from "@/elements/recorder.ts";
+import { ForindaUploader } from "@/elements/uploader.ts";
 import { installFakeMediaRecorder, type InstalledFakeRecorder } from "@forinda/test-helpers";
 
 let fx: InstalledFakeRecorder;
@@ -21,6 +22,9 @@ afterEach(() => {
 
 if (!customElements.get(ForindaRecorder.tagName)) {
   customElements.define(ForindaRecorder.tagName, ForindaRecorder);
+}
+if (!customElements.get(ForindaUploader.tagName)) {
+  customElements.define(ForindaUploader.tagName, ForindaUploader);
 }
 
 const fakeStream = (): MediaStream => ({}) as unknown as MediaStream;
@@ -134,5 +138,69 @@ describe("<forinda-recorder>", () => {
     el.remove();
 
     expect(fx.current?.stop).toHaveBeenCalledOnce();
+  });
+});
+
+describe("<forinda-recorder> — for= + slotted uploader (EPIC-21)", () => {
+  function mount(opts: { forId?: string; slotted?: { url: string } } = {}): ForindaRecorder {
+    const el = document.createElement("forinda-recorder") as ForindaRecorder;
+    if (opts.forId !== undefined) el.setAttribute("for", opts.forId);
+    if (opts.slotted !== undefined) {
+      const u = document.createElement("forinda-uploader");
+      u.setAttribute("url", opts.slotted.url);
+      el.appendChild(u);
+    }
+    document.body.appendChild(el);
+    return el;
+  }
+
+  it("snapshots the target's mediaStream at start() time when for= is set", () => {
+    const target = document.createElement("div") as HTMLDivElement & {
+      mediaStream?: MediaStream;
+    };
+    target.id = "src";
+    const stream = { id: "fake" } as unknown as MediaStream;
+    target.mediaStream = stream;
+    document.body.appendChild(target);
+
+    const el = mount({ forId: "src" });
+    el.start();
+
+    expect(el.stream).toBe(stream);
+  });
+
+  it("emits an error when for= references a missing element", () => {
+    const el = mount({ forId: "ghost" });
+    const errors: Error[] = [];
+    el.addEventListener("recorder-error", (e) => errors.push((e as CustomEvent<Error>).detail));
+    el.start();
+    expect(errors[0]?.message).toMatch(/for="ghost"/);
+  });
+
+  it("emits an error when the for= target lacks a mediaStream property", () => {
+    const target = document.createElement("div");
+    target.id = "bad";
+    document.body.appendChild(target);
+
+    const el = mount({ forId: "bad" });
+    const errors: Error[] = [];
+    el.addEventListener("recorder-error", (e) => errors.push((e as CustomEvent<Error>).detail));
+    el.start();
+    expect(errors[0]?.message).toMatch(/mediaStream/);
+  });
+
+  it("pipes to slotted <forinda-uploader> children when started", async () => {
+    const fetchImpl = vi.fn(async () => new Response("ok", { status: 200 }));
+    const recorderEl = mount({ slotted: { url: "https://t/u" } });
+    const uploaderEl = recorderEl.querySelector("forinda-uploader") as ForindaUploader;
+    uploaderEl.fetchImpl = fetchImpl;
+    recorderEl.stream = { id: "src" } as unknown as MediaStream;
+    recorderEl.start();
+
+    fx.current?.__fire("dataavailable", { data: new Blob(["x"]) });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 });

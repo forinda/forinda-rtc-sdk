@@ -28,10 +28,12 @@
 
 import {
   defineRecorder,
+  pipeRecorderTo,
   type Recorder,
   type RecorderOptions,
   type RecorderState,
 } from "@forinda/video-sdk-core";
+import { ForindaUploader } from "./uploader.ts";
 import { readNumber, readString } from "@/internal/attrs.ts";
 import { dispatchTypedEvent } from "@/internal/send-event.ts";
 
@@ -75,6 +77,7 @@ export class ForindaRecorder extends HTMLElement {
   private statusEl: HTMLSpanElement;
   private recorder: Recorder | null = null;
   private streamRef: MediaStream | null = null;
+  private pipeDisposers: Array<() => void> = [];
 
   constructor() {
     super();
@@ -111,6 +114,8 @@ export class ForindaRecorder extends HTMLElement {
   }
 
   disconnectedCallback(): void {
+    for (const dispose of this.pipeDisposers) dispose();
+    this.pipeDisposers = [];
     if (this.recorder?.state === "recording" || this.recorder?.state === "paused") {
       void this.recorder.stop();
     }
@@ -118,6 +123,32 @@ export class ForindaRecorder extends HTMLElement {
   }
 
   start(): void {
+    // Resolve the stream from `for=` (target element's mediaStream) when not
+    // already set by direct property assignment. Snapshot once at start —
+    // stream changes after this point require an explicit stop()+start().
+    if (this.streamRef === null) {
+      const forId = readString(this, "for");
+      if (forId !== null) {
+        const target = document.getElementById(forId) as
+          | (Element & { mediaStream?: MediaStream | null })
+          | null;
+        if (target === null) {
+          this.emitError(new Error(`forinda-recorder: for="${forId}" target not found`));
+          return;
+        }
+        const stream = target.mediaStream ?? null;
+        if (stream === null) {
+          this.emitError(
+            new Error(
+              `forinda-recorder: for="${forId}" target has no mediaStream property; set one before start()`,
+            ),
+          );
+          return;
+        }
+        this.streamRef = stream;
+      }
+    }
+
     if (this.streamRef === null) {
       this.emitError(new Error("forinda-recorder: stream property must be set before start()"));
       return;
@@ -147,6 +178,14 @@ export class ForindaRecorder extends HTMLElement {
     });
     r.on("error", (err) => this.emitError(err));
 
+    // Wire any slotted <forinda-uploader> children. Multiple are allowed —
+    // each gets its own pipe so consumers can fan out to redundant backends.
+    for (const child of this.querySelectorAll<ForindaUploader>("forinda-uploader")) {
+      const sink = child.uploader;
+      if (sink === null) continue;
+      this.pipeDisposers.push(pipeRecorderTo(r, sink));
+    }
+
     try {
       r.start();
     } catch (err) {
@@ -157,6 +196,8 @@ export class ForindaRecorder extends HTMLElement {
 
   async stop(): Promise<Blob | null> {
     if (this.recorder === null) return null;
+    for (const dispose of this.pipeDisposers) dispose();
+    this.pipeDisposers = [];
     return this.recorder.stop();
   }
 
