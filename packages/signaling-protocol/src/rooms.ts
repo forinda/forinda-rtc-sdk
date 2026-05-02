@@ -51,6 +51,7 @@ export class Room {
   private readonly presenceMap = new Map<PeerId, Record<string, JsonValue>>();
   private readonly chatBuffer: import("./messages.ts").ChatMessage[] = [];
   private readonly chatHistoryLimit: number;
+  private readonly directorSet = new Set<PeerId>();
 
   constructor(id: RoomId, opts: RoomOptions) {
     this.id = id;
@@ -157,6 +158,31 @@ export class Room {
   /** Drops a peer's presence entry. Returns true when something was removed. */
   clearPresence(peerId: PeerId): boolean {
     return this.presenceMap.delete(peerId);
+  }
+
+  /** Mark a peer as a director. Idempotent. */
+  addDirector(peerId: PeerId): void {
+    this.directorSet.add(peerId);
+  }
+
+  /** Remove a peer from the director set. No-op if not a director. */
+  removeDirector(peerId: PeerId): void {
+    this.directorSet.delete(peerId);
+  }
+
+  /** True when `peerId` is currently a director of this room. */
+  isDirector(peerId: PeerId): boolean {
+    return this.directorSet.has(peerId);
+  }
+
+  /** True when this room currently has at least one director. */
+  hasAnyDirector(): boolean {
+    return this.directorSet.size > 0;
+  }
+
+  /** Snapshot of the director set (fresh array, safe to iterate). */
+  directorList(): readonly PeerId[] {
+    return [...this.directorSet];
   }
 
   /**
