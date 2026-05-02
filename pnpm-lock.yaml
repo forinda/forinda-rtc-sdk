@@ -189,6 +189,39 @@ importers:
         specifier: ^0.14.9
         version: 0.14.12
 
+  packages/integration-tests:
+    devDependencies:
+      '@forinda/test-helpers':
+        specifier: workspace:*
+        version: link:../test-helpers
+      '@forinda/video-sdk-core':
+        specifier: workspace:*
+        version: link:../core
+      '@forinda/video-sdk-signaling-broadcast':
+        specifier: workspace:*
+        version: link:../signaling-broadcast
+      '@forinda/video-sdk-signaling-protocol':
+        specifier: workspace:*
+        version: link:../signaling-protocol
+      '@forinda/video-sdk-signaling-server':
+        specifier: workspace:*
+        version: link:../signaling-server
+      '@forinda/video-sdk-signaling-ws':
+        specifier: workspace:*
+        version: link:../signaling-ws
+      oxlint:
+        specifier: ^0.11.0
+        version: 0.11.1
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.17)(jsdom@25.0.1)(lightningcss@1.32.0)
+      wireit:
+        specifier: ^0.14.9
+        version: 0.14.12
+
   packages/react:
     devDependencies:
       '@forinda/test-helpers':

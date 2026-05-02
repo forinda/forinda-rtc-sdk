@@ -32,7 +32,7 @@
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
     "test": "pnpm -r --filter './packages/*' run test",
-    "test:integration": "pnpm -r --filter './packages/*' run test:integration",
+    "test:integration": "pnpm --filter @forinda/integration-tests test",
     "dev:server": "pnpm --filter dev-signaling-server dev",
     "dev:vanilla": "pnpm --filter example-vanilla-publisher-viewer dev",
     "dev:react": "pnpm --filter example-react-publisher-viewer dev",

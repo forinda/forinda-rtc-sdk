@@ -1,0 +1,51 @@
+{
+  "name": "@forinda/integration-tests",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cross-package integration tests for the Forinda RTC SDK. Not published.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "wireit",
+    "typecheck": "wireit",
+    "lint": "wireit"
+  },
+  "devDependencies": {
+    "@forinda/test-helpers": "workspace:*",
+    "@forinda/video-sdk-core": "workspace:*",
+    "@forinda/video-sdk-signaling-broadcast": "workspace:*",
+    "@forinda/video-sdk-signaling-protocol": "workspace:*",
+    "@forinda/video-sdk-signaling-server": "workspace:*",
+    "@forinda/video-sdk-signaling-ws": "workspace:*",
+    "oxlint": "^0.11.0",
+    "typescript": "^6.0.0",
+    "vitest": "^2.1.0",
+    "wireit": "^0.14.9"
+  },
+  "wireit": {
+    "test": {
+      "command": "vitest run",
+      "files": ["test/**/*.ts", "vitest.config.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": [],
+      "dependencies": [
+        "../core:build",
+        "../signaling-protocol:build",
+        "../signaling-ws:build",
+        "../signaling-broadcast:build",
+        "../signaling-server:build",
+        "../test-helpers:build"
+      ]
+    },
+    "typecheck": {
+      "command": "tsc --noEmit",
+      "files": ["test/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "output": [],
+      "dependencies": ["../core:build", "../test-helpers:build"]
+    },
+    "lint": {
+      "command": "oxlint test",
+      "files": ["test/**/*.ts", "../../oxlint.json"],
+      "output": []
+    }
+  }
+}
