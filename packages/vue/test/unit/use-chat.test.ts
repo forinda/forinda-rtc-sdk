@@ -1,0 +1,46 @@
+import { describe, expect, it } from "vitest";
+import type { ChatHistoryEntry } from "@forinda/video-sdk-core";
+import { useChat } from "@/use-chat.ts";
+import { defineFakeRoomChannel } from "../_helpers/fake-room-channel.ts";
+import { withScope } from "../_helpers/with-scope.ts";
+
+describe("useChat", () => {
+  it("returns empty messages for a null channel", () => {
+    const { result, dispose } = withScope(() => useChat(null));
+    expect(result.messages.value).toEqual([]);
+    dispose();
+  });
+
+  it("snapshots existing chat history on mount", () => {
+    const ch = defineFakeRoomChannel("alice");
+    (ch.chatHistory as unknown as ChatHistoryEntry[]).push({
+      type: "chat",
+      from: "bob",
+      body: "hi",
+      ts: 1,
+      receivedAt: 1,
+    });
+    const { result, dispose } = withScope(() => useChat(ch));
+    expect(result.messages.value).toHaveLength(1);
+    expect(result.messages.value[0]?.body).toBe("hi");
+    dispose();
+  });
+
+  it("updates on chat event via send()", async () => {
+    const ch = defineFakeRoomChannel("alice");
+    const { result, dispose } = withScope(() => useChat(ch));
+    await result.send("hello");
+    expect(result.messages.value).toHaveLength(1);
+    expect(result.messages.value[0]?.body).toBe("hello");
+    expect(result.messages.value[0]?.from).toBe("alice");
+    dispose();
+  });
+
+  it("forwards opts.to for direct messages", async () => {
+    const ch = defineFakeRoomChannel("alice");
+    const { result, dispose } = withScope(() => useChat(ch));
+    await result.send("hi bob", { to: "bob" });
+    expect(result.messages.value[0]?.to).toBe("bob");
+    dispose();
+  });
+});

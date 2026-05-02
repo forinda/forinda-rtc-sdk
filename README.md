@@ -1,6 +1,6 @@
 # Forinda RTC SDK
 
-Open-source, framework-agnostic WebRTC SDK. Publish video, view it, chat, raise hands, share screens, and record — from plain TypeScript, React, or Web Components — against any signaling backend you can write.
+Open-source, framework-agnostic WebRTC SDK. Publish video, view it, chat, raise hands, share screens, and record — from plain TypeScript, React, Vue 3, or Web Components — against any signaling backend you can write.
 
 ## Packages
 
@@ -14,6 +14,7 @@ Open-source, framework-agnostic WebRTC SDK. Publish video, view it, chat, raise 
 | `@forinda/video-sdk-signaling-adapter-express` | Express integration (dual ESM + CJS) — share signaling with your HTTP server.                                                   |
 | `@forinda/video-sdk-signaling-server`          | Standalone reference server + `forinda-rtc-signaling` CLI.                                                                      |
 | `@forinda/video-sdk-react`                     | `VideoSdkProvider` + 11 hooks + `<VideoView>` component.                                                                        |
+| `@forinda/video-sdk-vue`                       | `VideoSdkPlugin` + 12 composables + `<VideoView>` component for Vue 3.4+.                                                       |
 | `@forinda/video-sdk-elements`                  | 4 Web Components: `<forinda-video-publisher>`, `<forinda-video-viewer>`, `<forinda-video-device-picker>`, `<forinda-recorder>`. |
 
 `@forinda/video-sdk-signaling-adapter-hono` and `@forinda/video-sdk-signaling-adapter-bun` are reserved package names with stub exports today; use the `ws` adapter as a workaround.
@@ -25,7 +26,7 @@ Open-source, framework-agnostic WebRTC SDK. Publish video, view it, chat, raise 
 - **Screen share** via `getDisplayMedia` — same `Publisher` plumbing as camera, just a different source.
 - **Presence + chat** as a thin layer over the same signaling transport. `raiseHand()` / `lowerHand()` sugar; broadcast or DM messaging; rolling history.
 - **Recording** via `MediaRecorder` with codec auto-pick, bitrate hints, chunked output for streaming uploads, and an in-memory buffer cap so long recordings can't OOM the tab.
-- **Three consumer surfaces** with the same underlying API: vanilla TypeScript, React 18+ hooks, and standards-based Web Components.
+- **Four consumer surfaces** with the same underlying API: vanilla TypeScript, React 18+ hooks, Vue 3 composables, and standards-based Web Components.
 - **Browser packages ship minified** with sourcemaps. `@forinda/video-sdk-core` is ~8 KB gzipped; the full publish + presence + chat + recording stack lands under ~16 KB gzipped.
 
 ## Quick start
@@ -89,6 +90,7 @@ In another, pick a flavor:
 pnpm dev:vanilla     # http://127.0.0.1:5173 — plain TS + core API
 pnpm dev:react       # http://127.0.0.1:5174 — React hooks + <VideoView>
 pnpm dev:elements    # http://127.0.0.1:5175 — <forinda-video-publisher> et al.
+pnpm dev:vue         # http://127.0.0.1:5176 — Vue 3 composables + <VideoView>
 ```
 
 Each example has its own README under `examples/*/README.md`.
@@ -98,6 +100,7 @@ Each example has its own README under `examples/*/README.md`.
 - **Node ≥ 20** for the server packages.
 - **Browsers** — anything supporting modern WebRTC (Chromium 110+, Firefox 113+, Safari 16.4+).
 - **React ≥ 18** for the React adapter (uses `useSyncExternalStore`).
+- **Vue ≥ 3.4** for the Vue adapter (Composition API only).
 
 ## Status & scope
 

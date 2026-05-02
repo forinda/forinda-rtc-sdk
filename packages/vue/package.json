@@ -1,0 +1,130 @@
+{
+  "name": "@forinda/video-sdk-vue",
+  "version": "0.1.1",
+  "description": "Vue 3 composables and components for the Forinda RTC SDK",
+  "keywords": [
+    "composables",
+    "rtc",
+    "sdk",
+    "video",
+    "vue",
+    "vue3",
+    "webrtc"
+  ],
+  "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
+    "directory": "packages/vue"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "wireit",
+    "typecheck": "wireit",
+    "lint": "wireit",
+    "test": "wireit",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@forinda/video-sdk-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@forinda/test-helpers": "workspace:*",
+    "@vitest/coverage-v8": "^2.1.0",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.0",
+    "oxlint": "^0.11.0",
+    "tsup": "^8.3.0",
+    "typescript": "^6.0.0",
+    "vitest": "^2.1.0",
+    "vue": "^3.5.0",
+    "wireit": "^0.14.9"
+  },
+  "peerDependencies": {
+    "@forinda/video-sdk-core": "workspace:*",
+    "vue": "^3.4.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "wireit": {
+    "build": {
+      "command": "tsup",
+      "files": [
+        "src/**/*.ts",
+        "tsup.config.ts",
+        "tsconfig.json",
+        "tsconfig.build.json",
+        "../../tsconfig.base.json"
+      ],
+      "output": [
+        "dist/**"
+      ],
+      "clean": "if-file-deleted",
+      "dependencies": [
+        "../core:build"
+      ]
+    },
+    "typecheck": {
+      "command": "tsc --noEmit",
+      "files": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
+      ],
+      "output": [],
+      "dependencies": [
+        "../core:build"
+      ]
+    },
+    "lint": {
+      "command": "oxlint src",
+      "files": [
+        "src/**/*.ts",
+        "../../oxlint.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": "vitest run",
+      "files": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "tsconfig.json",
+        "vitest.config.ts",
+        "../../tsconfig.base.json"
+      ],
+      "output": [],
+      "dependencies": [
+        "../core:build"
+      ]
+    }
+  }
+}

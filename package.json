@@ -37,6 +37,7 @@
     "dev:vanilla": "pnpm --filter example-vanilla-publisher-viewer dev",
     "dev:react": "pnpm --filter example-react-publisher-viewer dev",
     "dev:elements": "pnpm --filter example-web-components-publisher-viewer dev",
+    "dev:vue": "pnpm --filter example-vue-publisher-viewer dev",
     "clean": "pnpm -r exec rm -rf dist .wireit *.tsbuildinfo && rm -rf node_modules",
     "changeset": "changeset",
     "version-packages": "changeset version",
