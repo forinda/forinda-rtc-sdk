@@ -183,6 +183,14 @@ export const Chat = z.object({
   to: PeerId.optional(),
   body: z.string().min(1).max(8192),
   ts: z.number().int().nonnegative(),
+  /**
+   * Optional client-generated identifier (max 64 chars). When present, the
+   * server round-trips it untouched AND echoes the message back to the
+   * sender so optimistic UIs can reconcile the local pending entry. Legacy
+   * clients (no `clientId`) get the original "fan-out to others only"
+   * behavior so they don't see a duplicate of their own message.
+   */
+  clientId: z.string().min(1).max(64).optional(),
 });
 
 /**

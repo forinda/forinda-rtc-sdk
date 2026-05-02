@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { SignalingValidationError } from "@/errors.ts";
+import type { SignalingMessageType } from "@/messages.ts";
 import { defineSession } from "@/session.ts";
 
 const join = (room: string, peer: string, role: "publisher" | "viewer" | "presence" = "presence") =>
@@ -209,5 +210,73 @@ describe("Session — chat", () => {
     await expect(session.handleMessage("sa", chat("bob", "spoof"))).rejects.toBeInstanceOf(
       SignalingValidationError,
     );
+  });
+});
+
+describe("Session — chat clientId echo (EPIC-20)", () => {
+  it("echoes a clientId-tagged chat back to the sender", async () => {
+    const session = defineSession();
+    const sent: Array<{ peerId: string; msg: SignalingMessageType }> = [];
+    session.onSend((peerId, msg) => sent.push({ peerId, msg }));
+
+    await session.handleConnection("sa", {});
+    await session.handleConnection("sb", {});
+    await session.handleMessage(
+      "sa",
+      JSON.stringify({ type: "join", room: "demo", peer: "alice", role: "publisher" }),
+    );
+    await session.handleMessage(
+      "sb",
+      JSON.stringify({ type: "join", room: "demo", peer: "bob", role: "presence" }),
+    );
+    sent.length = 0;
+
+    await session.handleMessage(
+      "sa",
+      JSON.stringify({
+        type: "chat",
+        from: "alice",
+        body: "hello",
+        ts: 123,
+        clientId: "abc-123",
+      }),
+    );
+
+    const chats = sent.filter((s) => s.msg.type === "chat");
+    expect(chats.map((s) => s.peerId).sort()).toEqual(["alice", "bob"]);
+    for (const c of chats) {
+      expect(c.msg).toMatchObject({
+        type: "chat",
+        from: "alice",
+        body: "hello",
+        clientId: "abc-123",
+      });
+    }
+  });
+
+  it("does NOT echo to the sender when clientId is omitted (legacy clients)", async () => {
+    const session = defineSession();
+    const sent: Array<{ peerId: string; msg: SignalingMessageType }> = [];
+    session.onSend((peerId, msg) => sent.push({ peerId, msg }));
+
+    await session.handleConnection("sa", {});
+    await session.handleConnection("sb", {});
+    await session.handleMessage(
+      "sa",
+      JSON.stringify({ type: "join", room: "demo", peer: "alice", role: "publisher" }),
+    );
+    await session.handleMessage(
+      "sb",
+      JSON.stringify({ type: "join", room: "demo", peer: "bob", role: "presence" }),
+    );
+    sent.length = 0;
+
+    await session.handleMessage(
+      "sa",
+      JSON.stringify({ type: "chat", from: "alice", body: "hello", ts: 123 }),
+    );
+
+    const chats = sent.filter((s) => s.msg.type === "chat");
+    expect(chats.map((s) => s.peerId)).toEqual(["bob"]);
   });
 });

@@ -419,14 +419,19 @@ export class Session {
     const room = this.roomMap.get(socket.roomId);
     if (room === undefined) return;
 
+    const echoToSender = message.clientId !== undefined;
+
     if (message.to !== undefined) {
       if (room.has(message.to)) {
         this.send(message.to, message);
       }
+      if (echoToSender && message.to !== message.from) {
+        this.send(message.from, message);
+      }
       return;
     }
     for (const member of room.peers()) {
-      if (member.peerId !== message.from) {
+      if (member.peerId !== message.from || echoToSender) {
         this.send(member.peerId, message);
       }
     }
