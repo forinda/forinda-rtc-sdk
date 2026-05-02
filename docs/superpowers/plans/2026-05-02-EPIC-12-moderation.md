@@ -14,6 +14,7 @@
 - **React adapter**: `useRoom()` extends with `role: RoleValue | null` (the room's joined role) + `directors: readonly string[]` (live set) + `sendCommand({ type: "mute", target, kind })` etc. Maps each command 1:1 to a `room.signaling.send(...)` call.
 
 **Out of scope (deferred to EPIC-12b):**
+
 - Vue adapter parity for `sendCommand`.
 - `<forinda-room-controls>` Web Component element.
 - Server-enforced `set-bitrate` (engine relays it; honoring it requires SFU integration which is EPIC-14).
@@ -24,28 +25,29 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/signaling-protocol/src/messages.ts` | Add `"director"` to `Role`. Add six new message schemas (`Mute`, `Unmute`, `Kick`, `Promote`, `Demote`, `SetBitrate`). Extend `SignalingMessage` union + add inferred type exports. |
-| `packages/signaling-protocol/src/errors.ts` | New `SignalingDirectorConflictError(code: "director_conflict")` + `SignalingPermissionError(code: "not_authorized")`. |
-| `packages/signaling-protocol/src/rooms.ts` | Add `directors: Set<PeerId>` + `addDirector` / `removeDirector` / `isDirector` / `directorList` methods. |
-| `packages/signaling-protocol/src/session.ts` | First-claim director enforcement on `applyJoin`. Six new `apply*` methods. New `enforceModerationCommands` option that gates director-only commands. Handle director departure (drop from set; clear no-op). |
-| `packages/signaling-protocol/src/engine.ts` | Forward `enforceModerationCommands` through `SignalingEngineOptions`. |
-| `packages/signaling-protocol/src/index.ts` | Re-export new errors + types. |
-| `packages/signaling-protocol/test/unit/session-director.test.ts` | First-claim wins; departure clears slot; promote adds; demote removes; honor-mode + enforce-mode. |
-| `packages/signaling-protocol/test/unit/session-moderation.test.ts` | Each command relays to target; engine enforcement rejects non-director commands. |
-| `packages/core/src/room/types.ts` | `RoomLeader.role` already `RoleValue \| null` — no change. New `Room` getter helper for `directors`. |
-| `packages/core/src/room/room.ts` | Track director set from `peer-joined` / `peer-left` / promote / demote messages so `defineRoom` consumers can read it via `room.directors`. |
-| `packages/react/src/use-room.ts` | Extend `UseRoomResult` with `role`, `directors`, `sendCommand`. Subscribe to wire events to keep `directors` reactive. |
-| `packages/react/test/unit/use-room.test.tsx` | sendCommand fires the wire message; directors stays in sync with peer-joined/promote/demote. |
-| `packages/signaling-protocol/README.md`, `packages/core/README.md`, `packages/react/README.md` | Document the director role + commands + enforcement opt-in. |
-| `.changeset/director-moderation.md` | minor for `signaling-protocol` + `core` + `react`; patch for cascading peer-deps. |
+| File                                                                                           | Responsibility                                                                                                                                                                                               |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `packages/signaling-protocol/src/messages.ts`                                                  | Add `"director"` to `Role`. Add six new message schemas (`Mute`, `Unmute`, `Kick`, `Promote`, `Demote`, `SetBitrate`). Extend `SignalingMessage` union + add inferred type exports.                          |
+| `packages/signaling-protocol/src/errors.ts`                                                    | New `SignalingDirectorConflictError(code: "director_conflict")` + `SignalingPermissionError(code: "not_authorized")`.                                                                                        |
+| `packages/signaling-protocol/src/rooms.ts`                                                     | Add `directors: Set<PeerId>` + `addDirector` / `removeDirector` / `isDirector` / `directorList` methods.                                                                                                     |
+| `packages/signaling-protocol/src/session.ts`                                                   | First-claim director enforcement on `applyJoin`. Six new `apply*` methods. New `enforceModerationCommands` option that gates director-only commands. Handle director departure (drop from set; clear no-op). |
+| `packages/signaling-protocol/src/engine.ts`                                                    | Forward `enforceModerationCommands` through `SignalingEngineOptions`.                                                                                                                                        |
+| `packages/signaling-protocol/src/index.ts`                                                     | Re-export new errors + types.                                                                                                                                                                                |
+| `packages/signaling-protocol/test/unit/session-director.test.ts`                               | First-claim wins; departure clears slot; promote adds; demote removes; honor-mode + enforce-mode.                                                                                                            |
+| `packages/signaling-protocol/test/unit/session-moderation.test.ts`                             | Each command relays to target; engine enforcement rejects non-director commands.                                                                                                                             |
+| `packages/core/src/room/types.ts`                                                              | `RoomLeader.role` already `RoleValue \| null` — no change. New `Room` getter helper for `directors`.                                                                                                         |
+| `packages/core/src/room/room.ts`                                                               | Track director set from `peer-joined` / `peer-left` / promote / demote messages so `defineRoom` consumers can read it via `room.directors`.                                                                  |
+| `packages/react/src/use-room.ts`                                                               | Extend `UseRoomResult` with `role`, `directors`, `sendCommand`. Subscribe to wire events to keep `directors` reactive.                                                                                       |
+| `packages/react/test/unit/use-room.test.tsx`                                                   | sendCommand fires the wire message; directors stays in sync with peer-joined/promote/demote.                                                                                                                 |
+| `packages/signaling-protocol/README.md`, `packages/core/README.md`, `packages/react/README.md` | Document the director role + commands + enforcement opt-in.                                                                                                                                                  |
+| `.changeset/director-moderation.md`                                                            | minor for `signaling-protocol` + `core` + `react`; patch for cascading peer-deps.                                                                                                                            |
 
 ---
 
 ## Task 1: Wire format — `Role: "director"` + six command schemas
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/messages.ts`
 
 - [ ] **Step 1: Add `"director"` to the `Role` enum**
@@ -237,6 +239,7 @@ git commit -m "feat(signaling-protocol): director role + 7 moderation wire types
 ## Task 2: Two new error classes
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/errors.ts`
 - Modify: `packages/signaling-protocol/src/index.ts`
 
@@ -310,6 +313,7 @@ git commit -m "feat(signaling-protocol): SignalingDirectorConflictError + Signal
 ## Task 3: `Room` tracks the director set
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/rooms.ts`
 
 - [ ] **Step 1: Add the director set + accessor methods**
@@ -369,6 +373,7 @@ git commit -m "feat(signaling-protocol): Room director set + accessors (EPIC-12 
 ## Task 4: Session — first-claim director rule + promote / demote
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/session.ts`
 - Test: `packages/signaling-protocol/test/unit/session-director.test.ts`
 
@@ -379,16 +384,11 @@ Create `packages/signaling-protocol/test/unit/session-director.test.ts`:
 ```ts
 import { describe, expect, it } from "vitest";
 import { defineSignalingEngine } from "@/engine.ts";
-import {
-  SignalingDirectorConflictError,
-  SignalingPermissionError,
-} from "@/errors.ts";
+import { SignalingDirectorConflictError, SignalingPermissionError } from "@/errors.ts";
 import type { SignalingMessageType } from "@/messages.ts";
 
-const join = (
-  peer: string,
-  role: "publisher" | "viewer" | "presence" | "director" = "presence",
-) => JSON.stringify({ type: "join", room: "demo", peer, role });
+const join = (peer: string, role: "publisher" | "viewer" | "presence" | "director" = "presence") =>
+  JSON.stringify({ type: "join", room: "demo", peer, role });
 
 const promote = (target: string) => JSON.stringify({ type: "promote", target });
 const demote = (target: string) => JSON.stringify({ type: "demote", target });
@@ -571,12 +571,9 @@ In `applyJoin`, immediately after the `authenticate` block and BEFORE `const roo
 if (message.role === "director") {
   const existing = this.roomMap.get(message.room);
   if (existing !== undefined && existing.hasAnyDirector()) {
-    throw new SignalingDirectorConflictError(
-      `room ${message.room} already has a director`,
-      {
-        context: { room: message.room, peer: message.peer },
-      },
-    );
+    throw new SignalingDirectorConflictError(`room ${message.room} already has a director`, {
+      context: { room: message.room, peer: message.peer },
+    });
   }
 }
 ```
@@ -705,6 +702,7 @@ git commit -m "feat(signaling-protocol): first-claim director rule + promote/dem
 ## Task 5: Session — `mute` / `unmute` / `kick` / `set-bitrate`
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/src/session.ts`
 - Test: `packages/signaling-protocol/test/unit/session-moderation.test.ts`
 
@@ -718,10 +716,8 @@ import { defineSignalingEngine } from "@/engine.ts";
 import { SignalingPermissionError } from "@/errors.ts";
 import type { SignalingMessageType } from "@/messages.ts";
 
-const join = (
-  peer: string,
-  role: "publisher" | "viewer" | "presence" | "director" = "presence",
-) => JSON.stringify({ type: "join", room: "demo", peer, role });
+const join = (peer: string, role: "publisher" | "viewer" | "presence" | "director" = "presence") =>
+  JSON.stringify({ type: "join", room: "demo", peer, role });
 
 const mute = (target: string, kind: "audio" | "video" = "audio") =>
   JSON.stringify({ type: "mute", target, kind });
@@ -758,9 +754,7 @@ describe("Session — mute / unmute (EPIC-12)", () => {
 
     // Direct relay to the target.
     expect(
-      sent.find(
-        (s) => s.peerId === "bob" && s.msg.type === "mute" && s.msg.kind === "audio",
-      ),
+      sent.find((s) => s.peerId === "bob" && s.msg.type === "mute" && s.msg.kind === "audio"),
     ).toBeDefined();
     // Presence-state fan-out so every peer sees the mute flag.
     const presenceUpdates = sent.filter((s) => s.msg.type === "presence-state");
@@ -856,9 +850,9 @@ describe("Session — set-bitrate (EPIC-12)", () => {
     await session.handleConnection("sc", {});
     await session.handleMessage("sc", join("carol", "presence"));
 
-    await expect(
-      session.handleMessage("sc", setBitrate("bob", 500_000)),
-    ).rejects.toBeInstanceOf(SignalingPermissionError);
+    await expect(session.handleMessage("sc", setBitrate("bob", 500_000))).rejects.toBeInstanceOf(
+      SignalingPermissionError,
+    );
   });
 });
 ```
@@ -1048,6 +1042,7 @@ git commit -m "feat(signaling-protocol): mute/unmute/kick/set-bitrate commands (
 ## Task 6: `Room` adapter — track director set + expose `directors`
 
 **Files:**
+
 - Modify: `packages/core/src/room/types.ts`
 - Modify: `packages/core/src/room/room.ts`
 - Test: `packages/core/test/unit/room/room.test.ts` (extend)
@@ -1188,6 +1183,7 @@ git commit -m "feat(core): Room.directors live set (EPIC-12 #6/8)"
 ## Task 7: React `useRoom()` extension — `role`, `directors`, `sendCommand`
 
 **Files:**
+
 - Modify: `packages/react/src/use-room.ts`
 - Test: `packages/react/test/unit/use-room.test.tsx`
 
@@ -1360,6 +1356,7 @@ git commit -m "feat(react): useRoom exposes role/directors/sendCommand (EPIC-12 
 ## Task 8: Workspace verify, READMEs, changeset, tag
 
 **Files:**
+
 - Modify: `packages/signaling-protocol/README.md`
 - Modify: `packages/core/README.md`
 - Modify: `packages/react/README.md`
@@ -1370,30 +1367,31 @@ git commit -m "feat(react): useRoom exposes role/directors/sendCommand (EPIC-12 
 Find the wire-format table (the one starting with `| join | client → server |...`) and update it to include the seven new types. Append rows in order:
 
 ```markdown
-| `mute`              | director → server | mute the target's audio or video (relayed + presence-state broadcast) |
-| `unmute`            | director → server | clear a previous `mute`                                                |
-| `kick`              | director → server | force-remove the target (engine-enforced when enforcement is on)       |
-| `kicked`            | server → target   | one-shot notification right before the engine drops the binding        |
-| `promote`           | director → server | add `target` to the room's director set                                 |
-| `demote`            | director → server | remove `target` from the room's director set                            |
-| `set-bitrate`       | director → server | bandwidth ceiling hint relayed to the target                            |
+| `mute` | director → server | mute the target's audio or video (relayed + presence-state broadcast) |
+| `unmute` | director → server | clear a previous `mute` |
+| `kick` | director → server | force-remove the target (engine-enforced when enforcement is on) |
+| `kicked` | server → target | one-shot notification right before the engine drops the binding |
+| `promote` | director → server | add `target` to the room's director set |
+| `demote` | director → server | remove `target` from the room's director set |
+| `set-bitrate` | director → server | bandwidth ceiling hint relayed to the target |
 ```
 
 After the existing "Errors" subsection, append the new error rows to the table:
 
 ```markdown
 | `SignalingDirectorConflictError` | `director_conflict` | A second peer tried to join with `role: "director"` while a director already exists |
-| `SignalingPermissionError`       | `not_authorized`    | A non-director sent a moderation command and `enforceModerationCommands` is on      |
+| `SignalingPermissionError` | `not_authorized` | A non-director sent a moderation command and `enforceModerationCommands` is on |
 ```
 
 Right after the chat-history section, append:
 
-```markdown
+````markdown
 ### Director / moderation
 
 ```ts
 const engine = defineSignalingEngine({ enforceModerationCommands: true });
 ```
+````
 
 The `Role` enum gains `"director"`. The first peer to join a room with `role: "director"` claims it; subsequent claims throw `SignalingDirectorConflictError`. Co-directors are added at runtime via the `promote` command.
 
@@ -1403,7 +1401,8 @@ Six director-only commands ride the wire: `mute`, `unmute`, `kick`, `promote`, `
 - **Enforced mode** (`enforceModerationCommands: true`): non-director senders are rejected with `SignalingPermissionError(code: "not_authorized")`. `kick` additionally removes the target from the room (forced disconnect on the host side).
 
 `mute` / `unmute` encode state as presence attributes (`director-muted-audio: true`, `director-muted-video: true`) so late joiners see the current state via the existing `presence-snapshot`. No new state-snapshot wire type was added.
-```
+
+````
 
 - [ ] **Step 2: Update `packages/core/README.md`**
 
@@ -1411,11 +1410,11 @@ In the `defineRoom` section, find the existing methods table (the one listing `p
 
 ```markdown
 | `directors` (getter) | `readonly string[]` — live list of director peer ids in this room. Updated on every `peer-joined` / `peer-left` / `promote` / `demote` event. |
-```
+````
 
 Add a new subsection right after the `defineRoom` example:
 
-```markdown
+````markdown
 #### Director role + moderation
 
 When a `Room` joins with `role: "director"`, it appears in `room.directors` immediately. Send director commands through the underlying transport (or use the `useRoom` adapter's `sendCommand` for React):
@@ -1428,9 +1427,11 @@ await room.ensureJoined("director");
 await room.signaling.send({ type: "mute", target: "bob", kind: "audio" });
 await room.signaling.send({ type: "kick", target: "spammer", reason: "off-topic" });
 ```
+````
 
 Mute state is encoded as presence attributes (`director-muted-audio: true` / `director-muted-video: true`) on the target's `room.peers` entry — your UI can render the indicator from the same presence map you already read for chat / hand-raise.
-```
+
+````
 
 - [ ] **Step 3: Update `packages/react/README.md`**
 
@@ -1464,16 +1465,17 @@ return (
     )}
   </>
 );
-```
+````
 
 The available command shapes are: `mute` / `unmute` (`{ target, kind }`), `kick` (`{ target, reason? }`), `promote` / `demote` (`{ target }`), `set-bitrate` (`{ target, bitsPerSec }`).
-```
+
+````
 
 - [ ] **Step 4: Workspace verify**
 
 ```bash
 pnpm typecheck && pnpm test && pnpm build && pnpm lint
-```
+````
 
 Expected: every step exits 0.
 
@@ -1532,6 +1534,7 @@ git tag -a v0.0.0-epic-12 -m "EPIC-12: Director role + moderation"
 - ✅ Honor-based by default; `defineSignalingEngine({ enforceModerationCommands: true })` rejects non-director commands — Tasks 4, 5.
 
 **Type consistency:**
+
 - `Role`, `MuteKind`, plus the seven message schemas all defined once in `messages.ts`, re-exported through `index.ts`.
 - `SignalingDirectorConflictError` / `SignalingPermissionError` defined together in `errors.ts`.
 - React hook's `ModerationCommand` union mirrors the wire format 1:1 (same field names, same literals).

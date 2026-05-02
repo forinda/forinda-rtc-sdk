@@ -145,6 +145,39 @@ const { messages } = useChat(channel);
 
 When attached, the child hooks ignore their own `room` / `peerId` / `signaling` options (taken from the Room). Standalone usage is unchanged.
 
+#### Director / moderation surface (EPIC-12)
+
+`useRoom()` also returns `role`, `directors`, and `sendCommand` for moderation UIs:
+
+```tsx
+const { room, role, directors, sendCommand } = useRoom({
+  room: "demo",
+  peerId: "alice",
+});
+
+// Claim director after the Room is constructed:
+useEffect(() => {
+  if (!room) return;
+  void room.ensureConnected().then(() => room.ensureJoined("director"));
+}, [room]);
+
+const isDirector = role === "director" || directors.includes("alice");
+
+return (
+  <>
+    {isDirector && (
+      <button onClick={() => sendCommand({ type: "mute", target: "bob", kind: "audio" })}>
+        Mute Bob
+      </button>
+    )}
+  </>
+);
+```
+
+The available command shapes: `mute` / `unmute` (`{ target, kind }`), `kick` (`{ target, reason? }`), `promote` / `demote` (`{ target }`), `set-bitrate` (`{ target, bitsPerSec }`).
+
+When the engine has `enforceModerationCommands: true`, non-director senders are rejected with `SignalingPermissionError`. Default honor mode just relays the command and lets the target's client decide whether to obey.
+
 ### `useRoomChannel(opts)`
 
 Construct a `RoomChannel` (presence + chat) for the lifetime of the calling component. Falls back to `VideoSdkProvider`'s signaling factory when `opts.signaling` is omitted. Pass `attach: room` to share a `Room`'s transport.

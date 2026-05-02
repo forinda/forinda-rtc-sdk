@@ -41,6 +41,7 @@ export {
   type PresenceSnapshotMessage,
   type PresenceStateMessage,
   type PresenceUpdateMessage,
+  type RoleValue,
   type SdpMessage,
   type SignalingMessageType,
 } from "@forinda/video-sdk-signaling-protocol";

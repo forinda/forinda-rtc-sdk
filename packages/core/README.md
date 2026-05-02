@@ -87,6 +87,25 @@ The Room **does not** auto-stop its children. Stop publisher / viewer / channel 
 
 Without the sugar: `defineAttachedPublisher(room, opts)`, `defineAttachedViewer(room, opts)`, `defineAttachedRoomChannel(room, opts)`. Standalone `definePublisher` / `defineViewer` / `defineRoomChannel` continue to work unchanged — use those when each component owns its own transport.
 
+#### Director role + moderation (EPIC-12)
+
+When a `Room` joins with `role: "director"`, it appears in `room.directors` immediately and the engine validates first-claim wins (a second director claim for the same room throws `SignalingDirectorConflictError`). Send director commands through the underlying transport (or use the `useRoom` adapter's `sendCommand` for React):
+
+```ts
+const room = defineRoom({ signaling, room: "demo", peerId: "alice" });
+await room.ensureConnected();
+await room.ensureJoined("director");
+console.log(room.directors); // ["alice"]
+
+await room.signaling.send({ type: "mute", target: "bob", kind: "audio" });
+await room.signaling.send({ type: "kick", target: "spammer", reason: "off-topic" });
+await room.signaling.send({ type: "promote", target: "carol" });
+```
+
+`room.directors` is a live `readonly string[]` — updated on every `peer-joined` (with `role=director`), `peer-left`, `promote`, and `demote` event. Mute state is encoded as presence attributes (`director-muted-audio: true` / `director-muted-video: true`) on the target's `room.peers` entry, so your UI can render the indicator from the same presence map you already read for chat / hand-raise.
+
+The `joined` event fires once `ensureJoined` succeeds — useful for adapters that need to surface the post-join role.
+
 **Room channel (standalone presence + chat):**
 
 - **Room channel** — `defineRoomChannel({ signaling, room, peerId? })`: presence + chat layer that piggybacks on the same signaling transport. No media.
