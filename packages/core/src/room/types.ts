@@ -6,6 +6,7 @@
  */
 
 import type { ChatMessage, JsonValue, RoleValue } from "@forinda/video-sdk-signaling-protocol";
+import type { RetryConfig } from "@/retry/policy.ts";
 import type { SignalingTransport } from "@/signaling/transport.ts";
 
 /**
@@ -27,6 +28,19 @@ export interface RoomChannelOptions {
   /** Cap on the in-memory chat history buffer. Default `200`. */
   chatHistoryLimit?: number;
   /**
+   * Auto-retry policy for transport drops. The channel reconnects, re-issues
+   * `join` (when `manageJoin`), re-broadcasts the local presence map, and
+   * marks all in-flight pending chats as `failed`. Default: enabled with
+   * `defineRetryPolicy`'s defaults. Set `enabled: false` to disable.
+   */
+  retry?: RetryConfig;
+  /**
+   * Timeout (ms) before an un-acknowledged outgoing chat flips to `failed`.
+   * Default `10_000`. The ack is a server-echo of the chat with the same
+   * `clientId`, so the timeout covers both network drop and engine refusal.
+   */
+  chatAckTimeoutMs?: number;
+  /**
    * **Internal.** Set by `defineAttachedRoomChannel`. Use the proxy
    * factory or `room.channel()` instead of touching this directly.
    */
@@ -40,15 +54,44 @@ export interface RoomChannelOptions {
  */
 export interface AttachedRoomChannelOptions {
   chatHistoryLimit?: number;
+  retry?: RetryConfig;
+  chatAckTimeoutMs?: number;
 }
 
 /**
- * One delivered chat message plus a locally-stamped receive timestamp.
- * `receivedAt` is independent of the wire `ts` so consumers can sort messages
- * by receipt order even when peer clocks skew.
+ * One chat message in the rolling history.
+ *
+ * - `id`: the `clientId` that round-trips through the server. For chats
+ *   this peer originated, the id is generated locally and reused for the
+ *   server echo. For incoming chats from other peers, the id is taken
+ *   from `msg.clientId` when present, otherwise generated locally so
+ *   every entry has a stable identifier.
+ * - `status`: lifecycle. Always `"confirmed"` for incoming chats. For
+ *   outgoing chats: starts `"pending"` (synchronous append on `sendChat`),
+ *   flips to `"confirmed"` on server echo, or `"failed"` on
+ *   `chatAckTimeoutMs` / `signaling.send` rejection.
+ * - `receivedAt`: locally-stamped receive timestamp, independent of the
+ *   wire `ts` so consumers can sort by receipt order even when peer clocks
+ *   skew.
  */
 export interface ChatHistoryEntry extends ChatMessage {
   receivedAt: number;
+  id: string;
+  status: "pending" | "confirmed" | "failed";
+}
+
+/** Lifecycle states for a `RoomChannel`. */
+export type RoomChannelState =
+  | "idle"
+  | "connecting"
+  | "connected"
+  | "reconnecting"
+  | "closed";
+
+/** Status update for a single chat entry. */
+export interface ChatStatusEntry {
+  id: string;
+  status: ChatHistoryEntry["status"];
 }
 
 /** Snapshot of a peer's presence delivered alongside the `presence` event. */
@@ -75,6 +118,10 @@ export type RoomChannelEvents = {
   "peer-left": { peer: string };
   /** Fires for every `chat` delivered to this peer (broadcast or DM). */
   chat: ChatHistoryEntry;
+  /** Fires when an outgoing chat's status changes. */
+  "chat-status": ChatStatusEntry;
+  /** Channel-level lifecycle state. */
+  state: RoomChannelState;
   /** Internal channel error (validation, unexpected message). */
   error: Error;
 };

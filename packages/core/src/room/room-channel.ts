@@ -245,12 +245,24 @@ export class RoomChannel {
   }
 
   private applyChat(message: ChatMessage): void {
-    const entry: ChatHistoryEntry = { ...message, receivedAt: Date.now() };
+    const id = message.clientId ?? this.generateChatId();
+    const entry: ChatHistoryEntry = {
+      ...message,
+      receivedAt: Date.now(),
+      id,
+      status: "confirmed",
+    };
     this.chatBuffer.push(entry);
     while (this.chatBuffer.length > this.chatHistoryLimit) {
       this.chatBuffer.shift();
     }
     this.emitter.emit("chat", entry);
+  }
+
+  private generateChatId(): string {
+    return typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 }
 
