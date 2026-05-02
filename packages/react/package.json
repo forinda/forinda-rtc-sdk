@@ -46,15 +46,26 @@
   "scripts": {
     "build": "wireit",
     "typecheck": "wireit",
-    "lint": "wireit"
+    "lint": "wireit",
+    "test": "wireit",
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
     "@forinda/video-sdk-core": "workspace:*",
+    "@testing-library/dom": "^10.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/jsdom": "^21.1.7",
     "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitest/coverage-v8": "^2.1.0",
+    "jsdom": "^25.0.0",
     "oxlint": "^0.11.0",
     "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tsup": "^8.3.0",
     "typescript": "^6.0.0",
+    "vitest": "^2.1.0",
     "wireit": "^0.14.9"
   },
   "peerDependencies": {
@@ -72,6 +83,7 @@
         "src/**/*.tsx",
         "tsup.config.ts",
         "tsconfig.json",
+        "tsconfig.build.json",
         "../../tsconfig.base.json"
       ],
       "output": [
@@ -87,6 +99,8 @@
       "files": [
         "src/**/*.ts",
         "src/**/*.tsx",
+        "test/**/*.ts",
+        "test/**/*.tsx",
         "tsconfig.json",
         "../../tsconfig.base.json"
       ],
@@ -98,6 +112,19 @@
         "src/**/*.ts",
         "src/**/*.tsx",
         "../../oxlint.json"
+      ],
+      "output": []
+    },
+    "test": {
+      "command": "vitest run",
+      "files": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "test/**/*.ts",
+        "test/**/*.tsx",
+        "vitest.config.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
       ],
       "output": []
     }
