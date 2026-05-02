@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Web Components publisher / viewer</title>
+    <style>
+      body { font-family: system-ui; margin: 2rem; }
+      forinda-video-publisher,
+      forinda-video-viewer {
+        width: 480px;
+        max-width: 100%;
+        aspect-ratio: 16 / 9;
+        background: #111;
+        border-radius: 8px;
+      }
+      forinda-video-publisher::part(video),
+      forinda-video-viewer::part(video) { border-radius: 8px; }
+      .row { display: flex; gap: 0.5rem; margin-bottom: 1rem; align-items: center; }
+    </style>
+  </head>
+  <body>
+    <h1>Web Components publisher / viewer</h1>
+    <div class="row">
+      <button id="publish-btn" type="button">Publish</button>
+      <input id="pub-id" type="text" placeholder="publisher peerId" />
+      <button id="view-btn" type="button">View</button>
+      <forinda-video-device-picker kind="camera" placeholder="Camera"></forinda-video-device-picker>
+    </div>
+    <div id="slot"></div>
+    <p id="status">choose a role…</p>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

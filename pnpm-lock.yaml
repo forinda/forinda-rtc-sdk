@@ -102,6 +102,25 @@ importers:
         specifier: ^8.0.0
         version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)
 
+  examples/web-components-publisher-viewer:
+    dependencies:
+      '@forinda/video-sdk-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@forinda/video-sdk-elements':
+        specifier: workspace:*
+        version: link:../../packages/web-components
+      '@forinda/video-sdk-signaling-ws':
+        specifier: workspace:*
+        version: link:../../packages/signaling-ws
+    devDependencies:
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.0
+        version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)
+
   packages/core:
     dependencies:
       '@forinda/video-sdk-signaling-protocol':
