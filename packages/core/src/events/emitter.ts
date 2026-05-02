@@ -24,8 +24,15 @@ export type Listener<T> = (payload: T) => void;
  * Typed emitter. Generic parameter is an `EventMap` — an interface mapping
  * event names to their payload types.
  *
+ * Use `type`, not `interface`, for the event map — TS interfaces don't
+ * satisfy the `Record<string, unknown>` constraint because they're treated
+ * as potentially open-ended.
+ *
  * ```ts
- * interface PublisherEvents { state: ConnectionState; viewer: { peerId: string } }
+ * type PublisherEvents = {
+ *   state: ConnectionState;
+ *   viewer: { peerId: string };
+ * };
  * const emitter = defineEmitter<PublisherEvents>();
  * emitter.on("state", (s) => { /* s is ConnectionState *​/ });
  * ```

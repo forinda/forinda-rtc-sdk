@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { defineEmitter, Emitter } from "@/events/emitter.ts";
 
-interface Events {
+type Events = {
   hello: { name: string };
   count: number;
-}
+};
 
 describe("Emitter", () => {
   it("factory returns an Emitter", () => {
