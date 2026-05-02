@@ -19,34 +19,35 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/core/src/recording/uploader-types.ts` | `Uploader`, `UploaderState`, `UploaderEvents`, `UploaderOptions` interfaces. |
-| `packages/core/src/recording/uploader.ts` | `defineUploader(opts)` — HTTP-POST-per-chunk implementation with queue + keepalive heuristic. |
-| `packages/core/src/recording/pipe.ts` | `pipeRecorderTo(recorder, uploader)` — wires `dataavailable` → `uploader.send` and uploader state → recorder pause/resume. |
-| `packages/core/src/recording/recorder.ts` | Add `pipeTo(uploader)` instance method (thin wrapper over `pipeRecorderTo`). |
-| `packages/core/src/index.ts` | Re-export `defineUploader`, `pipeRecorderTo`, types. |
-| `packages/core/test/unit/recording/uploader.test.ts` | Chunk → fetch round-trip, queue-cap, keepalive heuristic, retry resume, headers. |
-| `packages/core/test/unit/recording/pipe.test.ts` | Pump wires events, fail → pause, retry → resume. |
-| `packages/web-components/src/elements/recorder.ts` | Add `for=` attribute support; query slotted `<forinda-uploader>` children at start; pipe to each. |
-| `packages/web-components/src/elements/uploader.ts` | New `<forinda-uploader>` element. Reads `url`, `headers`, `max-queued-bytes` attributes; constructs a `defineUploader` lazily on first access; exposes `uploader` getter for the recorder to consume. |
-| `packages/web-components/src/elements/register.ts` | Register `ForindaUploader`. |
-| `packages/web-components/test/unit/recorder.test.ts` | New tests for `for=` resolution + slotted uploader pipe wiring. |
-| `packages/web-components/test/unit/uploader.test.ts` | New: attribute reading, headers parsing, queue cap surfacing. |
-| `packages/react/src/use-uploader.ts` | `useUploader(recorder, uploader)` returning reactive `{ state, pendingBytes, error, retry }`. |
-| `packages/react/src/index.ts` | Re-export. |
-| `packages/react/test/unit/use-uploader.test.tsx` | New. |
-| `packages/vue/src/use-uploader.ts` | Vue-flavored equivalent. |
-| `packages/vue/src/index.ts` | Re-export. |
-| `packages/vue/test/unit/use-uploader.test.ts` | New. |
-| `packages/core/README.md`, `packages/web-components/README.md`, `packages/react/README.md`, `packages/vue/README.md` | Document the new uploader surface and `for=` shorthand. |
-| `.changeset/recording-streaming.md` | minor for `core`, `elements`; patch for `react`, `vue`, peer-dep cascades. |
+| File                                                                                                                 | Responsibility                                                                                                                                                                                        |
+| -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/core/src/recording/uploader-types.ts`                                                                      | `Uploader`, `UploaderState`, `UploaderEvents`, `UploaderOptions` interfaces.                                                                                                                          |
+| `packages/core/src/recording/uploader.ts`                                                                            | `defineUploader(opts)` — HTTP-POST-per-chunk implementation with queue + keepalive heuristic.                                                                                                         |
+| `packages/core/src/recording/pipe.ts`                                                                                | `pipeRecorderTo(recorder, uploader)` — wires `dataavailable` → `uploader.send` and uploader state → recorder pause/resume.                                                                            |
+| `packages/core/src/recording/recorder.ts`                                                                            | Add `pipeTo(uploader)` instance method (thin wrapper over `pipeRecorderTo`).                                                                                                                          |
+| `packages/core/src/index.ts`                                                                                         | Re-export `defineUploader`, `pipeRecorderTo`, types.                                                                                                                                                  |
+| `packages/core/test/unit/recording/uploader.test.ts`                                                                 | Chunk → fetch round-trip, queue-cap, keepalive heuristic, retry resume, headers.                                                                                                                      |
+| `packages/core/test/unit/recording/pipe.test.ts`                                                                     | Pump wires events, fail → pause, retry → resume.                                                                                                                                                      |
+| `packages/web-components/src/elements/recorder.ts`                                                                   | Add `for=` attribute support; query slotted `<forinda-uploader>` children at start; pipe to each.                                                                                                     |
+| `packages/web-components/src/elements/uploader.ts`                                                                   | New `<forinda-uploader>` element. Reads `url`, `headers`, `max-queued-bytes` attributes; constructs a `defineUploader` lazily on first access; exposes `uploader` getter for the recorder to consume. |
+| `packages/web-components/src/elements/register.ts`                                                                   | Register `ForindaUploader`.                                                                                                                                                                           |
+| `packages/web-components/test/unit/recorder.test.ts`                                                                 | New tests for `for=` resolution + slotted uploader pipe wiring.                                                                                                                                       |
+| `packages/web-components/test/unit/uploader.test.ts`                                                                 | New: attribute reading, headers parsing, queue cap surfacing.                                                                                                                                         |
+| `packages/react/src/use-uploader.ts`                                                                                 | `useUploader(recorder, uploader)` returning reactive `{ state, pendingBytes, error, retry }`.                                                                                                         |
+| `packages/react/src/index.ts`                                                                                        | Re-export.                                                                                                                                                                                            |
+| `packages/react/test/unit/use-uploader.test.tsx`                                                                     | New.                                                                                                                                                                                                  |
+| `packages/vue/src/use-uploader.ts`                                                                                   | Vue-flavored equivalent.                                                                                                                                                                              |
+| `packages/vue/src/index.ts`                                                                                          | Re-export.                                                                                                                                                                                            |
+| `packages/vue/test/unit/use-uploader.test.ts`                                                                        | New.                                                                                                                                                                                                  |
+| `packages/core/README.md`, `packages/web-components/README.md`, `packages/react/README.md`, `packages/vue/README.md` | Document the new uploader surface and `for=` shorthand.                                                                                                                                               |
+| `.changeset/recording-streaming.md`                                                                                  | minor for `core`, `elements`; patch for `react`, `vue`, peer-dep cascades.                                                                                                                            |
 
 ---
 
 ## Task 1: Uploader interface + types
 
 **Files:**
+
 - Create: `packages/core/src/recording/uploader-types.ts`
 
 - [ ] **Step 1: Create the types file**
@@ -145,6 +146,7 @@ git commit -m "feat(core): Uploader interface + UploaderOptions (EPIC-21 #1/10)"
 ## Task 2: `defineUploader` — HTTP POST-per-chunk implementation
 
 **Files:**
+
 - Create: `packages/core/src/recording/uploader.ts`
 - Test: `packages/core/test/unit/recording/uploader.test.ts`
 
@@ -491,6 +493,7 @@ git commit -m "feat(core): defineUploader with queue + keepalive heuristic (EPIC
 ## Task 3: `pipeRecorderTo` + `recorder.pipeTo()` method
 
 **Files:**
+
 - Create: `packages/core/src/recording/pipe.ts`
 - Modify: `packages/core/src/recording/recorder.ts`
 - Modify: `packages/core/src/index.ts`
@@ -739,6 +742,7 @@ git commit -m "feat(core): pipeRecorderTo + Recorder.pipeTo with backpressure (E
 ## Task 4: `<forinda-uploader>` element
 
 **Files:**
+
 - Create: `packages/web-components/src/elements/uploader.ts`
 - Modify: `packages/web-components/src/elements/register.ts`
 - Test: `packages/web-components/test/unit/uploader.test.ts`
@@ -807,7 +811,7 @@ Expected: failures — `ForindaUploader` doesn't exist.
 
 Create `packages/web-components/src/elements/uploader.ts`:
 
-```ts
+````ts
 /**
  * `<forinda-uploader>` — declarative companion to `<forinda-recorder>`.
  *
@@ -879,7 +883,7 @@ export class ForindaUploader extends HTMLElement {
     }
   }
 }
-```
+````
 
 - [ ] **Step 4: Register the element**
 
@@ -919,6 +923,7 @@ git commit -m "feat(elements): <forinda-uploader> declarative upload sink (EPIC-
 ## Task 5: `<forinda-recorder for=…>` + slotted uploader pipe
 
 **Files:**
+
 - Modify: `packages/web-components/src/elements/recorder.ts`
 - Test: `packages/web-components/test/unit/recorder.test.ts`
 
@@ -1167,6 +1172,7 @@ git commit -m "feat(elements): <forinda-recorder for=> + slotted <forinda-upload
 ## Task 6: React `useUploader`
 
 **Files:**
+
 - Create: `packages/react/src/use-uploader.ts`
 - Modify: `packages/react/src/index.ts`
 - Test: `packages/react/test/unit/use-uploader.test.tsx`
@@ -1356,6 +1362,7 @@ git commit -m "feat(react): useUploader (EPIC-21 #6/10)"
 ## Task 7: Vue `useUploader`
 
 **Files:**
+
 - Create: `packages/vue/src/use-uploader.ts`
 - Modify: `packages/vue/src/index.ts`
 - Test: `packages/vue/test/unit/use-uploader.test.ts`
@@ -1537,6 +1544,7 @@ git commit -m "feat(vue): useUploader (EPIC-21 #7/10)"
 ## Task 8: Core README + uploader docs
 
 **Files:**
+
 - Modify: `packages/core/README.md`
 
 - [ ] **Step 1: Add an "Uploading recordings" subsection**
@@ -1592,6 +1600,7 @@ git commit -m "docs(core): document defineUploader + Recorder.pipeTo (EPIC-21 #8
 ## Task 9: Elements + adapters READMEs
 
 **Files:**
+
 - Modify: `packages/web-components/README.md`
 - Modify: `packages/react/README.md`
 - Modify: `packages/vue/README.md`
@@ -1694,6 +1703,7 @@ git commit -m "docs: streaming uploads in elements + react + vue READMEs (EPIC-2
 ## Task 10: Workspace verify, changeset, tag
 
 **Files:**
+
 - Create: `.changeset/recording-streaming.md`
 
 - [ ] **Step 1: Workspace lint + typecheck + test + build**
@@ -1763,6 +1773,7 @@ git tag -a v0.0.0-epic-21 -m "EPIC-21: Recording streaming + declarative element
 - ✅ Tests cover chunk → fetch round-trip (Task 2), backpressure on error (Task 3), target resolution by id (Task 5).
 
 **Type consistency:**
+
 - `Uploader` / `UploaderState` / `UploaderEvents` / `UploaderOptions` defined once in `uploader-types.ts`, used everywhere.
 - `pipeRecorderTo(recorder, uploader)` signature consistent across `pipe.ts`, `recorder.pipeTo`, both adapter hooks.
 - React hook `useUploader(recorder, uploader)` and Vue composable `useUploader(recorder, uploader)` — same signature.

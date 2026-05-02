@@ -210,6 +210,41 @@ Plus two helpers: `isRecordingTypeSupported(mimeType)` and `pickRecordingType(pr
 
 > **iOS / Safari quirk:** `MediaRecorder` is unreliable pre-iOS-17 and may flake on long sessions. Detect via `isRecordingTypeSupported` and gate the recording UI accordingly.
 
+### Uploading recordings
+
+Pair `defineRecorder` with `defineUploader` to stream chunks to a backend instead of buffering everything in memory. Set `timesliceMs` so the recorder fires `dataavailable` periodically; pipe each chunk into the uploader.
+
+```ts
+import { defineRecorder, defineUploader } from "@forinda/video-sdk-core";
+
+const uploader = defineUploader({
+  url: "/api/uploads",
+  headers: { Authorization: `Bearer ${token}` },
+  // Defaults: keepalive for chunks ≤ 60 KB, fall back to regular fetch above.
+});
+
+const recorder = defineRecorder(stream, { timesliceMs: 1_000 });
+const dispose = recorder.pipeTo(uploader);
+
+uploader.on("state", (s) => console.log("upload state:", s));
+uploader.on("error", (e) => console.warn("upload error:", e));
+
+recorder.start();
+// ...later
+await recorder.stop();
+dispose();
+```
+
+When a `POST` returns 4xx/5xx, the uploader transitions to `"failed"` and the recorder pauses automatically. Recover with `await uploader.retry()` — recording resumes once the queue drains. The queue is capped by `maxQueuedBytes` (default 100 MiB); over-cap `send` calls reject so consumers see backpressure instead of silent OOM.
+
+| Uploader option           | Default             | Purpose                                                                                                                   |
+| ------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `url`                     | —                   | Required. Destination — `POST` per chunk.                                                                                 |
+| `headers`                 | `{}`                | Extra request headers. `Content-Type` is set automatically from the chunk's mime type.                                    |
+| `maxQueuedBytes`          | `100 * 1024 * 1024` | Hard cap on bytes queued (waiting + in-flight). Over-cap `send` rejects with `uploader_queue_overflow`.                   |
+| `keepaliveThresholdBytes` | `60_000`            | Chunks at or below this size use `fetch` with `keepalive: true` (survive page unload); larger chunks use regular `fetch`. |
+| `fetchImpl`               | `globalThis.fetch`  | Test seam.                                                                                                                |
+
 ## License
 
 MIT — © 2026 Felix Orinda.
