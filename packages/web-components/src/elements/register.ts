@@ -4,6 +4,7 @@
  * implementation is silently skipped (consumer-defined elements win).
  */
 
+import { ForindaRecorder } from "@/elements/recorder.ts";
 import { ForindaVideoDevicePicker } from "@/elements/video-device-picker.ts";
 import { ForindaVideoPublisher } from "@/elements/video-publisher.ts";
 import { ForindaVideoViewer } from "@/elements/video-viewer.ts";
@@ -14,6 +15,7 @@ const ELEMENTS: ElementCtor[] = [
   ForindaVideoPublisher,
   ForindaVideoViewer,
   ForindaVideoDevicePicker,
+  ForindaRecorder,
 ];
 
 export function registerAll(): void {

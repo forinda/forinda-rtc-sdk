@@ -104,6 +104,40 @@ console.log(channel.chatHistory); // capped at chatHistoryLimit (default 200)
 
 The channel **does not own its transport's lifecycle** — the consumer is responsible for connecting/disconnecting it. Sharing one transport with a `Publisher` or `Viewer` is the common case; pass `manageJoin: false` so the join is issued only once.
 
+**Recording (EPIC-13):**
+
+- **Recorder** — `defineRecorder(stream, opts?)`: typed wrapper over `MediaRecorder`. Picks a supported mime type from `codecPreferences` (or honors an explicit `mimeType`), exposes a tiny state machine, and assembles the final `Blob` on `stop()`.
+
+```ts
+import { defineRecorder } from "@forinda/video-sdk-core";
+
+const recorder = defineRecorder(stream, {
+  mimeType: "video/webm;codecs=vp9,opus", // optional — auto-picked when omitted
+  videoBitsPerSecond: 2_500_000,
+  timesliceMs: 1_000, // emit a chunk every 1s for streaming uploads
+});
+recorder.on("start", ({ mimeType }) => console.log("recording as", mimeType));
+recorder.on("dataavailable", ({ data }) => uploadChunk(data));
+recorder.on("stop", ({ blob, durationMs }) => downloadAs("clip.webm", blob));
+recorder.start();
+// later
+const blob = await recorder.stop();
+```
+
+| Option               | Default                               | Purpose                                                         |
+| -------------------- | ------------------------------------- | --------------------------------------------------------------- |
+| `mimeType`           | first supported in `codecPreferences` | Pin a specific codec; throws on `start` if unsupported.         |
+| `codecPreferences`   | `DEFAULT_CODEC_PREFERENCES`           | Fallback list. Default tries VP9, VP8, bare WebM, MP4 in order. |
+| `videoBitsPerSecond` | browser default                       | Forwarded to `MediaRecorder`.                                   |
+| `audioBitsPerSecond` | browser default                       | Forwarded to `MediaRecorder`.                                   |
+| `timesliceMs`        | one chunk on stop                     | Emit `dataavailable` every N ms instead of only at the end.     |
+
+State machine: `idle → recording → (paused ↔ recording) → stopped`. Errors transition to a terminal `error` state and surface as typed `Error` events (never bare DOM events).
+
+Plus two helpers: `isRecordingTypeSupported(mimeType)` and `pickRecordingType(preferences)` for capability detection without instantiating a recorder.
+
+> **iOS / Safari quirk:** `MediaRecorder` is unreliable pre-iOS-17 and may flake on long sessions. Detect via `isRecordingTypeSupported` and gate the recording UI accordingly.
+
 ## License
 
 MIT — © 2026 Felix Orinda.

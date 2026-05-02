@@ -171,6 +171,21 @@ Sugar over `usePresence` for the most common interaction pattern. Reads the chan
 const { raised, raise, lower, toggle } = useRaiseHand(channel);
 ```
 
+### `useRecorder(stream, opts?)`
+
+Record any `MediaStream` to a `Blob`. Wraps core's `defineRecorder`; constructs the `MediaRecorder` lazily on the first `start()` call and auto-stops on unmount.
+
+```ts
+const { state, blob, chunks, error, start, stop, pause, resume } = useRecorder(stream, {
+  mimeType: "video/webm;codecs=vp9,opus",
+  videoBitsPerSecond: 2_500_000,
+  timesliceMs: 1_000,
+});
+// state: "idle" | "recording" | "paused" | "stopped" | "error"
+```
+
+When `stream` is `null` (e.g. before `useUserMedia` resolves) the hook returns inert state and `start()` is a no-op.
+
 ## Components
 
 ### `<VideoView stream={...} />`

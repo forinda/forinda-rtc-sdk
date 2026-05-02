@@ -118,6 +118,60 @@ Subscribes to a publisher and renders the inbound stream.
 
 The inbound `<video>` is exposed via `::part(video)`. The element sets `srcObject` on the first `track` event and exposes the live stream via the `mediaStream` JS property.
 
+### `<forinda-recorder>`
+
+Record any `MediaStream` to a `Blob`. The stream is set as a JS property (not an attribute — `MediaStream` isn't serializable). Codec / bitrate / chunking are attributes; lifecycle is exposed both as the toolbar button (in shadow DOM) and as imperative methods.
+
+**Attributes:**
+
+| Attribute      | Type    | Default                        | Description                                                |
+| -------------- | ------- | ------------------------------ | ---------------------------------------------------------- |
+| `mime-type`    | string  | first supported VP9/VP8 / WebM | Pin a specific recorder mime type.                         |
+| `video-bps`    | number  | browser default                | Target video bitrate in bits per second.                   |
+| `audio-bps`    | number  | browser default                | Target audio bitrate in bits per second.                   |
+| `timeslice-ms` | number  | one chunk on stop              | Emit `dataavailable` every N ms instead of only on stop.   |
+| `auto-start`   | boolean | `false`                        | Start recording immediately when `stream` property is set. |
+
+**JS properties / methods:**
+
+| Member                 | Purpose                                                     |
+| ---------------------- | ----------------------------------------------------------- |
+| `stream`               | Set / get the `MediaStream` to record.                      |
+| `start()` / `stop()`   | Imperative lifecycle. `stop()` resolves with the `Blob`.    |
+| `pause()` / `resume()` | Pause and resume the active recording.                      |
+| `recorderInstance`     | Read-only access to the underlying `Recorder` once started. |
+
+**Events:**
+
+| Event            | `event.detail`                                                                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `recorder-start` | `{ mimeType: string }`                                                                                                              |
+| `recorder-stop`  | `{ blob: Blob; mimeType: string; durationMs: number; url: string }` (`url` is `URL.createObjectURL(blob)` for download convenience) |
+| `recorder-error` | `Error`                                                                                                                             |
+
+**Styling:** the toolbar button + status span are exposed as `::part(button)` / `::part(status)` for theming.
+
+```html
+<forinda-recorder
+  mime-type="video/webm;codecs=vp9,opus"
+  video-bps="2500000"
+  timeslice-ms="1000"
+></forinda-recorder>
+<script type="module">
+  const el = document.querySelector("forinda-recorder");
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+  el.stream = stream;
+  el.addEventListener("recorder-stop", (e) => {
+    const a = document.createElement("a");
+    a.href = e.detail.url;
+    a.download = "clip.webm";
+    a.click();
+  });
+</script>
+```
+
+> **iOS / Safari:** `MediaRecorder` is unreliable pre-iOS-17. The element will fire `recorder-error` with a `ConfigurationError` if no codec is supported.
+
 ### `<forinda-video-device-picker>`
 
 A `<select>` populated with the user's cameras / microphones / speakers, kept in sync via `devicechange`.

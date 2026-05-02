@@ -6,6 +6,7 @@ describe("auto-registration entry", () => {
     expect(customElements.get("forinda-video-publisher")).toBeDefined();
     expect(customElements.get("forinda-video-viewer")).toBeDefined();
     expect(customElements.get("forinda-video-device-picker")).toBeDefined();
+    expect(customElements.get("forinda-recorder")).toBeDefined();
   });
 
   it("manual entry exposes classes without auto-registering under a custom name", async () => {

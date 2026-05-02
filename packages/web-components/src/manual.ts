@@ -23,4 +23,5 @@ export {
   type DeviceKind,
   type DevicePickerOverrides,
 } from "./elements/video-device-picker.ts";
+export { ForindaRecorder } from "./elements/recorder.ts";
 export { registerAll } from "./elements/register.ts";
