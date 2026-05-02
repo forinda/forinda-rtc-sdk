@@ -4,7 +4,7 @@ import { createBanner } from "../../tools/build-banner.ts";
 export default defineConfig({
   entry: ["src/index.ts"],
   format: ["esm"],
-  dts: { resolve: true, tsconfig: "./tsconfig.build.json" },
+  dts: { resolve: true },
   sourcemap: true,
   clean: true,
   target: "es2022",
