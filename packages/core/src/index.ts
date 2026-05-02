@@ -133,9 +133,11 @@ export { defineRoomChannel, defineAttachedRoomChannel, RoomChannel } from "./roo
 export type {
   AttachedRoomChannelOptions,
   ChatHistoryEntry,
+  ChatStatusEntry,
   PresenceEntry,
   RoomChannelEvents,
   RoomChannelOptions,
+  RoomChannelState,
   RoomLeader,
   RoomOptions,
   RoomPeerEntry,

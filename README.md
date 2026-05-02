@@ -95,6 +95,18 @@ pnpm dev:vue         # http://127.0.0.1:5176 — Vue 3 composables + <VideoView>
 
 Each example has its own README under `examples/*/README.md`.
 
+## Testing tiers
+
+| Tier        | Command                                                                   | What it runs                                                                                                           |
+| ----------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Unit        | `pnpm test`                                                               | Per-package vitest in jsdom (or node for server packages). The default for day-to-day dev.                             |
+| Integration | `pnpm test:integration`                                                   | Cross-package suite in `packages/integration-tests/`. Real WebSocket round-trips, real engine.                         |
+| Browser     | `pnpm test:browser`                                                       | Vitest in headless Chromium (Playwright provider) with synthetic getUserMedia. Covers core/react/elements media paths. |
+| E2E         | `pnpm e2e`                                                                | Playwright two-tab Publisher↔Viewer flow against the dev signaling server + React example app.                         |
+| Load        | `pnpm load:signaling --rooms 100 --peers 10 --chatPerSec 1 --duration 30` | Generates synthetic chat traffic; reports throughput + p50/p95 latency.                                                |
+
+CI runs all five on every PR.
+
 ## Compatibility
 
 - **Node ≥ 20** for the server packages.
