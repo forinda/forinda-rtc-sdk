@@ -58,12 +58,14 @@ export function createFakePeerConnection(): FakePeerConnection {
     getReceivers: vi.fn(() => []),
     getStats: vi.fn(async () => new Map() as RTCStatsReport),
 
+    // RTCPeerConnection.createOffer/createAnswer have legacy callback overloads
+    // that confuse TS overload resolution; cast through unknown.
     createOffer: vi.fn(
       async () => ({ type: "offer", sdp: "v=0...offer" }) as RTCSessionDescriptionInit,
-    ),
+    ) as unknown as RTCPeerConnection["createOffer"],
     createAnswer: vi.fn(
       async () => ({ type: "answer", sdp: "v=0...answer" }) as RTCSessionDescriptionInit,
-    ),
+    ) as unknown as RTCPeerConnection["createAnswer"],
     setLocalDescription: vi.fn(async () => undefined),
     setRemoteDescription: vi.fn(async () => undefined),
     addIceCandidate: vi.fn(async () => undefined),
