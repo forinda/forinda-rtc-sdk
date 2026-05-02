@@ -1,8 +1,16 @@
 name: Release
 
+# Manual trigger only — publishing is a deliberate, irreversible action and
+# shouldn't fire on every push to main. From the Actions tab click "Run
+# workflow" on the main branch:
+#   - When changesets are pending → opens / updates a "Version Packages" PR.
+#     Merge that PR (which bumps versions + writes per-package CHANGELOGs)
+#     and run this workflow again to publish.
+#   - When no changesets are pending AND package.json versions are ahead of
+#     npm → publishes the new versions to npm with provenance and creates
+#     one GitHub Release per package.
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref }}
@@ -25,7 +33,7 @@ jobs:
           version: 9.12.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
           registry-url: https://registry.npmjs.org/
       - run: pnpm install --frozen-lockfile
@@ -38,6 +46,10 @@ jobs:
           version: pnpm version-packages
           commit: "chore: version packages"
           title: "chore: version packages"
+          # Auto-create one GitHub Release per published package, using the
+          # changelog entry @changesets/changelog-github wrote for that
+          # version (which links every PR + contributor handle).
+          createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

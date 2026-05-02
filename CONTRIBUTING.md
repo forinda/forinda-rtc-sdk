@@ -91,7 +91,7 @@ Use the `_mocks/` fixtures (`fake-pc.ts`, `fake-media-devices.ts`, `in-memory-si
 
 ## Releases
 
-Releases are automated via [Changesets](https://github.com/changesets/changesets). PRs merged to `main` that contain changesets will auto-open a "Version Packages" PR; merging that PR publishes to npm with [provenance](https://docs.npmjs.com/generating-provenance-statements).
+See **[`RELEASE.md`](./RELEASE.md)** for the full process. Short version: publishing is **manually triggered** from the Actions tab (never on push), because it's irreversible. Use `pnpm changeset` to record what should ship; `changesets/action` opens a "Version Packages" PR; merging it + triggering Release a second time publishes to npm with provenance and creates one GitHub Release per package.
 
 ## License
 

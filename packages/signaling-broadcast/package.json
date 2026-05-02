@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-signaling-broadcast",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Same-tab BroadcastChannel client transport for Forinda video SDK demos and tests",
   "keywords": [
     "broadcastchannel",

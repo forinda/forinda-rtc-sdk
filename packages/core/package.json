@@ -1,6 +1,6 @@
 {
   "name": "@forinda/video-sdk-core",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Framework-agnostic WebRTC publish/view core for the Forinda video SDK",
   "keywords": [
     "browser",
