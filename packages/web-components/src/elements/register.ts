@@ -5,6 +5,7 @@
  */
 
 import { ForindaRecorder } from "@/elements/recorder.ts";
+import { ForindaUploader } from "@/elements/uploader.ts";
 import { ForindaVideoDevicePicker } from "@/elements/video-device-picker.ts";
 import { ForindaVideoPublisher } from "@/elements/video-publisher.ts";
 import { ForindaVideoViewer } from "@/elements/video-viewer.ts";
@@ -16,6 +17,7 @@ const ELEMENTS: ElementCtor[] = [
   ForindaVideoViewer,
   ForindaVideoDevicePicker,
   ForindaRecorder,
+  ForindaUploader,
 ];
 
 export function registerAll(): void {
