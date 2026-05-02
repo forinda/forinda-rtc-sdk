@@ -25,7 +25,7 @@ describe("VideoView", () => {
     }
     render(<Wrapper />);
     expect(captured).not.toBeNull();
-    expect(captured?.tagName).toBe("VIDEO");
+    expect((captured as HTMLVideoElement | null)?.tagName).toBe("VIDEO");
   });
 
   it("applies mirror style when mirror prop is true", () => {
