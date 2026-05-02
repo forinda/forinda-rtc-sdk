@@ -116,3 +116,29 @@ export class SignalingRateLimitError extends SignalingProtocolError {
     this.name = "SignalingRateLimitError";
   }
 }
+
+/**
+ * Thrown when a peer attempts to claim `role: "director"` for a room that
+ * already has a director. The engine enforces first-claim wins; co-directors
+ * are added at runtime via the `promote` command.
+ */
+export class SignalingDirectorConflictError extends SignalingProtocolError {
+  constructor(message: string, opts: Omit<SignalingErrorOptions, "code"> = {}) {
+    super(message, { ...opts, code: "director_conflict" });
+    this.name = "SignalingDirectorConflictError";
+  }
+}
+
+/**
+ * Thrown when a non-director peer issues a director-only command
+ * (`mute`, `unmute`, `kick`, `promote`, `demote`, `set-bitrate`) AND the
+ * engine has `enforceModerationCommands: true`. With enforcement off the
+ * engine relays such commands honor-based (the target decides whether to
+ * obey).
+ */
+export class SignalingPermissionError extends SignalingProtocolError {
+  constructor(message: string, opts: Omit<SignalingErrorOptions, "code"> = {}) {
+    super(message, { ...opts, code: "not_authorized" });
+    this.name = "SignalingPermissionError";
+  }
+}

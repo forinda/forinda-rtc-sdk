@@ -81,6 +81,8 @@ export {
   PeerNotFoundError,
   RoomFullError,
   SignalingAuthError,
+  SignalingDirectorConflictError,
+  SignalingPermissionError,
   SignalingProtocolError,
   SignalingRateLimitError,
   SignalingValidationError,
