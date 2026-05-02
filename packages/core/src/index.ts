@@ -127,3 +127,17 @@ export type {
   RoomChannelOptions,
   RoomPeerEntry,
 } from "./room/types.ts";
+
+// Recording — MediaRecorder wrapper
+export { defineRecorder, Recorder } from "./recording/recorder.ts";
+export {
+  DEFAULT_CODEC_PREFERENCES,
+  isRecordingTypeSupported,
+  pickRecordingType,
+} from "./recording/codec-support.ts";
+export type {
+  RecorderChunk,
+  RecorderEvents,
+  RecorderOptions,
+  RecorderState,
+} from "./recording/types.ts";
