@@ -38,5 +38,6 @@ export { useRaiseHand, type UseRaiseHandResult } from "./use-raise-hand.ts";
 
 // Recording
 export { useRecorder, type UseRecorderResult } from "./use-recorder.ts";
+export { useUploader, type UseUploaderResult } from "./use-uploader.ts";
 
 export { VideoView, type VideoViewProps } from "./video-view.tsx";
