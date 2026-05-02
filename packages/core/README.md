@@ -2,8 +2,6 @@
 
 Framework-agnostic WebRTC publish/view core for the Forinda video SDK. Browser-only, ESM-only.
 
-> ✅ EPIC-3 complete. Publisher + Viewer ready for adapter wiring (EPIC-4).
-
 ## Install
 
 ```bash
@@ -14,7 +12,7 @@ pnpm add @forinda/video-sdk-core @forinda/video-sdk-signaling-protocol
 
 ```ts
 import { definePublisher, defineViewer, getUserMedia } from "@forinda/video-sdk-core";
-import { defineWebSocketSignaling } from "@forinda/video-sdk-signaling-ws"; // EPIC-4
+import { defineWebSocketSignaling } from "@forinda/video-sdk-signaling-ws";
 
 const stream = await getUserMedia({ audio: true, video: true });
 
@@ -43,7 +41,7 @@ await viewer.start();
 
 ## What ships
 
-**Primitives (EPIC-3a):**
+**Primitives:**
 
 - **Logger** — `setLogger(impl)`, default noop. Pluggable; never installs global handlers.
 - **Emitter** — typed `defineEmitter<Events>()` with `on` / `once` / `off` / `emit` / `removeAllListeners`.
@@ -53,14 +51,14 @@ await viewer.start();
 - **Stats** — `defineStatsCollector` polling wrapper + `normalizeStats` reducer + `ConnectionStats` flat shape.
 - **Signaling** — `SignalingTransport` interface + re-exported wire-format types.
 
-**Orchestration (EPIC-3b):**
+**Orchestration:**
 
 - **State machine** — `ConnectionState` lifecycle (`idle` → `connecting` → `connected` → `reconnecting` → `failed` → `closed`), `defineStateMachine` enforcer.
 - **Retry policy** — `defineRetryPolicy` exponential backoff + jitter, bounded by `maxAttempts` / `maxDurationMs`.
 - **Publisher** — `definePublisher`: signaling join, per-viewer `RTCPeerConnection` management, SDP/ICE routing, stats aggregation, hot-swap, auto-retry.
 - **Viewer** — `defineViewer`: signaling join, single upstream PC, track event, stats, auto-retry.
 
-**Room-level interaction (EPIC-11):**
+**Room-level interaction:**
 
 - **Room channel** — `defineRoomChannel({ signaling, room, peerId? })`: presence + chat layer that piggybacks on the same signaling transport. No media.
 
@@ -104,7 +102,7 @@ console.log(channel.chatHistory); // capped at chatHistoryLimit (default 200)
 
 The channel **does not own its transport's lifecycle** — the consumer is responsible for connecting/disconnecting it. Sharing one transport with a `Publisher` or `Viewer` is the common case; pass `manageJoin: false` so the join is issued only once.
 
-**Recording (EPIC-13):**
+**Recording:**
 
 - **Recorder** — `defineRecorder(stream, opts?)`: typed wrapper over `MediaRecorder`. Picks a supported mime type from `codecPreferences` (or honors an explicit `mimeType`), exposes a tiny state machine, and assembles the final `Blob` on `stop()`.
 

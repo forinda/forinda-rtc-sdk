@@ -103,4 +103,4 @@ expect(stats.inbound.bitrateBps).toBeGreaterThan(0);
 - Vitest browser config (`@vitest/browser` + Playwright Chromium).
 - Root-level `e2e/` Playwright project.
 
-Both are deferred to EPIC-9 (CI/CD + first release) where they'll be wired alongside the rest of the test matrix.
+Both are on the roadmap and will be wired alongside the rest of the test matrix.
