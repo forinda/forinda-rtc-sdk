@@ -44,3 +44,36 @@ describe("useChat", () => {
     dispose();
   });
 });
+
+describe("useChat — EPIC-20 surface", () => {
+  it("send() returns the entry id", async () => {
+    const ch = defineFakeRoomChannel("alice");
+    (ch.sendChat as unknown) = async (body: string) => {
+      const id = `id-${body}`;
+      (ch.chatHistory as unknown as ChatHistoryEntry[]).push({
+        type: "chat",
+        from: "alice",
+        body,
+        ts: 1,
+        receivedAt: 1,
+        id,
+        status: "confirmed",
+      });
+      return id;
+    };
+
+    const { result, dispose } = withScope(() => useChat(ch));
+
+    const returned = await result.send("hello");
+    expect(returned).toBe("id-hello");
+
+    dispose();
+  });
+
+  it("returns empty string when no channel", async () => {
+    const { result, dispose } = withScope(() => useChat(null));
+    const returned = await result.send("hello");
+    expect(returned).toBe("");
+    dispose();
+  });
+});

@@ -11,8 +11,12 @@ import type { ChatHistoryEntry, RoomChannel } from "@forinda/video-sdk-core";
 
 export interface UseChatResult {
   messages: Ref<readonly ChatHistoryEntry[]>;
-  /** Send a chat message. Omit `to` for a room-wide broadcast. */
-  send: (body: string, opts?: { to?: string }) => Promise<void>;
+  /**
+   * Send a chat message. Omit `to` for a room-wide broadcast.
+   * Resolves with the entry's `id` (or `""` when no channel is attached);
+   * the id correlates with the underlying channel's `chat-status` events.
+   */
+  send: (body: string, opts?: { to?: string }) => Promise<string>;
 }
 
 const EMPTY: readonly ChatHistoryEntry[] = [];
@@ -48,7 +52,8 @@ export function useChat(channel: MaybeRefOrGetter<RoomChannel | null>): UseChatR
     messages,
     send: async (body, opts = {}) => {
       const ch = toValue(channel);
-      if (ch) await ch.sendChat(body, opts);
+      if (!ch) return "";
+      return ch.sendChat(body, opts);
     },
   };
 }
