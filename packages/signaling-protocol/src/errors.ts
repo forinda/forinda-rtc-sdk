@@ -103,3 +103,16 @@ export class PeerNotFoundError extends SignalingProtocolError {
     this.name = "PeerNotFoundError";
   }
 }
+
+/**
+ * Thrown when a peer's per-type rate-limit token bucket is empty. The
+ * engine surfaces this immediately on `applyChat` / `applyPresenceUpdate`;
+ * the message is NOT relayed. Hosts decide whether to surface it back to
+ * the client (typed error frame, close code, etc.).
+ */
+export class SignalingRateLimitError extends SignalingProtocolError {
+  constructor(message: string, opts: Omit<SignalingErrorOptions, "code"> = {}) {
+    super(message, { ...opts, code: "rate_limited" });
+    this.name = "SignalingRateLimitError";
+  }
+}

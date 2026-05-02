@@ -64,6 +64,7 @@ export {
   RoomFullError,
   SignalingAuthError,
   SignalingProtocolError,
+  SignalingRateLimitError,
   SignalingValidationError,
   type SignalingErrorOptions,
 } from "./errors.ts";
