@@ -358,6 +358,16 @@ export class Session {
       room: message.room,
       peers: room.presenceSnapshot(),
     });
+    // Opt-in chat-history replay (EPIC-22). Only sent when the joiner
+    // requested it AND the engine actually buffers history. Old clients
+    // never set the flag → never receive the new message type.
+    if (message.replayHistory === true && this.chatHistoryPerRoom > 0) {
+      this.send(message.peer, {
+        type: "chat-history",
+        room: message.room,
+        messages: [...room.chatHistory()],
+      });
+    }
   }
 
   /**
@@ -491,6 +501,8 @@ export class Session {
     const room = this.roomMap.get(socket.roomId);
     if (room === undefined) return;
 
+    room.pushChat(message);
+
     const echoToSender = message.clientId !== undefined;
 
     if (message.to !== undefined) {
@@ -509,11 +521,15 @@ export class Session {
     }
   }
 
-  /** Lazy room creation. Capacity propagates from session options. */
+  /** Lazy room creation. Capacity + chat-history limit propagate from session options. */
   private getOrCreateRoom(roomId: RoomId): Room {
     let room = this.roomMap.get(roomId);
     if (room === undefined) {
-      room = defineRoom({ id: roomId, capacity: this.maxPeersPerRoom });
+      room = defineRoom({
+        id: roomId,
+        capacity: this.maxPeersPerRoom,
+        chatHistoryLimit: this.chatHistoryPerRoom,
+      });
       this.roomMap.set(roomId, room);
     }
     return room;

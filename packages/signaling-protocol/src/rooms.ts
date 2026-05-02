@@ -188,5 +188,6 @@ export class Room {
  * ```
  */
 export function defineRoom(opts: { id: RoomId } & RoomOptions): Room {
-  return new Room(opts.id, { capacity: opts.capacity });
+  const { id, ...roomOpts } = opts;
+  return new Room(id, roomOpts);
 }
