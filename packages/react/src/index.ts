@@ -22,4 +22,14 @@ export {
 export { useViewer, type UseViewerOptions, type UseViewerResult } from "./use-viewer.ts";
 export { useConnectionStats, type UseConnectionStatsOptions } from "./use-connection-stats.ts";
 
+// Room-level interaction layer (presence + chat + raise hand)
+export {
+  useRoomChannel,
+  type UseRoomChannelOptions,
+  type UseRoomChannelResult,
+} from "./use-room-channel.ts";
+export { usePresence, type UsePresenceResult } from "./use-presence.ts";
+export { useChat, type UseChatResult } from "./use-chat.ts";
+export { useRaiseHand, type UseRaiseHandResult } from "./use-raise-hand.ts";
+
 export { VideoView, type VideoViewProps } from "./video-view.tsx";
