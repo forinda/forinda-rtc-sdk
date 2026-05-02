@@ -22,6 +22,9 @@
  */
 
 import { defineEmitter, type Emitter } from "@/events/emitter.ts";
+import { SdkError } from "@/errors/errors.ts";
+import { defineRetryPolicy, RetryPolicy } from "@/retry/policy.ts";
+import type { TransportState } from "@/signaling/transport.ts";
 import type {
   ChatMessage,
   JsonValue,
@@ -57,6 +60,8 @@ export class RoomChannel {
   private readonly chatAckTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly ownAttributeKeys = new Set<string>();
   private readonly leader: RoomChannelOptions["__leader"];
+  private readonly retryPolicy: RetryPolicy;
+  private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private _state: RoomChannelState = "idle";
 
   constructor(opts: RoomChannelOptions) {
@@ -72,6 +77,7 @@ export class RoomChannel {
     this.manageJoin = opts.__leader ? false : (opts.manageJoin ?? true);
     this.chatHistoryLimit = opts.chatHistoryLimit ?? DEFAULT_CHAT_HISTORY_LIMIT;
     this.chatAckTimeoutMs = opts.chatAckTimeoutMs ?? DEFAULT_CHAT_ACK_TIMEOUT_MS;
+    this.retryPolicy = defineRetryPolicy(opts.retry ?? {});
   }
 
   /** Channel-level lifecycle state. Mirrors the `state` event. */
@@ -111,6 +117,18 @@ export class RoomChannel {
     this.setState("connecting");
 
     this.disposers.push(this.signaling.on("message", (msg) => this.routeMessage(msg)));
+    this.disposers.push(
+      this.signaling.on("state", (s: TransportState) => {
+        // Once the transport drops post-`connected`, drive the recovery loop.
+        // Skip while already retrying — handleSessionFailure handles the
+        // chained drops itself.
+        if (s === "closed" && this._state === "connected") {
+          this.handleSessionFailure(
+            new SdkError("signaling closed unexpectedly", { code: "signaling_closed" }),
+          );
+        }
+      }),
+    );
 
     if (this.leader) {
       // Attached: defer transport + join entirely to the Room. Whatever role
@@ -150,6 +168,11 @@ export class RoomChannel {
     for (const timer of this.chatAckTimers.values()) clearTimeout(timer);
     this.chatAckTimers.clear();
 
+    if (this.retryTimer !== undefined) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = undefined;
+    }
+
     if (this.manageJoin) {
       try {
         await this.signaling.send({
@@ -169,6 +192,84 @@ export class RoomChannel {
     if (this._state === next) return;
     this._state = next;
     this.emitter.emit("state", next);
+  }
+
+  /**
+   * Internal: handle a transport-level failure after the channel was
+   * already `connected`. Marks every in-flight pending chat as failed
+   * (we don't know if they reached the engine before the drop), then
+   * schedules a reconnect attempt or transitions to `closed` on
+   * exhaustion.
+   */
+  private handleSessionFailure(cause: SdkError): void {
+    if (this._state === "closed") return;
+
+    for (const id of [...this.pendingChats.keys()]) {
+      this.markChatFailed(id);
+    }
+
+    this.setState("reconnecting");
+
+    const delay = this.retryPolicy.nextDelayMs();
+    if (delay === null) {
+      this.emitter.emit(
+        "error",
+        new SdkError("retry budget exhausted", { code: "retry_exhausted", cause }),
+      );
+      this.setState("closed");
+      return;
+    }
+
+    this.retryTimer = setTimeout(() => {
+      void this.attemptReconnect();
+    }, delay);
+  }
+
+  private async attemptReconnect(): Promise<void> {
+    if (this._state === "closed") return;
+    this.retryTimer = undefined;
+    try {
+      await this.signaling.connect();
+      if (this.manageJoin) {
+        await this.signaling.send({
+          type: "join",
+          room: this.room,
+          peer: this.peerId,
+          role: "presence",
+        });
+      }
+      await this.resyncPresence();
+      this.setState("connected");
+      this.retryPolicy.markSuccess();
+    } catch (cause) {
+      this.handleSessionFailure(
+        new SdkError("reconnect attempt failed", {
+          code: "reconnect_failed",
+          cause,
+        }),
+      );
+    }
+  }
+
+  /**
+   * Re-broadcast every previously-set own presence attribute so other peers
+   * see the right state after the reconnect. Reads the current values from
+   * the local presence map (the engine sent us a `presence-state` for
+   * each `setAttribute`, which we mirrored).
+   */
+  private async resyncPresence(): Promise<void> {
+    if (this.ownAttributeKeys.size === 0) return;
+    const attributes: Record<string, JsonValue> = {};
+    for (const k of this.ownAttributeKeys) {
+      const current = this.presenceMap.get(this.peerId)?.[k];
+      if (current !== undefined) attributes[k] = current;
+    }
+    if (Object.keys(attributes).length === 0) return;
+    await this.signaling.send({
+      type: "presence-update",
+      peer: this.peerId,
+      attributes,
+    });
   }
 
   /** Set or replace a single own presence attribute. */
