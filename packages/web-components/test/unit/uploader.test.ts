@@ -22,7 +22,7 @@ describe("<forinda-uploader>", () => {
   });
 
   it("reads url + headers attributes and exposes an uploader", async () => {
-    const fetchImpl = vi.fn(async () => new Response("ok", { status: 200 }));
+    const fetchImpl: typeof fetch = vi.fn(async () => new Response("ok", { status: 200 }));
     const el = mountUploader({
       url: "https://example.test/u",
       headers: '{"Authorization":"Bearer abc"}',
@@ -33,8 +33,9 @@ describe("<forinda-uploader>", () => {
     expect(uploader).not.toBeNull();
     await uploader!.send(new Blob(["x"], { type: "application/octet-stream" }));
 
-    expect(fetchImpl).toHaveBeenCalledTimes(1);
-    const init = fetchImpl.mock.calls[0]![1] as RequestInit;
+    const mock = fetchImpl as unknown as ReturnType<typeof vi.fn>;
+    expect(mock).toHaveBeenCalledTimes(1);
+    const init = mock.mock.calls[0]![1] as RequestInit;
     expect(new Headers(init.headers).get("Authorization")).toBe("Bearer abc");
   });
 
