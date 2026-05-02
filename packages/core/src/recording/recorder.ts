@@ -21,7 +21,9 @@ import {
   isRecordingTypeSupported,
   pickRecordingType,
 } from "./codec-support.ts";
+import { pipeRecorderTo } from "./pipe.ts";
 import type { RecorderEvents, RecorderOptions, RecorderState } from "./types.ts";
+import type { Uploader } from "./uploader-types.ts";
 
 export class Recorder {
   private readonly stream: MediaStream;
@@ -149,6 +151,16 @@ export class Recorder {
   resume(): void {
     if (this.recorderState !== "paused" || this.mediaRecorder === null) return;
     this.mediaRecorder.resume();
+  }
+
+  /**
+   * Forward every `dataavailable` chunk to an `Uploader`. The uploader's
+   * `failed` state pauses this recorder; recovery (via `uploader.retry()`)
+   * resumes it. Returns a disposer to unwire — pairs naturally with React's
+   * effect cleanup or Vue's `onScopeDispose`.
+   */
+  pipeTo(uploader: Uploader): () => void {
+    return pipeRecorderTo(this, uploader);
   }
 
   private resolveMimeType(): string | null {

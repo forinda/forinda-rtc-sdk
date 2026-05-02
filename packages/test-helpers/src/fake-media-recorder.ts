@@ -42,9 +42,15 @@ export function installFakeMediaRecorder(): InstalledFakeRecorder {
     });
     this.pause = vi.fn(() => {
       this.state = "paused";
+      // Real MediaRecorder fires the "pause" event after the method returns;
+      // tests that consume the wrapper depend on this transition firing.
+      const bucket = handlers.get("pause");
+      if (bucket) for (const h of bucket) h({});
     });
     this.resume = vi.fn(() => {
       this.state = "recording";
+      const bucket = handlers.get("resume");
+      if (bucket) for (const h of bucket) h({});
     });
 
     (this as unknown as { addEventListener: MediaRecorder["addEventListener"] }).addEventListener =

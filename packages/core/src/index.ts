@@ -161,3 +161,11 @@ export type {
   RecorderOptions,
   RecorderState,
 } from "./recording/types.ts";
+export { defineUploader } from "./recording/uploader.ts";
+export { pipeRecorderTo } from "./recording/pipe.ts";
+export type {
+  Uploader,
+  UploaderEvents,
+  UploaderOptions,
+  UploaderState,
+} from "./recording/uploader-types.ts";
