@@ -82,6 +82,14 @@ export const JoinRoom = z.object({
   room: RoomId,
   peer: PeerId,
   role: Role,
+  /**
+   * Optional opt-in: when `true` AND the engine has `chatHistoryPerRoom > 0`,
+   * the engine sends the joiner a single `chat-history` message right after
+   * `presence-snapshot`. Omitted means the joiner does not want history —
+   * preserves v0.1 behavior so legacy clients are unaffected by the new
+   * message type.
+   */
+  replayHistory: z.boolean().optional(),
 });
 
 /**
@@ -194,6 +202,22 @@ export const Chat = z.object({
 });
 
 /**
+ * Server → client. One-shot replay of the room's most-recent chats. Sent
+ * only when the joiner set `replayHistory: true` on their `join` AND the
+ * engine has `chatHistoryPerRoom > 0`. Empty `messages` array if no history
+ * has accumulated yet.
+ *
+ * `messages` are full `Chat` records (including `clientId` when the sender
+ * provided one, ts, to, etc.) so consumers can render them indistinguishably
+ * from live chats.
+ */
+export const ChatHistory = z.object({
+  type: z.literal("chat-history"),
+  room: RoomId,
+  messages: z.array(Chat),
+});
+
+/**
  * The discriminated union of every wire-format message. Use `.parse(raw)` for
  * boundary validation; use `.safeParse(raw)` when you need a non-throwing
  * branch (the Session does this so it can attach context to its own typed
@@ -210,6 +234,7 @@ export const SignalingMessage = z.discriminatedUnion("type", [
   PresenceState,
   PresenceSnapshot,
   Chat,
+  ChatHistory,
 ]);
 
 // Inferred TS types — exported so consumers get one definition for runtime + types.
@@ -226,4 +251,5 @@ export type PresenceUpdateMessage = z.infer<typeof PresenceUpdate>;
 export type PresenceStateMessage = z.infer<typeof PresenceState>;
 export type PresenceSnapshotMessage = z.infer<typeof PresenceSnapshot>;
 export type ChatMessage = z.infer<typeof Chat>;
+export type ChatHistoryMessage = z.infer<typeof ChatHistory>;
 export type SignalingMessageType = z.infer<typeof SignalingMessage>;

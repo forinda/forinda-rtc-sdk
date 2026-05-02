@@ -28,6 +28,7 @@ export { defineRoom, Room, type RoomOptions } from "./rooms.ts";
 // Wire format — schemas + inferred types (single source of truth)
 export {
   Chat,
+  ChatHistory,
   IceCand,
   JoinRoom,
   LeaveRoom,
@@ -41,6 +42,7 @@ export {
   Role,
   Sdp,
   SignalingMessage,
+  type ChatHistoryMessage,
   type ChatMessage,
   type IceCandMessage,
   type JoinRoomMessage,
