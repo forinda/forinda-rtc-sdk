@@ -29,7 +29,12 @@ import type {
   PresenceStateMessage,
   SignalingMessageType,
 } from "@forinda/video-sdk-signaling-protocol";
-import type { ChatHistoryEntry, RoomChannelEvents, RoomChannelOptions } from "./types.ts";
+import type {
+  ChatHistoryEntry,
+  RoomChannelEvents,
+  RoomChannelOptions,
+  RoomChannelState,
+} from "./types.ts";
 
 const DEFAULT_CHAT_HISTORY_LIMIT = 200;
 const DEFAULT_CHAT_ACK_TIMEOUT_MS = 10_000;
@@ -52,8 +57,7 @@ export class RoomChannel {
   private readonly chatAckTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly ownAttributeKeys = new Set<string>();
   private readonly leader: RoomChannelOptions["__leader"];
-  private started = false;
-  private stopped = false;
+  private _state: RoomChannelState = "idle";
 
   constructor(opts: RoomChannelOptions) {
     this.leader = opts.__leader;
@@ -68,6 +72,11 @@ export class RoomChannel {
     this.manageJoin = opts.__leader ? false : (opts.manageJoin ?? true);
     this.chatHistoryLimit = opts.chatHistoryLimit ?? DEFAULT_CHAT_HISTORY_LIMIT;
     this.chatAckTimeoutMs = opts.chatAckTimeoutMs ?? DEFAULT_CHAT_ACK_TIMEOUT_MS;
+  }
+
+  /** Channel-level lifecycle state. Mirrors the `state` event. */
+  get state(): RoomChannelState {
+    return this._state;
   }
 
   /** Read-only view of the room's current presence map. */
@@ -93,11 +102,13 @@ export class RoomChannel {
    * `join` so the engine's presence + chat handlers see this peer.
    */
   async start(): Promise<void> {
-    if (this.started) return;
-    if (this.stopped) {
-      throw new Error("RoomChannel has been stopped; create a new instance to reuse");
+    if (this._state !== "idle") {
+      if (this._state === "closed") {
+        throw new Error("RoomChannel has been stopped; create a new instance to reuse");
+      }
+      return;
     }
-    this.started = true;
+    this.setState("connecting");
 
     this.disposers.push(this.signaling.on("message", (msg) => this.routeMessage(msg)));
 
@@ -122,6 +133,8 @@ export class RoomChannel {
         role: "presence",
       });
     }
+
+    this.setState("connected");
   }
 
   /**
@@ -129,8 +142,7 @@ export class RoomChannel {
    * `leave`. Idempotent.
    */
   async stop(): Promise<void> {
-    if (!this.started || this.stopped) return;
-    this.stopped = true;
+    if (this._state === "closed" || this._state === "idle") return;
 
     for (const dispose of this.disposers) dispose();
     this.disposers.length = 0;
@@ -149,6 +161,14 @@ export class RoomChannel {
         // Transport may already be closed; nothing useful to do.
       }
     }
+
+    this.setState("closed");
+  }
+
+  private setState(next: RoomChannelState): void {
+    if (this._state === next) return;
+    this._state = next;
+    this.emitter.emit("state", next);
   }
 
   /** Set or replace a single own presence attribute. */
