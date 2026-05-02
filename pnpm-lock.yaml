@@ -400,6 +400,18 @@ importers:
       '@forinda/video-sdk-core':
         specifier: workspace:*
         version: link:../core
+      '@forinda/video-sdk-signaling-ws':
+        specifier: workspace:*
+        version: link:../signaling-ws
+      '@types/jsdom':
+        specifier: ^21.1.7
+        version: 21.1.7
+      '@vitest/coverage-v8':
+        specifier: ^2.1.0
+        version: 2.1.9(vitest@2.1.9(@types/node@22.19.17)(jsdom@25.0.1))
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
       oxlint:
         specifier: ^0.11.0
         version: 0.11.1
@@ -409,6 +421,9 @@ importers:
       typescript:
         specifier: ^6.0.0
         version: 6.0.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.17)(jsdom@25.0.1)
       wireit:
         specifier: ^0.14.9
         version: 0.14.12

@@ -1,28 +1,181 @@
 # @forinda/video-sdk-elements
 
-Web Components (custom HTML elements) for the Forinda video SDK.
+Framework-agnostic Web Components (custom HTML elements) for the Forinda RTC SDK. Use them directly in plain HTML, or inside any framework that renders DOM (Vue, Svelte, Angular, Solid, plain Lit, etc.).
 
-Drop-in tags: `<video-publisher>`, `<video-viewer>`, `<video-device-picker>`. Works in any framework that consumes custom elements (Vue, Svelte, Angular, Solid, plain HTML).
+## Install
 
-> 🚧 Foundation skeleton — implementation in EPIC-6. See `docs/superpowers/specs/2026-05-02-video-sdk-design.md`.
-
-## Auto-register vs manual
-
-Default (auto-register on import):
-
-```ts
-import "@forinda/video-sdk-elements";
+```bash
+pnpm add @forinda/video-sdk-elements @forinda/video-sdk-core @forinda/video-sdk-signaling-ws
 ```
 
-Manual (explicit, custom prefix):
+> Peer deps: `@forinda/video-sdk-core`, `@forinda/video-sdk-signaling-ws`. Both ship as workspace siblings — no transitive bundling.
 
-```ts
-import { defineElements } from "@forinda/video-sdk-elements/manual";
-defineElements({ prefix: "forinda-" });
-```
-
-CDN drop-in:
+## Quick start
 
 ```html
-<script src="https://unpkg.com/@forinda/video-sdk-elements/dist/index.global.js"></script>
+<script type="module">
+  import "@forinda/video-sdk-elements";
+</script>
+
+<forinda-video-publisher
+  room="demo"
+  signaling-url="wss://signal.example.com"
+  ice-servers='[{"urls":"stun:stun.l.google.com:19302"}]'
+  audio video mirror
+></forinda-video-publisher>
 ```
+
+Importing `@forinda/video-sdk-elements` registers all elements automatically (idempotent — safe across multiple bundles). For manual control, use the `/manual` subpath:
+
+```ts
+import { ForindaVideoPublisher, registerAll } from "@forinda/video-sdk-elements/manual";
+
+// Define under your own tag name…
+customElements.define("my-publisher", ForindaVideoPublisher);
+
+// …or call the bundled registrar later.
+registerAll();
+```
+
+## Elements
+
+### `<forinda-video-publisher>`
+
+Acquires `getUserMedia`, opens a WebSocket signaling channel, and publishes one-to-many until removed from the DOM.
+
+**Attributes:**
+
+| Attribute       | Type     | Default | Description                                              |
+| --------------- | -------- | ------- | -------------------------------------------------------- |
+| `room`          | string   | —       | Required. Room id this publisher joins.                  |
+| `signaling-url` | string   | —       | Required. WebSocket signaling URL.                       |
+| `peer-id`       | string   | uuid    | Optional self-identifier for the publisher.              |
+| `audio`         | boolean  | implied | Capture audio. Implied if neither `audio` nor `video`.   |
+| `video`         | boolean  | implied | Capture video. Implied if neither `audio` nor `video`.   |
+| `ice-servers`   | JSON     | `[]`    | `RTCIceServer[]` literal.                                |
+| `mirror`        | boolean  | `false` | Apply `transform: scaleX(-1)` to the local preview.      |
+| `manual-play`   | boolean  | `false` | Skip the default `muted/autoplay/playsInline` setup.     |
+
+**Events** (all `CustomEvent`, do not bubble):
+
+| Event         | `event.detail`                                    |
+| ------------- | ------------------------------------------------- |
+| `ready`       | `{ stream: MediaStream; publisher: Publisher }`   |
+| `state`       | `ConnectionState` from the publisher state machine |
+| `viewer`      | `{ peerId: string }` — viewer joined              |
+| `viewer-left` | `{ peerId: string }`                              |
+| `error`       | `Error`                                           |
+
+**Styling:** the internal `<video>` is exposed via the `video` shadow part:
+
+```css
+forinda-video-publisher::part(video) {
+  border-radius: 12px;
+  aspect-ratio: 16 / 9;
+}
+```
+
+### `<forinda-video-viewer>`
+
+Subscribes to a publisher and renders the inbound stream.
+
+**Attributes:**
+
+| Attribute       | Type    | Default | Description                                              |
+| --------------- | ------- | ------- | -------------------------------------------------------- |
+| `room`          | string  | —       | Required.                                                |
+| `publisher-id`  | string  | —       | Required. The publisher peer id to subscribe to.         |
+| `signaling-url` | string  | —       | Required.                                                |
+| `peer-id`       | string  | uuid    | Optional self-identifier for the viewer.                 |
+| `ice-servers`   | JSON    | `[]`    | `RTCIceServer[]` literal.                                |
+| `manual-play`   | boolean | `false` | Skip default playback setup.                             |
+
+**Events:**
+
+| Event   | `event.detail`                              |
+| ------- | ------------------------------------------- |
+| `ready` | `{ viewer: Viewer }`                        |
+| `state` | `ConnectionState`                           |
+| `track` | `{ stream: MediaStream }` (first inbound)   |
+| `error` | `Error`                                     |
+
+The inbound `<video>` is exposed via `::part(video)`. The element sets `srcObject` on the first `track` event and exposes the live stream via the `mediaStream` JS property.
+
+### `<forinda-video-device-picker>`
+
+A `<select>` populated with the user's cameras / microphones / speakers, kept in sync via `devicechange`.
+
+**Attributes:**
+
+| Attribute     | Type    | Default            | Description                                                  |
+| ------------- | ------- | ------------------ | ------------------------------------------------------------ |
+| `kind`        | enum    | `camera`           | One of `camera`, `microphone`, `speaker`.                    |
+| `placeholder` | string  | `Select a device`  | Disabled first option label.                                 |
+
+**Events:**
+
+| Event    | `event.detail`                                |
+| -------- | --------------------------------------------- |
+| `change` | `{ deviceId: string; label: string }`         |
+| `error`  | `Error`                                       |
+
+The internal `<select>` is exposed via `::part(select)`.
+
+```html
+<forinda-video-device-picker
+  kind="camera"
+  placeholder="Choose camera"
+></forinda-video-device-picker>
+<script type="module">
+  document.querySelector("forinda-video-device-picker")
+    .addEventListener("change", (e) => console.log("picked", e.detail.deviceId));
+</script>
+```
+
+> Device labels are empty until at least one capture permission has been granted. Show a publisher (or call `getUserMedia` directly) before relying on labels.
+
+## Test injection
+
+Each element exposes an `overrides` JS property so you can swap factories without monkey-patching globals. Set it BEFORE the element is appended:
+
+```ts
+const el = document.createElement("forinda-video-publisher");
+el.overrides = {
+  getUserMedia: (c) => fakeStream(c),
+  signalingFactory: () => fakeSignaling(),
+  publisherFactory: () => fakePublisher(),
+};
+el.setAttribute("room", "demo");
+el.setAttribute("signaling-url", "wss://x");
+document.body.appendChild(el);
+```
+
+These hooks are intended for tests and storybook stubs — production code should leave `overrides` empty.
+
+## Behavior
+
+### Lifecycle
+
+- `connectedCallback` aborts any pending start, opens a fresh `AbortController`, and runs the start sequence: `getUserMedia` → signaling factory → core orchestrator → `start()`.
+- `disconnectedCallback` aborts, detaches all listeners, calls `.stop()` on the orchestrator, `.disconnect()` on the signaling transport, and stops every track in the local stream.
+- Re-attaching the element (move via `appendChild`) starts a fresh session.
+
+### SSR
+
+Importing `@forinda/video-sdk-elements` on the server is safe — `customElements` is feature-detected. The elements still construct (no DOM access until `connectedCallback`), so a build that loads but never renders is fine.
+
+### Shipping format
+
+- **ESM** (`./dist/index.js`) — the default for bundlers and browsers via `<script type="module">`.
+- **IIFE** (`./dist/index.global.js`, exposed as `ForindaVideoSdk`) — drop-in `<script src=…>` for no-build pages. Imports `@forinda/video-sdk-core` and `@forinda/video-sdk-signaling-ws` as `external`s, so include them first.
+
+## Pitfalls
+
+- **`signaling-url` must be a WebSocket URL.** Non-WS URLs will throw inside the signaling factory and surface as an `error` event.
+- **`ice-servers` is parsed as JSON.** Use single quotes around the attribute value to avoid escaping double quotes inside.
+- **Autoplay needs `muted`.** The element sets both by default. If you opt into `manual-play`, you must call `.play()` yourself after a user gesture.
+- **`overrides` must be set before connect.** Setting it after `connectedCallback` has already kicked off the start sequence is a no-op for that run.
+
+## License
+
+MIT — © 2026 Felix Orinda.
