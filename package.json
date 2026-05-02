@@ -33,6 +33,7 @@
     "format:check": "oxfmt --check .",
     "test": "pnpm -r --filter './packages/*' run test",
     "test:integration": "pnpm --filter @forinda/integration-tests test",
+    "load:signaling": "node tools/load-signaling.mjs",
     "dev:server": "pnpm --filter dev-signaling-server dev",
     "dev:vanilla": "pnpm --filter example-vanilla-publisher-viewer dev",
     "dev:react": "pnpm --filter example-react-publisher-viewer dev",
@@ -51,7 +52,8 @@
     "oxlint": "^0.11.0",
     "tsup": "^8.3.0",
     "typescript": "^6.0.0",
-    "wireit": "^0.14.9"
+    "wireit": "^0.14.9",
+    "ws": "^8.20.0"
   },
   "engines": {
     "node": ">=20.0.0",

@@ -32,6 +32,9 @@ importers:
       wireit:
         specifier: ^0.14.9
         version: 0.14.12
+      ws:
+        specifier: ^8.20.0
+        version: 8.20.0
 
   apps/dev-signaling-server:
     dependencies:
