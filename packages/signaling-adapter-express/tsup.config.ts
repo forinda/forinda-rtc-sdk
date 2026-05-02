@@ -10,6 +10,8 @@ export default defineConfig({
   target: "node20",
   platform: "node",
   treeshake: true,
+  external: ["ws", "express"],
+  tsconfig: "./tsconfig.build.json",
   outExtension: ({ format }) => ({ js: format === "cjs" ? ".cjs" : ".js" }),
   banner: { js: createBanner() },
 });
