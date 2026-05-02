@@ -206,6 +206,50 @@ describe("<forinda-video-publisher>", () => {
     el.remove();
   });
 
+  it("uses getDisplayMedia when source='screen'", async () => {
+    const stream = defineFakeStream();
+    const getUserMedia = vi.fn();
+    const getDisplayMedia = vi.fn().mockResolvedValue(stream);
+    const fake = defineFakePublisher();
+
+    const el = makeEl({ room: "r", "signaling-url": "wss://x", source: "screen" });
+    el.overrides = {
+      getUserMedia,
+      getDisplayMedia,
+      signalingFactory: () => defineFakeSignaling() as unknown as never,
+      publisherFactory: () => fake as unknown as never,
+    };
+    document.body.appendChild(el);
+    await new Promise<void>((r) => el.addEventListener("ready", () => r(), { once: true }));
+
+    expect(getDisplayMedia).toHaveBeenCalledWith({ audio: false, video: true });
+    expect(getUserMedia).not.toHaveBeenCalled();
+    el.remove();
+  });
+
+  it("opts into screen audio when share-audio attribute is present", async () => {
+    const stream = defineFakeStream();
+    const getDisplayMedia = vi.fn().mockResolvedValue(stream);
+    const fake = defineFakePublisher();
+
+    const el = makeEl({
+      room: "r",
+      "signaling-url": "wss://x",
+      source: "screen",
+      "share-audio": true,
+    });
+    el.overrides = {
+      getDisplayMedia,
+      signalingFactory: () => defineFakeSignaling() as unknown as never,
+      publisherFactory: () => fake as unknown as never,
+    };
+    document.body.appendChild(el);
+    await new Promise<void>((r) => el.addEventListener("ready", () => r(), { once: true }));
+
+    expect(getDisplayMedia).toHaveBeenCalledWith({ audio: true, video: true });
+    el.remove();
+  });
+
   it("tears down on disconnect: stops tracks, disconnects signaling, stops publisher", async () => {
     const stream = defineFakeStream();
     const fake = defineFakePublisher();

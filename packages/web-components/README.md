@@ -47,16 +47,18 @@ Acquires `getUserMedia`, opens a WebSocket signaling channel, and publishes one-
 
 **Attributes:**
 
-| Attribute       | Type    | Default | Description                                            |
-| --------------- | ------- | ------- | ------------------------------------------------------ |
-| `room`          | string  | —       | Required. Room id this publisher joins.                |
-| `signaling-url` | string  | —       | Required. WebSocket signaling URL.                     |
-| `peer-id`       | string  | uuid    | Optional self-identifier for the publisher.            |
-| `audio`         | boolean | implied | Capture audio. Implied if neither `audio` nor `video`. |
-| `video`         | boolean | implied | Capture video. Implied if neither `audio` nor `video`. |
-| `ice-servers`   | JSON    | `[]`    | `RTCIceServer[]` literal.                              |
-| `mirror`        | boolean | `false` | Apply `transform: scaleX(-1)` to the local preview.    |
-| `manual-play`   | boolean | `false` | Skip the default `muted/autoplay/playsInline` setup.   |
+| Attribute       | Type    | Default  | Description                                                                                   |
+| --------------- | ------- | -------- | --------------------------------------------------------------------------------------------- |
+| `room`          | string  | —        | Required. Room id this publisher joins.                                                       |
+| `signaling-url` | string  | —        | Required. WebSocket signaling URL.                                                            |
+| `peer-id`       | string  | uuid     | Optional self-identifier for the publisher.                                                   |
+| `source`        | enum    | `camera` | `camera` (uses `getUserMedia`) or `screen` (uses `getDisplayMedia`).                          |
+| `audio`         | boolean | implied  | Capture audio. Implied if neither `audio` nor `video`. Camera only.                           |
+| `video`         | boolean | implied  | Capture video. Implied if neither `audio` nor `video`. Camera only.                           |
+| `share-audio`   | boolean | `false`  | When `source="screen"`, request system audio (browsers usually require explicit user opt-in). |
+| `ice-servers`   | JSON    | `[]`     | `RTCIceServer[]` literal.                                                                     |
+| `mirror`        | boolean | `false`  | Apply `transform: scaleX(-1)` to the local preview.                                           |
+| `manual-play`   | boolean | `false`  | Skip the default `muted/autoplay/playsInline` setup.                                          |
 
 **Events** (all `CustomEvent`, do not bubble):
 
@@ -76,6 +78,19 @@ forinda-video-publisher::part(video) {
   aspect-ratio: 16 / 9;
 }
 ```
+
+**Screen sharing:**
+
+```html
+<forinda-video-publisher
+  room="demo"
+  signaling-url="wss://signal.example.com"
+  source="screen"
+  share-audio
+></forinda-video-publisher>
+```
+
+Mount a _second_ publisher element to share screen alongside camera — each gets its own `peerId`, so viewers subscribe to whichever they want.
 
 ### `<forinda-video-viewer>`
 

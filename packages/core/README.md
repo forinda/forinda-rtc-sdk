@@ -48,7 +48,7 @@ await viewer.start();
 - **Logger** — `setLogger(impl)`, default noop. Pluggable; never installs global handlers.
 - **Emitter** — typed `defineEmitter<Events>()` with `on` / `once` / `off` / `emit` / `removeAllListeners`.
 - **Errors** — `SdkError` hierarchy + re-exported `SignalingProtocolError` tree. Stable `code` strings.
-- **Media** — `getUserMedia`, `enumerateDevices`, `watchDevices`, `replaceVideoTrack`, `replaceAudioTrack`, `buildConstraints`.
+- **Media** — `getUserMedia`, `getDisplayMedia` (screen share), `enumerateDevices`, `watchDevices`, `replaceVideoTrack`, `replaceAudioTrack`, `buildConstraints`.
 - **Peer** — `definePeerConnection`, `defineNegotiator` (perfect-negotiation pattern), `normalizeIceServers`, SDP read helpers.
 - **Stats** — `defineStatsCollector` polling wrapper + `normalizeStats` reducer + `ConnectionStats` flat shape.
 - **Signaling** — `SignalingTransport` interface + re-exported wire-format types.

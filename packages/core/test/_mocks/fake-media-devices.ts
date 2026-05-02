@@ -9,16 +9,21 @@ import { vi } from "vitest";
  */
 export function installFakeMediaDevices(): {
   getUserMedia: ReturnType<typeof vi.fn>;
+  getDisplayMedia: ReturnType<typeof vi.fn>;
   enumerateDevices: ReturnType<typeof vi.fn>;
   fireDeviceChange: () => void;
   cleanup: () => void;
 } {
   const getUserMedia = vi.fn<(c: MediaStreamConstraints) => Promise<MediaStream>>();
+  const getDisplayMedia = vi.fn<(c: DisplayMediaStreamOptions) => Promise<MediaStream>>();
   const enumerateDevices = vi.fn<() => Promise<MediaDeviceInfo[]>>();
   const listeners = new Set<() => void>();
 
-  const fake: Partial<MediaDevices> = {
+  const fake: Partial<MediaDevices> & {
+    getDisplayMedia: (c: DisplayMediaStreamOptions) => Promise<MediaStream>;
+  } = {
     getUserMedia,
+    getDisplayMedia,
     enumerateDevices,
     addEventListener: ((event: string, handler: EventListener) => {
       if (event === "devicechange") listeners.add(handler as () => void);
@@ -36,6 +41,7 @@ export function installFakeMediaDevices(): {
 
   return {
     getUserMedia,
+    getDisplayMedia,
     enumerateDevices,
     fireDeviceChange: () => {
       for (const listener of listeners) listener();

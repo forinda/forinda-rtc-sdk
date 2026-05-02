@@ -29,6 +29,21 @@ function mountPublisher(): void {
   slot.appendChild(pub);
 }
 
+function mountScreenPublisher(): void {
+  const pub = document.createElement("forinda-video-publisher");
+  pub.setAttribute("room", ROOM);
+  pub.setAttribute("signaling-url", SIGNALING_URL);
+  pub.setAttribute("source", "screen");
+  pub.addEventListener("ready", (e) => {
+    const detail = (e as CustomEvent<{ publisher: { peerId: string } }>).detail;
+    setStatus(`screen publisher ready — peerId=${detail.publisher.peerId}`);
+  });
+  pub.addEventListener("error", (e) => {
+    setStatus(`screen error: ${(e as unknown as CustomEvent<Error>).detail.message}`);
+  });
+  slot.appendChild(pub);
+}
+
 function mountViewer(publisherId: string): void {
   slot.replaceChildren();
   const view = document.createElement("forinda-video-viewer");
@@ -43,6 +58,7 @@ function mountViewer(publisherId: string): void {
 }
 
 document.querySelector("#publish-btn")!.addEventListener("click", mountPublisher);
+document.querySelector("#share-btn")!.addEventListener("click", mountScreenPublisher);
 document.querySelector("#view-btn")!.addEventListener("click", () => {
   if (pubInput.value) mountViewer(pubInput.value);
 });

@@ -55,6 +55,21 @@ const { stream, error, state, refresh, stop } = useUserMedia({ audio: true, vide
 
 Cleans up tracks on unmount; uses `AbortController` so StrictMode double-mount in dev is idempotent. SSR-safe (returns `{ stream: null, state: "idle" }` on the server).
 
+### `useDisplayMedia(opts?)`
+
+Request a screen-share `MediaStream` via `getDisplayMedia`. Defaults to **manual start** (most apps want a button click), with `{ autoStart: true }` to open the picker on mount.
+
+```ts
+const { stream, state, start, stop } = useDisplayMedia();
+// state: "idle" | "requesting" | "granted" | "denied" | "ended" | "error"
+
+await start(); // opens browser picker
+// later:
+publisher?.replaceVideoTrack(stream!.getVideoTracks()[0]); // swap into existing publisher
+```
+
+The `"ended"` state fires when the user clicks the browser's own "Stop sharing" pill — wire it to swap back to the camera or unmount.
+
 ### `useDevices()`
 
 Subscribe to camera/mic/speaker enumeration with hotplug auto-refresh.

@@ -63,6 +63,7 @@ export {
 // Media
 export { buildConstraints, type CaptureOptions } from "./media/constraints.ts";
 export { getUserMedia } from "./media/user-media.ts";
+export { getDisplayMedia, type DisplayCaptureOptions } from "./media/display-media.ts";
 export { enumerateDevices, watchDevices, type DeviceList } from "./media/devices.ts";
 export { replaceAudioTrack, replaceVideoTrack } from "./media/track-replacer.ts";
 

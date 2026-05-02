@@ -32,11 +32,12 @@
     <h1>Web Components publisher / viewer</h1>
     <div class="row">
       <button id="publish-btn" type="button">Publish</button>
+      <button id="share-btn" type="button">Share screen</button>
       <input id="pub-id" type="text" placeholder="publisher peerId" />
       <button id="view-btn" type="button">View</button>
       <forinda-video-device-picker kind="camera" placeholder="Camera"></forinda-video-device-picker>
     </div>
-    <div id="slot"></div>
+    <div id="slot" style="display: flex; flex-wrap: wrap; gap: 1rem"></div>
     <p id="status">choose a role…</p>
     <script type="module" src="/src/main.ts"></script>
   </body>

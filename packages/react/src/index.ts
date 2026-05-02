@@ -7,6 +7,12 @@
 export { VideoSdkProvider, useVideoSdkConfig, type VideoSdkConfig } from "./provider.tsx";
 
 export { useUserMedia, type UseUserMediaResult, type UserMediaState } from "./use-user-media.ts";
+export {
+  useDisplayMedia,
+  type UseDisplayMediaOptions,
+  type UseDisplayMediaResult,
+  type DisplayMediaState,
+} from "./use-display-media.ts";
 export { useDevices, type UseDevicesResult } from "./use-devices.ts";
 export {
   usePublisher,

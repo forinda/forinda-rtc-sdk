@@ -33,13 +33,16 @@ import { defineWebSocketSignaling } from "@forinda/video-sdk-signaling-ws";
 import { readBoolean, readJson, readString } from "@/internal/attrs.ts";
 import { dispatchTypedEvent } from "@/internal/send-event.ts";
 
+export type PublisherSource = "camera" | "screen";
+
 /**
  * Injection points for tests. Production usage leaves these undefined and the
- * element falls back to native `getUserMedia`, the WS signaling factory, and
- * `definePublisher`.
+ * element falls back to native `getUserMedia` / `getDisplayMedia`, the WS
+ * signaling factory, and `definePublisher`.
  */
 export interface PublisherElementOverrides {
   getUserMedia?: (constraints: MediaStreamConstraints) => Promise<MediaStream>;
+  getDisplayMedia?: (constraints: DisplayMediaStreamOptions) => Promise<MediaStream>;
   signalingFactory?: (url: string) => SignalingTransport;
   publisherFactory?: (options: PublisherOptions) => Publisher;
 }
@@ -115,20 +118,12 @@ export class ForindaVideoPublisher extends HTMLElement {
       return;
     }
 
-    const wantsAudio = readBoolean(this, "audio");
-    const wantsVideo = readBoolean(this, "video");
-    const noneSpecified = !wantsAudio && !wantsVideo;
-    const constraints: MediaStreamConstraints = {
-      audio: wantsAudio || noneSpecified,
-      video: wantsVideo || noneSpecified,
-    };
+    const source = (readString(this, "source") ?? "camera") as PublisherSource;
     const iceServers = readJson<RTCIceServer[]>(this, "ice-servers", []);
     const peerId = readString(this, "peer-id") ?? undefined;
 
     try {
-      const getUserMedia =
-        this.overrides.getUserMedia ?? ((c) => navigator.mediaDevices.getUserMedia(c));
-      const stream = await getUserMedia(constraints);
+      const stream = await this.acquireStream(source);
       if (signal.aborted) {
         stream.getTracks().forEach((t) => t.stop());
         return;
@@ -180,6 +175,32 @@ export class ForindaVideoPublisher extends HTMLElement {
     this.stream?.getTracks().forEach((t) => t.stop());
     this.stream = null;
     this.videoEl.srcObject = null;
+  }
+
+  private async acquireStream(source: PublisherSource): Promise<MediaStream> {
+    if (source === "screen") {
+      const shareAudio = readBoolean(this, "share-audio");
+      const getDisplayMedia =
+        this.overrides.getDisplayMedia ??
+        ((c) =>
+          (
+            navigator.mediaDevices as MediaDevices & {
+              getDisplayMedia: (c: DisplayMediaStreamOptions) => Promise<MediaStream>;
+            }
+          ).getDisplayMedia(c));
+      return getDisplayMedia({ audio: shareAudio, video: true });
+    }
+
+    const wantsAudio = readBoolean(this, "audio");
+    const wantsVideo = readBoolean(this, "video");
+    const noneSpecified = !wantsAudio && !wantsVideo;
+    const constraints: MediaStreamConstraints = {
+      audio: wantsAudio || noneSpecified,
+      video: wantsVideo || noneSpecified,
+    };
+    const getUserMedia =
+      this.overrides.getUserMedia ?? ((c) => navigator.mediaDevices.getUserMedia(c));
+    return getUserMedia(constraints);
   }
 
   private emitError(err: unknown): void {
