@@ -55,6 +55,7 @@ export default defineConfig({
             { text: "Architecture", link: "/cookbook/architecture" },
             { text: "Patterns", link: "/cookbook/patterns" },
             { text: "SFU integration", link: "/cookbook/sfu-integration" },
+            { text: "Flask / Django backends", link: "/cookbook/python-backends" },
             { text: "Troubleshooting", link: "/cookbook/troubleshooting" },
           ],
         },

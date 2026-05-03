@@ -46,7 +46,8 @@
         "../docs/architecture.md",
         "../docs/patterns.md",
         "../docs/sfu-integration.md",
-        "../docs/troubleshooting.md"
+        "../docs/troubleshooting.md",
+        "../docs/integrations/*.md"
       ],
       "output": [
         ".vitepress/dist/**"
