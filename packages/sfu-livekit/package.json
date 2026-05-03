@@ -2,26 +2,47 @@
   "name": "@forinda/video-sdk-sfu-livekit",
   "version": "0.0.0",
   "description": "LiveKit SFU adapter for the Forinda RTC SDK — same Publisher/Viewer surface, routed through LiveKit Cloud or self-hosted",
-  "keywords": ["livekit", "rtc", "sdk", "sfu", "video", "webrtc"],
+  "keywords": [
+    "livekit",
+    "rtc",
+    "sdk",
+    "sfu",
+    "video",
+    "webrtc"
+  ],
   "homepage": "https://github.com/forinda/forinda-rtc-sdk#readme",
-  "bugs": { "url": "https://github.com/forinda/forinda-rtc-sdk/issues" },
+  "bugs": {
+    "url": "https://github.com/forinda/forinda-rtc-sdk/issues"
+  },
   "license": "MIT",
-  "author": { "name": "Felix Orinda", "email": "forinda82@gmail.com" },
+  "author": {
+    "name": "Felix Orinda",
+    "email": "forinda82@gmail.com"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/forinda/forinda-rtc-sdk.git",
     "directory": "packages/sfu-livekit"
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./package.json": "./package.json"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "wireit",
     "typecheck": "wireit",
@@ -30,10 +51,6 @@
   },
   "dependencies": {
     "@forinda/video-sdk-core": "workspace:*"
-  },
-  "peerDependencies": {
-    "@forinda/video-sdk-core": "workspace:*",
-    "livekit-client": "^2.18.0"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.0",
@@ -45,7 +62,13 @@
     "vitest": "^2.1.0",
     "wireit": "^0.14.9"
   },
-  "engines": { "node": ">=20.0.0" },
+  "peerDependencies": {
+    "@forinda/video-sdk-core": "workspace:*",
+    "livekit-client": "^2.18.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "wireit": {
     "build": {
       "command": "tsup",
@@ -56,19 +79,33 @@
         "tsconfig.build.json",
         "../../tsconfig.base.json"
       ],
-      "output": ["dist/**"],
+      "output": [
+        "dist/**"
+      ],
       "clean": "if-file-deleted",
-      "dependencies": ["../core:build"]
+      "dependencies": [
+        "../core:build"
+      ]
     },
     "typecheck": {
       "command": "tsc --noEmit",
-      "files": ["src/**/*.ts", "test/**/*.ts", "tsconfig.json", "../../tsconfig.base.json"],
+      "files": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "tsconfig.json",
+        "../../tsconfig.base.json"
+      ],
       "output": [],
-      "dependencies": ["../core:build"]
+      "dependencies": [
+        "../core:build"
+      ]
     },
     "lint": {
       "command": "oxlint src",
-      "files": ["src/**/*.ts", "../../oxlint.json"],
+      "files": [
+        "src/**/*.ts",
+        "../../oxlint.json"
+      ],
       "output": []
     },
     "test": {
@@ -81,7 +118,9 @@
         "../../tsconfig.base.json"
       ],
       "output": [],
-      "dependencies": ["../core:build"]
+      "dependencies": [
+        "../core:build"
+      ]
     }
   }
 }

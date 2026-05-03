@@ -29,38 +29,39 @@
 
 ## File structure
 
-| File | Responsibility |
-| --- | --- |
-| `packages/sfu-livekit/package.json` | New package; peer deps `livekit-client@^2.18`. Wireit build/typecheck/test/lint. |
-| `packages/sfu-livekit/tsconfig.json`, `tsconfig.build.json` | Standard split — IDE-wide includes test/ + types; build excludes them. |
-| `packages/sfu-livekit/tsup.config.ts` | ESM-only, minified, `livekit-client` external. |
-| `packages/sfu-livekit/vitest.config.ts` | jsdom env. |
-| `packages/sfu-livekit/src/types.ts` | `SfuPublisher`, `SfuPublisherOptions`, `SfuViewer`, `SfuViewerOptions`, `SfuConnectionState`, `SfuPublisherEvents`, `SfuViewerEvents`. |
-| `packages/sfu-livekit/src/errors.ts` | `SfuError extends SdkError` with codes `sfu_connect_failed`, `sfu_publish_failed`, `sfu_token_invalid`, `sfu_disconnected`. |
-| `packages/sfu-livekit/src/publisher.ts` | `defineSfuPublisher(opts)`. Connects to LiveKit Room, publishes the stream's tracks, exposes typed events. |
-| `packages/sfu-livekit/src/viewer.ts` | `defineSfuViewer({ ..., publisherId })`. Connects, subscribes only to the named participant, emits `track`. |
-| `packages/sfu-livekit/src/internal/lifecycle.ts` | Shared LiveKit `Room` connect + reconnect bridging into our state machine. |
-| `packages/sfu-livekit/src/index.ts` | Re-exports. |
-| `packages/sfu-livekit/test/_helpers/fake-livekit.ts` | Hand-rolled fake `Room` / `LocalParticipant` / `Track`. |
-| `packages/sfu-livekit/test/unit/publisher.test.ts` | publish flow + event surface. |
-| `packages/sfu-livekit/test/unit/viewer.test.ts` | subscribe filter + track event. |
-| `packages/sfu-livekit/test/unit/lifecycle.test.ts` | connect / disconnect / token error mapping. |
-| `packages/sfu-livekit/README.md` | Install + getting LiveKit + minting tokens (Node snippet) + basic usage + bundle note. |
-| `packages/react/src/use-sfu-publisher.ts` | React hook mirroring `usePublisher` shape but routed through SFU. |
-| `packages/react/src/use-sfu-viewer.ts` | Mirror of `useViewer`. |
-| `packages/react/test/unit/use-sfu-publisher.test.tsx`, `use-sfu-viewer.test.tsx` | Mocked SFU package. |
-| `packages/vue/src/use-sfu-publisher.ts`, `use-sfu-viewer.ts` | Vue parity. |
-| `packages/vue/test/unit/use-sfu-publisher.test.ts`, `use-sfu-viewer.test.ts` | Same. |
-| `examples/livekit-sfu-publisher-viewer/` | Vite + React + LiveKit Cloud snippet. |
-| `docs/sfu-integration.md` | When to use SFU, two-transport model, mesh→SFU migration, token minting. |
-| Root `package.json` | Add `dev:sfu` script for the new example. |
-| `.changeset/sfu-livekit.md` | minor for `react` + `vue`; `0.1.0` initial release for `sfu-livekit`. |
+| File                                                                             | Responsibility                                                                                                                         |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/sfu-livekit/package.json`                                              | New package; peer deps `livekit-client@^2.18`. Wireit build/typecheck/test/lint.                                                       |
+| `packages/sfu-livekit/tsconfig.json`, `tsconfig.build.json`                      | Standard split — IDE-wide includes test/ + types; build excludes them.                                                                 |
+| `packages/sfu-livekit/tsup.config.ts`                                            | ESM-only, minified, `livekit-client` external.                                                                                         |
+| `packages/sfu-livekit/vitest.config.ts`                                          | jsdom env.                                                                                                                             |
+| `packages/sfu-livekit/src/types.ts`                                              | `SfuPublisher`, `SfuPublisherOptions`, `SfuViewer`, `SfuViewerOptions`, `SfuConnectionState`, `SfuPublisherEvents`, `SfuViewerEvents`. |
+| `packages/sfu-livekit/src/errors.ts`                                             | `SfuError extends SdkError` with codes `sfu_connect_failed`, `sfu_publish_failed`, `sfu_token_invalid`, `sfu_disconnected`.            |
+| `packages/sfu-livekit/src/publisher.ts`                                          | `defineSfuPublisher(opts)`. Connects to LiveKit Room, publishes the stream's tracks, exposes typed events.                             |
+| `packages/sfu-livekit/src/viewer.ts`                                             | `defineSfuViewer({ ..., publisherId })`. Connects, subscribes only to the named participant, emits `track`.                            |
+| `packages/sfu-livekit/src/internal/lifecycle.ts`                                 | Shared LiveKit `Room` connect + reconnect bridging into our state machine.                                                             |
+| `packages/sfu-livekit/src/index.ts`                                              | Re-exports.                                                                                                                            |
+| `packages/sfu-livekit/test/_helpers/fake-livekit.ts`                             | Hand-rolled fake `Room` / `LocalParticipant` / `Track`.                                                                                |
+| `packages/sfu-livekit/test/unit/publisher.test.ts`                               | publish flow + event surface.                                                                                                          |
+| `packages/sfu-livekit/test/unit/viewer.test.ts`                                  | subscribe filter + track event.                                                                                                        |
+| `packages/sfu-livekit/test/unit/lifecycle.test.ts`                               | connect / disconnect / token error mapping.                                                                                            |
+| `packages/sfu-livekit/README.md`                                                 | Install + getting LiveKit + minting tokens (Node snippet) + basic usage + bundle note.                                                 |
+| `packages/react/src/use-sfu-publisher.ts`                                        | React hook mirroring `usePublisher` shape but routed through SFU.                                                                      |
+| `packages/react/src/use-sfu-viewer.ts`                                           | Mirror of `useViewer`.                                                                                                                 |
+| `packages/react/test/unit/use-sfu-publisher.test.tsx`, `use-sfu-viewer.test.tsx` | Mocked SFU package.                                                                                                                    |
+| `packages/vue/src/use-sfu-publisher.ts`, `use-sfu-viewer.ts`                     | Vue parity.                                                                                                                            |
+| `packages/vue/test/unit/use-sfu-publisher.test.ts`, `use-sfu-viewer.test.ts`     | Same.                                                                                                                                  |
+| `examples/livekit-sfu-publisher-viewer/`                                         | Vite + React + LiveKit Cloud snippet.                                                                                                  |
+| `docs/sfu-integration.md`                                                        | When to use SFU, two-transport model, mesh→SFU migration, token minting.                                                               |
+| Root `package.json`                                                              | Add `dev:sfu` script for the new example.                                                                                              |
+| `.changeset/sfu-livekit.md`                                                      | minor for `react` + `vue`; `0.1.0` initial release for `sfu-livekit`.                                                                  |
 
 ---
 
 ## Task 1: Scaffold the `sfu-livekit` package
 
 **Files:**
+
 - Create: `packages/sfu-livekit/package.json`
 - Create: `packages/sfu-livekit/tsconfig.json`
 - Create: `packages/sfu-livekit/tsconfig.build.json`
@@ -271,6 +272,7 @@ git commit -m "feat(sfu-livekit): scaffold package (EPIC-14 #1/11)"
 ## Task 2: Types + errors
 
 **Files:**
+
 - Create: `packages/sfu-livekit/src/types.ts`
 - Create: `packages/sfu-livekit/src/errors.ts`
 
@@ -310,11 +312,7 @@ export type SfuErrorCode =
  * `Publisher` / `Viewer` shape so swapping mesh→SFU is one factory call.
  */
 
-import type {
-  ConnectionStats,
-  RetryConfig,
-  SdkError,
-} from "@forinda/video-sdk-core";
+import type { ConnectionStats, RetryConfig, SdkError } from "@forinda/video-sdk-core";
 
 /** Lifecycle vocabulary. Identical to core's `ConnectionState` minus `failed`/`reconnecting` (LiveKit handles its own reconnect internally). */
 export type SfuConnectionState = "idle" | "connecting" | "connected" | "closed";
@@ -438,6 +436,7 @@ git commit -m "feat(sfu-livekit): public types + SfuError (EPIC-14 #2/11)"
 ## Task 3: Fake LiveKit fixture for tests
 
 **Files:**
+
 - Create: `packages/sfu-livekit/test/_helpers/fake-livekit.ts`
 
 LiveKit's full type surface is large. The package only uses a small slice — `Room`, `RoomEvent`, `LocalParticipant`, `RemoteParticipant`, `Track`. Build a fake covering exactly that slice so unit tests don't pull in the real client (which makes WebSocket calls).
@@ -505,7 +504,9 @@ export function defineFakeRoom(localIdentity = "alice"): FakeRoom {
     state: "disconnected",
     localParticipant: {
       identity: localIdentity,
-      publishTrack: vi.fn(async (_track: MediaStreamTrack) => ({ trackSid: "sid-" + Math.random() })),
+      publishTrack: vi.fn(async (_track: MediaStreamTrack) => ({
+        trackSid: "sid-" + Math.random(),
+      })),
       unpublishTrack: vi.fn(async () => {}),
     },
     remoteParticipants: new Map(),
@@ -568,6 +569,7 @@ git commit -m "test(sfu-livekit): fake LiveKit fixture (EPIC-14 #3/11)"
 ## Task 4: `defineSfuPublisher`
 
 **Files:**
+
 - Create: `packages/sfu-livekit/src/internal/lifecycle.ts`
 - Create: `packages/sfu-livekit/src/publisher.ts`
 - Modify: `packages/sfu-livekit/src/index.ts`
@@ -587,11 +589,10 @@ let fakeRoom: FakeRoom;
 const fakeStream = (): MediaStream =>
   ({
     id: "fake-stream",
-    getTracks: () =>
-      [
-        { kind: "video", stop: vi.fn() } as unknown as MediaStreamTrack,
-        { kind: "audio", stop: vi.fn() } as unknown as MediaStreamTrack,
-      ],
+    getTracks: () => [
+      { kind: "video", stop: vi.fn() } as unknown as MediaStreamTrack,
+      { kind: "audio", stop: vi.fn() } as unknown as MediaStreamTrack,
+    ],
     getVideoTracks: () => [{ kind: "video", stop: vi.fn() } as unknown as MediaStreamTrack],
     getAudioTracks: () => [{ kind: "audio", stop: vi.fn() } as unknown as MediaStreamTrack],
   }) as unknown as MediaStream;
@@ -710,7 +711,7 @@ export function mapLiveKitState(state: string): SfuConnectionState {
 
 - [ ] **Step 4: Create `publisher.ts`**
 
-```ts
+````ts
 /**
  * `defineSfuPublisher` — wrap LiveKit's `Room` + `LocalParticipant` to
  * publish a `MediaStream`'s tracks under a stable peer identity, with a
@@ -851,9 +852,7 @@ class SfuPublisherImpl implements SfuPublisher {
  * Internal: open a LiveKit `Room`. Real path uses `new Room()` from
  * `livekit-client`; tests inject a fake via `__roomFactory`.
  */
-function openRoom(
-  opts: InternalSfuPublisherOptions,
-): {
+function openRoom(opts: InternalSfuPublisherOptions): {
   state: string;
   localParticipant: {
     identity: string;
@@ -894,7 +893,7 @@ function openRoom(
 export function defineSfuPublisher(opts: SfuPublisherOptions): SfuPublisher {
   return new SfuPublisherImpl(opts);
 }
-```
+````
 
 - [ ] **Step 5: Re-export from `index.ts`**
 
@@ -934,6 +933,7 @@ git commit -m "feat(sfu-livekit): defineSfuPublisher (EPIC-14 #4/11)"
 ## Task 5: `defineSfuViewer`
 
 **Files:**
+
 - Create: `packages/sfu-livekit/src/viewer.ts`
 - Modify: `packages/sfu-livekit/src/index.ts`
 - Test: `packages/sfu-livekit/test/unit/viewer.test.ts`
@@ -1037,7 +1037,7 @@ Expected: viewer test failures (publisher passes from Task 4).
 
 - [ ] **Step 3: Create `viewer.ts`**
 
-```ts
+````ts
 /**
  * `defineSfuViewer` — subscribe to one specific publisher in a LiveKit
  * room and expose its tracks as a single `MediaStream`.
@@ -1050,12 +1050,7 @@ Expected: viewer test failures (publisher passes from Task 4).
 
 import { defineEmitter, type Emitter, SdkError } from "@forinda/video-sdk-core";
 import { SfuError } from "./errors.ts";
-import type {
-  SfuConnectionState,
-  SfuViewer,
-  SfuViewerEvents,
-  SfuViewerOptions,
-} from "./types.ts";
+import type { SfuConnectionState, SfuViewer, SfuViewerEvents, SfuViewerOptions } from "./types.ts";
 
 type RoomFactory = (opts: { token: string; url: string }) => unknown;
 
@@ -1124,16 +1119,30 @@ class SfuViewerImpl implements SfuViewer {
   }
 
   private attachListeners(room: ReturnType<typeof openRoom>): void {
-    room.on("TrackSubscribed", (track: { mediaStreamTrack: MediaStreamTrack }, _publication: unknown, participant: { identity: string }) => {
-      if (participant.identity !== this.opts.publisherId) return;
-      if (this.currentStream === null) this.currentStream = new MediaStream();
-      this.currentStream.addTrack(track.mediaStreamTrack);
-      this.emitter.emit("track", { stream: this.currentStream, track: track.mediaStreamTrack });
-    });
-    room.on("TrackUnsubscribed", (track: { mediaStreamTrack: MediaStreamTrack }, _publication: unknown, participant: { identity: string }) => {
-      if (participant.identity !== this.opts.publisherId) return;
-      if (this.currentStream) this.currentStream.removeTrack(track.mediaStreamTrack);
-    });
+    room.on(
+      "TrackSubscribed",
+      (
+        track: { mediaStreamTrack: MediaStreamTrack },
+        _publication: unknown,
+        participant: { identity: string },
+      ) => {
+        if (participant.identity !== this.opts.publisherId) return;
+        if (this.currentStream === null) this.currentStream = new MediaStream();
+        this.currentStream.addTrack(track.mediaStreamTrack);
+        this.emitter.emit("track", { stream: this.currentStream, track: track.mediaStreamTrack });
+      },
+    );
+    room.on(
+      "TrackUnsubscribed",
+      (
+        track: { mediaStreamTrack: MediaStreamTrack },
+        _publication: unknown,
+        participant: { identity: string },
+      ) => {
+        if (participant.identity !== this.opts.publisherId) return;
+        if (this.currentStream) this.currentStream.removeTrack(track.mediaStreamTrack);
+      },
+    );
     room.on("Disconnected", () => {
       if (this.currentState !== "closed") {
         this.emitter.emit(
@@ -1192,7 +1201,7 @@ function realOpenRoom(): {
 export function defineSfuViewer(opts: SfuViewerOptions): SfuViewer {
   return new SfuViewerImpl(opts);
 }
-```
+````
 
 - [ ] **Step 4: Re-export from `index.ts`**
 
@@ -1231,6 +1240,7 @@ git commit -m "feat(sfu-livekit): defineSfuViewer (EPIC-14 #5/11)"
 ## Task 6: Lifecycle / connect-error tests
 
 **Files:**
+
 - Test: `packages/sfu-livekit/test/unit/lifecycle.test.ts`
 
 - [ ] **Step 1: Write the test**
@@ -1336,6 +1346,7 @@ git commit -m "test(sfu-livekit): lifecycle + error mapping coverage (EPIC-14 #6
 ## Task 7: React `useSfuPublisher` + `useSfuViewer`
 
 **Files:**
+
 - Create: `packages/react/src/use-sfu-publisher.ts`
 - Create: `packages/react/src/use-sfu-viewer.ts`
 - Modify: `packages/react/src/index.ts`
@@ -1721,6 +1732,7 @@ git commit -m "feat(react): useSfuPublisher + useSfuViewer (EPIC-14 #7/11)"
 ## Task 8: Vue `useSfuPublisher` + `useSfuViewer`
 
 **Files:**
+
 - Create: `packages/vue/src/use-sfu-publisher.ts`
 - Create: `packages/vue/src/use-sfu-viewer.ts`
 - Modify: `packages/vue/src/index.ts`
@@ -2062,6 +2074,7 @@ git commit -m "feat(vue): useSfuPublisher + useSfuViewer (EPIC-14 #8/11)"
 ## Task 9: SFU integration docs
 
 **Files:**
+
 - Create: `docs/sfu-integration.md`
 - Modify: `README.md` (add link)
 
@@ -2074,27 +2087,28 @@ When mesh hits its ceiling (~6-8 viewers per publisher on residential uplinks), 
 
 ## When to use SFU
 
-| Scale / shape | Use |
-| --- | --- |
-| 1-on-1 / small group (≤ 6 peers, full mesh) | `definePublisher` / `defineViewer` over our WebSocket signaling. |
-| 1-publisher webinar (1 → N viewers) | SFU. Mesh would force the publisher to upload N copies. |
-| Town-hall (2-3 publishers, many viewers) | SFU. Same reason. |
-| Recording at scale, server-side | SFU + LiveKit's egress (out of scope here — use LiveKit's API directly). |
+| Scale / shape                               | Use                                                                      |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
+| 1-on-1 / small group (≤ 6 peers, full mesh) | `definePublisher` / `defineViewer` over our WebSocket signaling.         |
+| 1-publisher webinar (1 → N viewers)         | SFU. Mesh would force the publisher to upload N copies.                  |
+| Town-hall (2-3 publishers, many viewers)    | SFU. Same reason.                                                        |
+| Recording at scale, server-side             | SFU + LiveKit's egress (out of scope here — use LiveKit's API directly). |
 
 ## Two-transport model
 
 The SFU adapter only handles **media** (publish + subscribe). Chat, presence, raise-hand, recording metadata, moderation — all of those continue to ride **our own WebSocket signaling** via `defineRoomChannel`. So a typical SFU app has two transports:
+```
 
-```
-   ┌──────────────────────────┐
-   │ App                      │
-   │                          │
-   │  defineSfuPublisher  ───►│ ws://lk.example.com   ←── LiveKit Cloud / self-host
-   │                          │
-   │  defineRoomChannel   ───►│ wss://signal.app/ws   ←── Our signaling-server
-   │  defineRecorder          │
-   └──────────────────────────┘
-```
+┌──────────────────────────┐
+│ App │
+│ │
+│ defineSfuPublisher ───►│ ws://lk.example.com ←── LiveKit Cloud / self-host
+│ │
+│ defineRoomChannel ───►│ wss://signal.app/ws ←── Our signaling-server
+│ defineRecorder │
+└──────────────────────────┘
+
+````
 
 ## Setting up LiveKit
 
@@ -2115,7 +2129,7 @@ const token = new AccessToken(process.env.LK_API_KEY, process.env.LK_API_SECRET,
 });
 token.addGrant({ roomJoin: true, room: roomName, canPublish: true, canSubscribe: true });
 return token.toJwt();
-```
+````
 
 The browser passes this JWT to `defineSfuPublisher({ token })` — never store the API secret in browser code.
 
@@ -2225,13 +2239,14 @@ If you only use mesh, never install either and your bundle stays slim.
 
 ## Troubleshooting
 
-| Code | Meaning |
-| --- | --- |
-| `sfu_token_invalid` | Token expired, malformed, or doesn't grant the requested room. Check the `AccessToken` minting code. |
-| `sfu_connect_failed` | Couldn't reach the LiveKit websocket. Network / firewall / wrong URL. |
-| `sfu_publish_failed` | `LocalParticipant.publishTrack` rejected. Usually codec or device permissions. |
-| `sfu_disconnected` | Room dropped mid-session. LiveKit handles its own reconnect; surface the error to the user. |
-```
+| Code                 | Meaning                                                                                              |
+| -------------------- | ---------------------------------------------------------------------------------------------------- |
+| `sfu_token_invalid`  | Token expired, malformed, or doesn't grant the requested room. Check the `AccessToken` minting code. |
+| `sfu_connect_failed` | Couldn't reach the LiveKit websocket. Network / firewall / wrong URL.                                |
+| `sfu_publish_failed` | `LocalParticipant.publishTrack` rejected. Usually codec or device permissions.                       |
+| `sfu_disconnected`   | Room dropped mid-session. LiveKit handles its own reconnect; surface the error to the user.          |
+
+````
 
 - [ ] **Step 2: Link from root README**
 
@@ -2239,7 +2254,7 @@ In the "Documentation" section, add a fourth bullet:
 
 ```markdown
 - **[`docs/sfu-integration.md`](docs/sfu-integration.md)** — when to use the LiveKit SFU adapter, two-transport model, mesh→SFU migration.
-```
+````
 
 - [ ] **Step 3: Format**
 
@@ -2261,6 +2276,7 @@ git commit -m "docs(EPIC-14): SFU integration guide (EPIC-14 #9/11)"
 ## Task 10: LiveKit SFU example app
 
 **Files:**
+
 - Create: `examples/livekit-sfu-publisher-viewer/package.json`
 - Create: `examples/livekit-sfu-publisher-viewer/index.html`
 - Create: `examples/livekit-sfu-publisher-viewer/vite.config.ts`
@@ -2416,7 +2432,9 @@ function Publisher({ token }: { token: string }): JSX.Element {
       <VideoView stream={stream} muted autoPlay playsInline mirror style={style.video} />
       <p>state: {state}</p>
       <p>viewers: {viewers.length}</p>
-      <p>peerId: <code>{publisher?.peerId ?? "—"}</code></p>
+      <p>
+        peerId: <code>{publisher?.peerId ?? "—"}</code>
+      </p>
     </section>
   );
 }
@@ -2500,6 +2518,7 @@ git commit -m "feat(examples): LiveKit SFU publisher/viewer example (EPIC-14 #10
 ## Task 11: Workspace verify, README, changeset, tag
 
 **Files:**
+
 - Modify: `README.md` (Packages table + roadmap pointer)
 - Create: `.changeset/sfu-livekit.md`
 
@@ -2508,7 +2527,7 @@ git commit -m "feat(examples): LiveKit SFU publisher/viewer example (EPIC-14 #10
 Find the `Packages` table and append the SFU row in the right place (alphabetical-ish):
 
 ```markdown
-| `@forinda/video-sdk-sfu-livekit`               | LiveKit SFU adapter — same Publisher/Viewer surface, routed through LiveKit Cloud or self-host.                              |
+| `@forinda/video-sdk-sfu-livekit` | LiveKit SFU adapter — same Publisher/Viewer surface, routed through LiveKit Cloud or self-host. |
 ```
 
 Update the "Status & scope" paragraph if it still says "SFU integration is on the roadmap" — replace with "SFU integration ships via the optional `@forinda/video-sdk-sfu-livekit` adapter; mesh remains the default for ≤8-viewer rooms."
@@ -2569,12 +2588,14 @@ git tag -a v0.0.0-epic-14 -m "EPIC-14: LiveKit SFU adapter"
 - ✅ Workspace + CI all green — Task 11.
 
 **Out of scope (explicit, documented in `docs/sfu-integration.md`):**
+
 - Server-side recording (LiveKit egress) — adopters call LiveKit's API directly.
 - Simulcast / SVC tuning — passthrough to client defaults.
 - LiveKit-flavored chat / data channels — our chat layer remains the recommendation.
 - Bridging our signaling to LiveKit's signaling — explicitly NOT building.
 
 **Type consistency:**
+
 - `SfuConnectionState` defined once; reused by publisher + viewer + adapter hooks.
 - `SfuError` extends `SdkError` so `instanceof SdkError + e.code` works for both mesh and SFU consumers.
 - React hook + Vue composable APIs match field-for-field.

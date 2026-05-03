@@ -67,6 +67,43 @@ importers:
         specifier: ^6.0.0
         version: 6.0.3
 
+  examples/livekit-sfu-publisher-viewer:
+    dependencies:
+      '@forinda/video-sdk-core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@forinda/video-sdk-react':
+        specifier: workspace:*
+        version: link:../../packages/react
+      '@forinda/video-sdk-sfu-livekit':
+        specifier: workspace:*
+        version: link:../../packages/sfu-livekit
+      livekit-client:
+        specifier: ^2.18.0
+        version: 2.18.8(@types/dom-mediacapture-record@1.0.22)
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.28
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.7(@types/react@18.3.28)
+      '@vitejs/plugin-react':
+        specifier: ^6.0.0
+        version: 6.0.1(vite@8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0))
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+      vite:
+        specifier: ^8.0.0
+        version: 8.0.10(@types/node@22.19.17)(esbuild@0.27.7)(tsx@4.21.0)
+
   examples/react-publisher-viewer:
     dependencies:
       '@forinda/video-sdk-core':

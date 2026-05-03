@@ -10,12 +10,7 @@
 
 import { defineEmitter, type Emitter, SdkError } from "@forinda/video-sdk-core";
 import { SfuError } from "./errors.ts";
-import type {
-  SfuConnectionState,
-  SfuViewer,
-  SfuViewerEvents,
-  SfuViewerOptions,
-} from "./types.ts";
+import type { SfuConnectionState, SfuViewer, SfuViewerEvents, SfuViewerOptions } from "./types.ts";
 
 type RoomFactory = (opts: { token: string; url: string }) => unknown;
 
