@@ -23,6 +23,7 @@
   "useCodeBlocks": true,
   "expandObjects": true,
   "fileExtension": ".md",
+  "entryFileName": "index.md",
   "skipErrorChecking": true,
   "exclude": [
     "**/node_modules/**",
