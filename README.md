@@ -16,6 +16,7 @@ Open-source, framework-agnostic WebRTC SDK. Publish video, view it, chat, raise 
 | `@forinda/video-sdk-react`                     | `VideoSdkProvider` + 11 hooks + `<VideoView>` component.                                                                        |
 | `@forinda/video-sdk-vue`                       | `VideoSdkPlugin` + 12 composables + `<VideoView>` component for Vue 3.4+.                                                       |
 | `@forinda/video-sdk-elements`                  | 4 Web Components: `<forinda-video-publisher>`, `<forinda-video-viewer>`, `<forinda-video-device-picker>`, `<forinda-recorder>`. |
+| `@forinda/video-sdk-sfu-livekit`               | LiveKit SFU adapter — same Publisher/Viewer surface, routed through LiveKit Cloud or self-host.                                 |
 
 `@forinda/video-sdk-signaling-adapter-hono` and `@forinda/video-sdk-signaling-adapter-bun` are reserved package names with stub exports today; use the `ws` adapter as a workaround.
 
@@ -124,7 +125,7 @@ CI runs all five on every PR.
 
 ## Status & scope
 
-Pre-1.0. P2P mesh (`@forinda/video-sdk-core`) covers webinars and small meetings comfortably; production ceiling is roughly 8 viewers per publisher before uplink saturates. SFU integration for larger broadcasts is on the roadmap.
+Pre-1.0. P2P mesh (`@forinda/video-sdk-core`) covers webinars and small meetings comfortably; production ceiling is roughly 8 viewers per publisher before uplink saturates. SFU integration ships via the optional `@forinda/video-sdk-sfu-livekit` adapter; mesh remains the default for ≤8-viewer rooms.
 
 ## Contributing
 

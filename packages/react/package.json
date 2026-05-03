@@ -75,7 +75,13 @@
   },
   "peerDependencies": {
     "@forinda/video-sdk-core": "workspace:*",
+    "@forinda/video-sdk-sfu-livekit": "workspace:*",
     "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@forinda/video-sdk-sfu-livekit": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20.0.0"

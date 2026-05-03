@@ -69,7 +69,13 @@
   },
   "peerDependencies": {
     "@forinda/video-sdk-core": "workspace:*",
+    "@forinda/video-sdk-sfu-livekit": "workspace:*",
     "vue": "^3.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@forinda/video-sdk-sfu-livekit": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=20.0.0"

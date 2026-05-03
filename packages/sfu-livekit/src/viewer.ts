@@ -145,6 +145,6 @@ async function openRoom(opts: InternalSfuViewerOptions): Promise<MinimalRoom> {
  * await viewer.start();
  * ```
  */
-export function defineSfuViewer(opts: SfuViewerOptions): SfuViewer {
+export function defineSfuViewer(opts: InternalSfuViewerOptions): SfuViewer {
   return new SfuViewerImpl(opts);
 }

@@ -10,7 +10,13 @@ export default defineConfig({
   target: "es2022",
   treeshake: true,
   minify: true,
-  external: ["react", "react-dom", "@forinda/video-sdk-core"],
+  external: [
+    "react",
+    "react-dom",
+    "@forinda/video-sdk-core",
+    "@forinda/video-sdk-sfu-livekit",
+    "livekit-client",
+  ],
   tsconfig: "./tsconfig.build.json",
   banner: { js: createBanner() },
 });

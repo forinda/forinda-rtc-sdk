@@ -11,6 +11,6 @@ export default defineConfig({
   treeshake: true,
   minify: true,
   tsconfig: "./tsconfig.build.json",
-  external: ["vue", "@forinda/video-sdk-core"],
+  external: ["vue", "@forinda/video-sdk-core", "@forinda/video-sdk-sfu-livekit", "livekit-client"],
   banner: { js: createBanner() },
 });

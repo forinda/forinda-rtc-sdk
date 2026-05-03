@@ -177,6 +177,6 @@ async function openRoom(opts: InternalSfuPublisherOptions): Promise<MinimalRoom>
  * await publisher.start();
  * ```
  */
-export function defineSfuPublisher(opts: SfuPublisherOptions): SfuPublisher {
+export function defineSfuPublisher(opts: InternalSfuPublisherOptions): SfuPublisher {
   return new SfuPublisherImpl(opts);
 }
