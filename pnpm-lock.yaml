@@ -248,6 +248,9 @@ importers:
       '@forinda/video-sdk-core':
         specifier: workspace:*
         version: link:../core
+      '@forinda/video-sdk-sfu-livekit':
+        specifier: workspace:^
+        version: link:../sfu-livekit
       '@testing-library/dom':
         specifier: ^10.0.0
         version: 10.4.1

@@ -69,7 +69,7 @@ class SfuPublisherImpl implements SfuPublisher {
     this.setState("connecting");
 
     try {
-      this.room = openRoom(this.opts);
+      this.room = await openRoom(this.opts);
       this.attachListeners(this.room);
       await this.room.connect(this.opts.url, this.opts.token);
 
@@ -149,18 +149,16 @@ class SfuPublisherImpl implements SfuPublisher {
 }
 
 /**
- * Internal: open a LiveKit `Room`. Real path uses `new Room()` from
- * `livekit-client`; tests inject a fake via `__roomFactory`.
+ * Internal: open a LiveKit `Room`. Real path dynamically imports
+ * `livekit-client` only when needed; tests inject a fake via
+ * `__roomFactory` to avoid loading the real package.
  */
-function openRoom(opts: InternalSfuPublisherOptions): MinimalRoom {
+async function openRoom(opts: InternalSfuPublisherOptions): Promise<MinimalRoom> {
   if (opts.__roomFactory) {
     return opts.__roomFactory(opts) as MinimalRoom;
   }
-  // Lazy require — only loads `livekit-client` at runtime if the consumer
-  // actually calls a publisher / viewer factory.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Room } = require("livekit-client");
-  return new Room() as MinimalRoom;
+  const livekit = (await import("livekit-client")) as { Room: new () => MinimalRoom };
+  return new livekit.Room();
 }
 
 /**

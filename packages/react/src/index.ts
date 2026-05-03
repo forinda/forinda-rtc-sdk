@@ -22,6 +22,18 @@ export {
 export { useViewer, type UseViewerOptions, type UseViewerResult } from "./use-viewer.ts";
 export { useConnectionStats, type UseConnectionStatsOptions } from "./use-connection-stats.ts";
 
+// SFU adapters (LiveKit) — opt-in for >~8-viewer rooms.
+export {
+  useSfuPublisher,
+  type UseSfuPublisherOptions,
+  type UseSfuPublisherResult,
+} from "./use-sfu-publisher.ts";
+export {
+  useSfuViewer,
+  type UseSfuViewerOptions,
+  type UseSfuViewerResult,
+} from "./use-sfu-viewer.ts";
+
 // Room — higher-level coordinator (eliminates the duplicate-join footgun
 // when sharing one transport between Publisher / Viewer / RoomChannel)
 export { useRoom, type UseRoomOptions, type UseRoomResult } from "./use-room.ts";

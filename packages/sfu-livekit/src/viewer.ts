@@ -64,7 +64,7 @@ class SfuViewerImpl implements SfuViewer {
     this.setState("connecting");
 
     try {
-      this.room = openRoom(this.opts);
+      this.room = await openRoom(this.opts);
       this.attachListeners(this.room);
       await this.room.connect(this.opts.url, this.opts.token);
       this.setState("connected");
@@ -123,13 +123,12 @@ class SfuViewerImpl implements SfuViewer {
   }
 }
 
-function openRoom(opts: InternalSfuViewerOptions): MinimalRoom {
+async function openRoom(opts: InternalSfuViewerOptions): Promise<MinimalRoom> {
   if (opts.__roomFactory) {
     return opts.__roomFactory(opts) as MinimalRoom;
   }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Room } = require("livekit-client");
-  return new Room() as MinimalRoom;
+  const livekit = (await import("livekit-client")) as { Room: new () => MinimalRoom };
+  return new livekit.Room();
 }
 
 /**
