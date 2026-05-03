@@ -1,0 +1,4 @@
+.vitepress/dist/
+.vitepress/cache/
+symbols/
+node_modules/
