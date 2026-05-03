@@ -100,6 +100,7 @@ Each example has its own README under `examples/*/README.md`.
 - **[`docs/architecture.md`](docs/architecture.md)** — package graph + data flow for one RTC session.
 - **[`docs/patterns.md`](docs/patterns.md)** — three end-to-end recipes (webinar, mesh meeting, custom signaling backend).
 - **[`docs/troubleshooting.md`](docs/troubleshooting.md)** — every typed error code → user-visible cause → fix.
+- **[`docs/sfu-integration.md`](docs/sfu-integration.md)** — when to use the LiveKit SFU adapter, two-transport model, mesh→SFU migration.
 - **Per-package READMEs** are the canonical reference for each surface — start at the `Packages` table above.
 
 ## Testing tiers
