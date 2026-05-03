@@ -41,4 +41,16 @@ export { useRaiseHand, type UseRaiseHandResult } from "./use-raise-hand.ts";
 export { useRecorder, type UseRecorderResult } from "./use-recorder.ts";
 export { useUploader, type UseUploaderResult } from "./use-uploader.ts";
 
+// SFU adapters (LiveKit) — opt-in for >~8-viewer rooms.
+export {
+  useSfuPublisher,
+  type UseSfuPublisherOptions,
+  type UseSfuPublisherResult,
+} from "./use-sfu-publisher.ts";
+export {
+  useSfuViewer,
+  type UseSfuViewerOptions,
+  type UseSfuViewerResult,
+} from "./use-sfu-viewer.ts";
+
 export { VideoView } from "./video-view.ts";

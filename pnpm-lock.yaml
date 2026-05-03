@@ -623,6 +623,9 @@ importers:
       '@forinda/test-helpers':
         specifier: workspace:*
         version: link:../test-helpers
+      '@forinda/video-sdk-sfu-livekit':
+        specifier: workspace:^
+        version: link:../sfu-livekit
       '@vitest/coverage-v8':
         specifier: ^2.1.0
         version: 2.1.9(@vitest/browser@2.1.9)(vitest@2.1.9)
