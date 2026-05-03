@@ -95,6 +95,13 @@ pnpm dev:vue         # http://127.0.0.1:5176 — Vue 3 composables + <VideoView>
 
 Each example has its own README under `examples/*/README.md`.
 
+## Documentation
+
+- **[`docs/architecture.md`](docs/architecture.md)** — package graph + data flow for one RTC session.
+- **[`docs/patterns.md`](docs/patterns.md)** — three end-to-end recipes (webinar, mesh meeting, custom signaling backend).
+- **[`docs/troubleshooting.md`](docs/troubleshooting.md)** — every typed error code → user-visible cause → fix.
+- **Per-package READMEs** are the canonical reference for each surface — start at the `Packages` table above.
+
 ## Testing tiers
 
 | Tier        | Command                                                                   | What it runs                                                                                                           |
