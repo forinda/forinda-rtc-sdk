@@ -14,3 +14,4 @@ export type {
   SfuViewerOptions,
 } from "./types.ts";
 export { SfuError, type SfuErrorCode } from "./errors.ts";
+export { defineSfuPublisher } from "./publisher.ts";
