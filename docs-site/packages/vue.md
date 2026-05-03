@@ -2,4 +2,4 @@
 
 ---
 
-[Browse the per-symbol API reference for `@forinda/video-sdk-vue` →](/symbols/video-sdk-vue/)
+[Browse the per-symbol API reference for `@forinda/video-sdk-vue` →](/symbols/@forinda/video-sdk-vue/)

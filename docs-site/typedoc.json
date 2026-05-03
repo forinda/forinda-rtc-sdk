@@ -1,0 +1,34 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "../packages/core",
+    "../packages/signaling-protocol",
+    "../packages/signaling-ws",
+    "../packages/signaling-broadcast",
+    "../packages/signaling-adapter-ws",
+    "../packages/signaling-adapter-express",
+    "../packages/signaling-server",
+    "../packages/react",
+    "../packages/vue",
+    "../packages/web-components",
+    "../packages/sfu-livekit"
+  ],
+  "out": "symbols",
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "none",
+  "githubPages": false,
+  "hidePageHeader": false,
+  "hideBreadcrumbs": false,
+  "useCodeBlocks": true,
+  "expandObjects": true,
+  "fileExtension": ".md",
+  "skipErrorChecking": true,
+  "exclude": [
+    "**/node_modules/**",
+    "**/test/**",
+    "**/dist/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ]
+}

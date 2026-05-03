@@ -2,4 +2,4 @@
 
 ---
 
-[Browse the per-symbol API reference for `@forinda/video-sdk-signaling-ws` →](/symbols/video-sdk-signaling-ws/)
+[Browse the per-symbol API reference for `@forinda/video-sdk-signaling-ws` →](/symbols/@forinda/video-sdk-signaling-ws/)

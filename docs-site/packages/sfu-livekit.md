@@ -2,4 +2,4 @@
 
 ---
 
-[Browse the per-symbol API reference for `@forinda/video-sdk-sfu-livekit` →](/symbols/video-sdk-sfu-livekit/)
+[Browse the per-symbol API reference for `@forinda/video-sdk-sfu-livekit` →](/symbols/@forinda/video-sdk-sfu-livekit/)
