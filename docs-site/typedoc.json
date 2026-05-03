@@ -25,11 +25,5 @@
   "fileExtension": ".md",
   "entryFileName": "index.md",
   "skipErrorChecking": true,
-  "exclude": [
-    "**/node_modules/**",
-    "**/test/**",
-    "**/dist/**",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "exclude": ["**/node_modules/**", "**/test/**", "**/dist/**", "**/*.test.ts", "**/*.spec.ts"]
 }

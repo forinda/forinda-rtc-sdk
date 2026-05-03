@@ -98,6 +98,8 @@ Each example has its own README under `examples/*/README.md`.
 
 ## Documentation
 
+📖 **Live docs:** [https://forinda.github.io/forinda-rtc-sdk/](https://forinda.github.io/forinda-rtc-sdk/)
+
 - **[`docs/architecture.md`](docs/architecture.md)** — package graph + data flow for one RTC session.
 - **[`docs/patterns.md`](docs/patterns.md)** — three end-to-end recipes (webinar, mesh meeting, custom signaling backend).
 - **[`docs/troubleshooting.md`](docs/troubleshooting.md)** — every typed error code → user-visible cause → fix.

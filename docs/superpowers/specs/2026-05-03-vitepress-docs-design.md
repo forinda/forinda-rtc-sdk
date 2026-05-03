@@ -61,43 +61,43 @@ VitePress's `<!--@include: <path>-->` directive pulls READMEs and narrative docs
 
 ## File structure
 
-| File / directory                                          | Responsibility                                                                                            |
-| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `docs-site/package.json`                                  | New private package `@forinda/docs-site`. Wireit scripts: `dev`, `build`, `preview`, `typedoc`.           |
-| `docs-site/tsconfig.json`                                 | Picks up `.vitepress/config.ts` and any TS helper modules.                                                |
-| `docs-site/.vitepress/config.ts`                          | VitePress site config — `base: '/forinda-rtc-sdk/'`, nav, sidebar, theme, search.                          |
-| `docs-site/.vitepress/theme/index.ts`                     | Extends default theme.                                                                                    |
-| `docs-site/.vitepress/theme/custom.css`                   | Accent overrides (`--vp-c-brand-1` left at default indigo for v1; revisit later if branding requires).    |
-| `docs-site/index.md`                                      | Landing page (hero + 3 CTA buttons → quick-start, packages overview, cookbook).                            |
-| `docs-site/get-started/install.md`                        | Per-stack install snippets + peer-dep notes.                                                              |
-| `docs-site/get-started/quick-start.md`                    | Minimal mesh publisher walkthrough.                                                                       |
-| `docs-site/get-started/pick-your-stack.md`                | Decision tree for framework + mesh vs SFU.                                                                |
-| `docs-site/packages/index.md`                             | Sortable overview table of all packages.                                                                  |
-| `docs-site/packages/<name>.md` (×11)                      | One per package. Route name = published package name (e.g. `elements`); include path = directory (`packages/web-components/README.md`). Body = `<!--@include-->` of the README plus a "Browse symbols" link. |
-| `docs-site/cookbook/architecture.md`                      | `<!--@include: ../../docs/architecture.md-->`                                                              |
-| `docs-site/cookbook/patterns.md`                          | `<!--@include: ../../docs/patterns.md-->`                                                                  |
-| `docs-site/cookbook/sfu-integration.md`                   | `<!--@include: ../../docs/sfu-integration.md-->`                                                           |
-| `docs-site/cookbook/troubleshooting.md`                   | `<!--@include: ../../docs/troubleshooting.md-->`                                                           |
-| `docs-site/typedoc/typedoc.json`                          | TypeDoc config: per-package `entryPoints`, `plugin: ["typedoc-plugin-markdown"]`, output → `generated/`.   |
-| `docs-site/typedoc/generated/` (gitignored)               | Generated per-symbol markdown pages.                                                                      |
-| `docs-site/scripts/smoke.mjs`                             | Post-build assertion: greps `dist/index.html` for the hero string.                                        |
-| `docs-site/public/`                                       | Static assets (favicon, og-image — drop-ins; no logo art for v1).                                         |
-| `docs-site/README.md`                                     | Local dev instructions + the one-time "set Pages source = Actions" repo setting.                          |
-| `.github/workflows/docs.yml`                              | Build + deploy to GitHub Pages on `main` push or manual dispatch.                                          |
-| Root `package.json`                                       | Add `docs:dev`, `docs:build`, `docs:preview` scripts that filter to `@forinda/docs-site`.                  |
-| `.gitignore`                                              | Add `docs-site/.vitepress/dist/` and `docs-site/typedoc/generated/`.                                       |
-| `pnpm-workspace.yaml`                                     | No change needed if `docs-site/` is matched by an existing glob; otherwise add `docs-site`.                |
-| `.changeset/docs-site.md`                                 | Empty (private package — no public bump). Skip changeset.                                                  |
-| Root `README.md`                                          | Add a single "Documentation" sentence near the top: "📖 Live docs: [forinda.github.io/forinda-rtc-sdk]…". |
+| File / directory                            | Responsibility                                                                                                                                                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `docs-site/package.json`                    | New private package `@forinda/docs-site`. Wireit scripts: `dev`, `build`, `preview`, `typedoc`.                                                                                                              |
+| `docs-site/tsconfig.json`                   | Picks up `.vitepress/config.ts` and any TS helper modules.                                                                                                                                                   |
+| `docs-site/.vitepress/config.ts`            | VitePress site config — `base: '/forinda-rtc-sdk/'`, nav, sidebar, theme, search.                                                                                                                            |
+| `docs-site/.vitepress/theme/index.ts`       | Extends default theme.                                                                                                                                                                                       |
+| `docs-site/.vitepress/theme/custom.css`     | Accent overrides (`--vp-c-brand-1` left at default indigo for v1; revisit later if branding requires).                                                                                                       |
+| `docs-site/index.md`                        | Landing page (hero + 3 CTA buttons → quick-start, packages overview, cookbook).                                                                                                                              |
+| `docs-site/get-started/install.md`          | Per-stack install snippets + peer-dep notes.                                                                                                                                                                 |
+| `docs-site/get-started/quick-start.md`      | Minimal mesh publisher walkthrough.                                                                                                                                                                          |
+| `docs-site/get-started/pick-your-stack.md`  | Decision tree for framework + mesh vs SFU.                                                                                                                                                                   |
+| `docs-site/packages/index.md`               | Sortable overview table of all packages.                                                                                                                                                                     |
+| `docs-site/packages/<name>.md` (×11)        | One per package. Route name = published package name (e.g. `elements`); include path = directory (`packages/web-components/README.md`). Body = `<!--@include-->` of the README plus a "Browse symbols" link. |
+| `docs-site/cookbook/architecture.md`        | `<!--@include: ../../docs/architecture.md-->`                                                                                                                                                                |
+| `docs-site/cookbook/patterns.md`            | `<!--@include: ../../docs/patterns.md-->`                                                                                                                                                                    |
+| `docs-site/cookbook/sfu-integration.md`     | `<!--@include: ../../docs/sfu-integration.md-->`                                                                                                                                                             |
+| `docs-site/cookbook/troubleshooting.md`     | `<!--@include: ../../docs/troubleshooting.md-->`                                                                                                                                                             |
+| `docs-site/typedoc/typedoc.json`            | TypeDoc config: per-package `entryPoints`, `plugin: ["typedoc-plugin-markdown"]`, output → `generated/`.                                                                                                     |
+| `docs-site/typedoc/generated/` (gitignored) | Generated per-symbol markdown pages.                                                                                                                                                                         |
+| `docs-site/scripts/smoke.mjs`               | Post-build assertion: greps `dist/index.html` for the hero string.                                                                                                                                           |
+| `docs-site/public/`                         | Static assets (favicon, og-image — drop-ins; no logo art for v1).                                                                                                                                            |
+| `docs-site/README.md`                       | Local dev instructions + the one-time "set Pages source = Actions" repo setting.                                                                                                                             |
+| `.github/workflows/docs.yml`                | Build + deploy to GitHub Pages on `main` push or manual dispatch.                                                                                                                                            |
+| Root `package.json`                         | Add `docs:dev`, `docs:build`, `docs:preview` scripts that filter to `@forinda/docs-site`.                                                                                                                    |
+| `.gitignore`                                | Add `docs-site/.vitepress/dist/` and `docs-site/typedoc/generated/`.                                                                                                                                         |
+| `pnpm-workspace.yaml`                       | No change needed if `docs-site/` is matched by an existing glob; otherwise add `docs-site`.                                                                                                                  |
+| `.changeset/docs-site.md`                   | Empty (private package — no public bump). Skip changeset.                                                                                                                                                    |
+| Root `README.md`                            | Add a single "Documentation" sentence near the top: "📖 Live docs: [forinda.github.io/forinda-rtc-sdk]…".                                                                                                    |
 
 ## Build pipeline
 
-| Script           | Command                                                          | Wireit dependencies                                                       |
-| ---------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `docs:typedoc`   | `typedoc --options docs-site/typedoc/typedoc.json`               | `packages/*/src/**`, `packages/*/tsconfig.json`                           |
-| `docs:build`     | `vitepress build docs-site` then `node docs-site/scripts/smoke.mjs` | `docs:typedoc`, `docs-site/**`, `packages/*/README.md`, `docs/*.md`       |
-| `docs:dev`       | `vitepress dev docs-site`                                        | `docs:typedoc` (one-shot at startup; not re-run on file change for speed) |
-| `docs:preview`   | `vitepress preview docs-site`                                    | depends on existing `dist/`                                               |
+| Script         | Command                                                             | Wireit dependencies                                                       |
+| -------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `docs:typedoc` | `typedoc --options docs-site/typedoc/typedoc.json`                  | `packages/*/src/**`, `packages/*/tsconfig.json`                           |
+| `docs:build`   | `vitepress build docs-site` then `node docs-site/scripts/smoke.mjs` | `docs:typedoc`, `docs-site/**`, `packages/*/README.md`, `docs/*.md`       |
+| `docs:dev`     | `vitepress dev docs-site`                                           | `docs:typedoc` (one-shot at startup; not re-run on file change for speed) |
+| `docs:preview` | `vitepress preview docs-site`                                       | depends on existing `dist/`                                               |
 
 Wireit `files` globs include the README + narrative paths so external edits invalidate the docs build cache.
 

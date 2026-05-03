@@ -16,43 +16,43 @@
 
 ## File structure
 
-| File                                              | Responsibility                                                                                      |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `docs-site/package.json`                          | New private package `@forinda/docs-site`. Wireit `dev`/`build`/`preview`/`typedoc`.                  |
-| `docs-site/tsconfig.json`                         | Picks up `.vitepress/config.ts` + scripts.                                                          |
-| `docs-site/.vitepress/config.ts`                  | Site config — `base`, nav, sidebar, theme, search, head metadata.                                   |
-| `docs-site/.vitepress/theme/index.ts`             | Extends VitePress default theme.                                                                    |
-| `docs-site/.vitepress/theme/custom.css`           | Brand accent (left at default indigo for v1).                                                       |
-| `docs-site/index.md`                              | Landing page: hero, three CTAs, "what you get" feature list.                                        |
-| `docs-site/get-started/install.md`                | Per-stack `pnpm add` snippets + peer-dep notes.                                                     |
-| `docs-site/get-started/quick-start.md`            | Minimal mesh publisher walkthrough.                                                                 |
-| `docs-site/get-started/pick-your-stack.md`        | Decision matrix — vanilla / react / vue / elements + mesh / sfu.                                    |
-| `docs-site/cookbook/architecture.md`              | `<!--@include: ../../docs/architecture.md-->`                                                        |
-| `docs-site/cookbook/patterns.md`                  | `<!--@include: ../../docs/patterns.md-->`                                                            |
-| `docs-site/cookbook/sfu-integration.md`           | `<!--@include: ../../docs/sfu-integration.md-->`                                                     |
-| `docs-site/cookbook/troubleshooting.md`           | `<!--@include: ../../docs/troubleshooting.md-->`                                                     |
-| `docs-site/packages/index.md`                     | Sortable overview table + the IA-tweak note about `/symbols/`.                                       |
-| `docs-site/packages/core.md`                      | README include + Browse-symbols link.                                                               |
-| `docs-site/packages/signaling-protocol.md`        | Same shape.                                                                                         |
-| `docs-site/packages/signaling-ws.md`              | Same shape.                                                                                         |
-| `docs-site/packages/signaling-broadcast.md`       | Same shape.                                                                                         |
-| `docs-site/packages/signaling-adapter-ws.md`      | Same shape.                                                                                         |
-| `docs-site/packages/signaling-adapter-express.md` | Same shape.                                                                                         |
-| `docs-site/packages/signaling-server.md`          | Same shape.                                                                                         |
-| `docs-site/packages/react.md`                     | Same shape.                                                                                         |
-| `docs-site/packages/vue.md`                       | Same shape.                                                                                         |
-| `docs-site/packages/elements.md`                  | Includes `packages/web-components/README.md` (directory ≠ package name).                             |
-| `docs-site/packages/sfu-livekit.md`               | Same shape.                                                                                         |
-| `docs-site/typedoc.json`                          | TypeDoc config: per-package entry points, plugin-markdown, `out: docs-site/symbols`.                 |
-| `docs-site/symbols/` (gitignored)                 | Generated per-symbol markdown.                                                                      |
-| `docs-site/scripts/smoke.mjs`                     | Post-build assertion: greps `dist/index.html` for hero string and a `/packages/` link.              |
-| `docs-site/README.md`                             | Local dev instructions + one-time "Pages source = Actions" note.                                    |
-| `docs-site/.gitignore`                            | Local ignores: `.vitepress/dist/`, `.vitepress/cache/`, `symbols/`.                                 |
-| `.github/workflows/docs.yml`                      | Build + deploy to GitHub Pages on `main`; build-only on PRs.                                        |
-| Root `package.json`                               | Add `docs:dev`, `docs:build`, `docs:preview` shortcut scripts.                                      |
-| Root `.gitignore`                                 | Add `docs-site/.vitepress/dist/`, `docs-site/.vitepress/cache/`, `docs-site/symbols/`.               |
-| Root `README.md`                                  | Add a one-line "📖 Live docs" pointer near the top.                                                  |
-| `.changeset/` (none)                              | docs-site is private; no changeset.                                                                 |
+| File                                              | Responsibility                                                                         |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `docs-site/package.json`                          | New private package `@forinda/docs-site`. Wireit `dev`/`build`/`preview`/`typedoc`.    |
+| `docs-site/tsconfig.json`                         | Picks up `.vitepress/config.ts` + scripts.                                             |
+| `docs-site/.vitepress/config.ts`                  | Site config — `base`, nav, sidebar, theme, search, head metadata.                      |
+| `docs-site/.vitepress/theme/index.ts`             | Extends VitePress default theme.                                                       |
+| `docs-site/.vitepress/theme/custom.css`           | Brand accent (left at default indigo for v1).                                          |
+| `docs-site/index.md`                              | Landing page: hero, three CTAs, "what you get" feature list.                           |
+| `docs-site/get-started/install.md`                | Per-stack `pnpm add` snippets + peer-dep notes.                                        |
+| `docs-site/get-started/quick-start.md`            | Minimal mesh publisher walkthrough.                                                    |
+| `docs-site/get-started/pick-your-stack.md`        | Decision matrix — vanilla / react / vue / elements + mesh / sfu.                       |
+| `docs-site/cookbook/architecture.md`              | `<!--@include: ../../docs/architecture.md-->`                                          |
+| `docs-site/cookbook/patterns.md`                  | `<!--@include: ../../docs/patterns.md-->`                                              |
+| `docs-site/cookbook/sfu-integration.md`           | `<!--@include: ../../docs/sfu-integration.md-->`                                       |
+| `docs-site/cookbook/troubleshooting.md`           | `<!--@include: ../../docs/troubleshooting.md-->`                                       |
+| `docs-site/packages/index.md`                     | Sortable overview table + the IA-tweak note about `/symbols/`.                         |
+| `docs-site/packages/core.md`                      | README include + Browse-symbols link.                                                  |
+| `docs-site/packages/signaling-protocol.md`        | Same shape.                                                                            |
+| `docs-site/packages/signaling-ws.md`              | Same shape.                                                                            |
+| `docs-site/packages/signaling-broadcast.md`       | Same shape.                                                                            |
+| `docs-site/packages/signaling-adapter-ws.md`      | Same shape.                                                                            |
+| `docs-site/packages/signaling-adapter-express.md` | Same shape.                                                                            |
+| `docs-site/packages/signaling-server.md`          | Same shape.                                                                            |
+| `docs-site/packages/react.md`                     | Same shape.                                                                            |
+| `docs-site/packages/vue.md`                       | Same shape.                                                                            |
+| `docs-site/packages/elements.md`                  | Includes `packages/web-components/README.md` (directory ≠ package name).               |
+| `docs-site/packages/sfu-livekit.md`               | Same shape.                                                                            |
+| `docs-site/typedoc.json`                          | TypeDoc config: per-package entry points, plugin-markdown, `out: docs-site/symbols`.   |
+| `docs-site/symbols/` (gitignored)                 | Generated per-symbol markdown.                                                         |
+| `docs-site/scripts/smoke.mjs`                     | Post-build assertion: greps `dist/index.html` for hero string and a `/packages/` link. |
+| `docs-site/README.md`                             | Local dev instructions + one-time "Pages source = Actions" note.                       |
+| `docs-site/.gitignore`                            | Local ignores: `.vitepress/dist/`, `.vitepress/cache/`, `symbols/`.                    |
+| `.github/workflows/docs.yml`                      | Build + deploy to GitHub Pages on `main`; build-only on PRs.                           |
+| Root `package.json`                               | Add `docs:dev`, `docs:build`, `docs:preview` shortcut scripts.                         |
+| Root `.gitignore`                                 | Add `docs-site/.vitepress/dist/`, `docs-site/.vitepress/cache/`, `docs-site/symbols/`. |
+| Root `README.md`                                  | Add a one-line "📖 Live docs" pointer near the top.                                    |
+| `.changeset/` (none)                              | docs-site is private; no changeset.                                                    |
 
 ---
 
@@ -155,7 +155,7 @@ node_modules/
 
 - [ ] **Step 4: Create `docs-site/README.md`**
 
-```markdown
+````markdown
 # @forinda/docs-site
 
 VitePress documentation site for the Forinda RTC SDK. Private package — never published.
@@ -166,6 +166,7 @@ VitePress documentation site for the Forinda RTC SDK. Private package — never 
 pnpm install
 pnpm docs:dev      # http://localhost:5173
 ```
+````
 
 ## Build
 
@@ -185,16 +186,20 @@ pnpm docs:preview  # serves the built output
 `.github/workflows/docs.yml` builds + deploys to GitHub Pages on push to `main`.
 
 **One-time setup** (already done if you can see the site live): repo Settings → Pages → Source = "GitHub Actions".
+
 ```
 
 - [ ] **Step 5: Append to root `.gitignore`**
 
 ```
+
 # docs site (generated)
+
 docs-site/.vitepress/dist/
 docs-site/.vitepress/cache/
 docs-site/symbols/
-```
+
+````
 
 - [ ] **Step 6: Install + verify pnpm picks it up**
 
@@ -209,7 +214,7 @@ Expected: prints `ok`.
 ```bash
 git add docs-site/package.json docs-site/tsconfig.json docs-site/.gitignore docs-site/README.md .gitignore pnpm-lock.yaml
 git commit -m "chore(docs-site): scaffold @forinda/docs-site workspace package (DOCS #1/10)"
-```
+````
 
 ---
 
@@ -286,9 +291,7 @@ export default defineConfig({
         },
       ],
     },
-    socialLinks: [
-      { icon: "github", link: "https://github.com/forinda/forinda-rtc-sdk" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/forinda/forinda-rtc-sdk" }],
     search: { provider: "local" },
     editLink: {
       pattern: "https://github.com/forinda/forinda-rtc-sdk/edit/main/docs-site/:path",
@@ -374,7 +377,7 @@ features:
 
 - [ ] **Step 2: Create `docs-site/get-started/install.md`**
 
-```md
+````md
 # Install
 
 The SDK is split into small packages so you only pull what you use. Pick the rows that match your stack.
@@ -384,6 +387,7 @@ The SDK is split into small packages so you only pull what you use. Pick the row
 ```bash
 pnpm add @forinda/video-sdk-core @forinda/video-sdk-signaling-ws
 ```
+````
 
 ## React app
 
@@ -428,7 +432,8 @@ For production, embed the signaling engine in your existing Node server via `@fo
 - Browsers — Chromium 110+, Firefox 113+, Safari 16.4+.
 - React ≥ 18.
 - Vue ≥ 3.4.
-```
+
+````
 
 - [ ] **Step 3: Create `docs-site/get-started/quick-start.md`**
 
@@ -441,7 +446,7 @@ A minimal mesh publisher in 15 lines. Run a signaling server in one terminal, th
 
 ```bash
 pnpm dlx @forinda/video-sdk-signaling-server --port 8787
-```
+````
 
 ## 2. Publish your camera
 
@@ -482,7 +487,8 @@ await viewer.start();
 - Add presence + chat + recording over the same socket → [Patterns](/cookbook/patterns).
 - Pick the right framework adapter → [Pick your stack](/get-started/pick-your-stack).
 - Outgrow mesh? → [SFU integration](/cookbook/sfu-integration).
-```
+
+````
 
 - [ ] **Step 4: Create `docs-site/get-started/pick-your-stack.md`**
 
@@ -518,7 +524,7 @@ The SFU adapter has the same `Publisher` / `Viewer` shape as mesh, so swapping i
 - **Chat / presence / raise-hand** — `defineRoomChannel` (or `room.channel()` if you're using `defineRoom`). Rides the same WebSocket as media. See [Patterns](/cookbook/patterns).
 - **Recording** — `defineRecorder(stream, { timesliceMs: 1000 })`. Ships chunks to your uploader.
 - **Screen share** — `getDisplayMedia()` then feed it to a second `Publisher` with a different room name (or replace the camera track on the existing one).
-```
+````
 
 - [ ] **Step 5: Smoke-test locally**
 
@@ -609,19 +615,19 @@ Each per-package page has the same shape: include the README, link to the symbol
 ```md
 # Packages
 
-| Package                                        | Purpose                                                                                                                         |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| [`@forinda/video-sdk-core`](./core)            | Framework-agnostic WebRTC publish/view core. Browser-only, ESM-only.                                                            |
-| [`@forinda/video-sdk-signaling-protocol`](./signaling-protocol)        | Pure signaling engine + zod-validated wire format. Pluggable into any host.                                                     |
-| [`@forinda/video-sdk-signaling-ws`](./signaling-ws)              | Browser WebSocket signaling transport with auto-reconnect.                                                                      |
-| [`@forinda/video-sdk-signaling-broadcast`](./signaling-broadcast)       | Same-tab `BroadcastChannel` transport for demos and tests.                                                                      |
-| [`@forinda/video-sdk-signaling-adapter-ws`](./signaling-adapter-ws)      | Node `ws`-backed WebSocket signaling server.                                                                                    |
+| Package                                                                       | Purpose                                                                                                                         |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| [`@forinda/video-sdk-core`](./core)                                           | Framework-agnostic WebRTC publish/view core. Browser-only, ESM-only.                                                            |
+| [`@forinda/video-sdk-signaling-protocol`](./signaling-protocol)               | Pure signaling engine + zod-validated wire format. Pluggable into any host.                                                     |
+| [`@forinda/video-sdk-signaling-ws`](./signaling-ws)                           | Browser WebSocket signaling transport with auto-reconnect.                                                                      |
+| [`@forinda/video-sdk-signaling-broadcast`](./signaling-broadcast)             | Same-tab `BroadcastChannel` transport for demos and tests.                                                                      |
+| [`@forinda/video-sdk-signaling-adapter-ws`](./signaling-adapter-ws)           | Node `ws`-backed WebSocket signaling server.                                                                                    |
 | [`@forinda/video-sdk-signaling-adapter-express`](./signaling-adapter-express) | Express integration (dual ESM + CJS) — share signaling with your HTTP server.                                                   |
-| [`@forinda/video-sdk-signaling-server`](./signaling-server)          | Standalone reference server + `forinda-rtc-signaling` CLI.                                                                      |
-| [`@forinda/video-sdk-react`](./react)                     | `VideoSdkProvider` + 13 hooks + `<VideoView>` component.                                                                        |
-| [`@forinda/video-sdk-vue`](./vue)                       | `VideoSdkPlugin` + 14 composables + `<VideoView>` component for Vue 3.4+.                                                       |
-| [`@forinda/video-sdk-elements`](./elements)                  | 4 Web Components: `<forinda-video-publisher>`, `<forinda-video-viewer>`, `<forinda-video-device-picker>`, `<forinda-recorder>`. |
-| [`@forinda/video-sdk-sfu-livekit`](./sfu-livekit)                | LiveKit SFU adapter — same Publisher/Viewer surface, routed through LiveKit Cloud or self-host.                                 |
+| [`@forinda/video-sdk-signaling-server`](./signaling-server)                   | Standalone reference server + `forinda-rtc-signaling` CLI.                                                                      |
+| [`@forinda/video-sdk-react`](./react)                                         | `VideoSdkProvider` + 13 hooks + `<VideoView>` component.                                                                        |
+| [`@forinda/video-sdk-vue`](./vue)                                             | `VideoSdkPlugin` + 14 composables + `<VideoView>` component for Vue 3.4+.                                                       |
+| [`@forinda/video-sdk-elements`](./elements)                                   | 4 Web Components: `<forinda-video-publisher>`, `<forinda-video-viewer>`, `<forinda-video-device-picker>`, `<forinda-recorder>`. |
+| [`@forinda/video-sdk-sfu-livekit`](./sfu-livekit)                             | LiveKit SFU adapter — same Publisher/Viewer surface, routed through LiveKit Cloud or self-host.                                 |
 
 > Each package page below renders the upstream `packages/<dir>/README.md` verbatim.
 > For per-symbol API reference (auto-generated from JSDoc), see `/symbols/<package>/`.
@@ -785,13 +791,7 @@ The TypeDoc invocation runs once and writes per-package symbol pages into `docs-
   "expandObjects": true,
   "fileExtension": ".md",
   "skipErrorChecking": true,
-  "exclude": [
-    "**/node_modules/**",
-    "**/test/**",
-    "**/dist/**",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+  "exclude": ["**/node_modules/**", "**/test/**", "**/dist/**", "**/*.test.ts", "**/*.spec.ts"]
 }
 ```
 
@@ -871,6 +871,7 @@ console.log("Smoke check passed (" + checks.length + " assertions).");
 
 Run: `pnpm --filter @forinda/docs-site build`
 Expected:
+
 1. wireit runs `typedoc` (generates `docs-site/symbols/`)
 2. wireit runs `vitepress build .` (writes `docs-site/.vitepress/dist/`)
 3. `node scripts/smoke.mjs` runs and prints `Smoke check passed (3 assertions).`
